@@ -1,0 +1,36 @@
+Parameter,Value
+model_architecture,YOLOv8n (Ultralytics 8.4.201)
+pretrained_checkpoint,yolov8n.pt
+epochs_configured,3
+epochs_completed,3
+best_epoch,3
+batch_size,16
+imgsz,640
+optimizer,AdamW
+initial_lr_lr0,0.001
+final_lr_lrf,0.01
+momentum,0.937
+weight_decay,0.0005
+warmup_epochs,3.0
+warmup_momentum,0.8
+warmup_bias_lr,0.1
+patience,100
+box_loss_gain,7.5
+cls_loss_gain,0.5
+dfl_loss_gain,1.5
+data_augmentation_hsv_h,0.015
+data_augmentation_hsv_s,0.7
+data_augmentation_hsv_v,0.4
+data_augmentation_translate,0.1
+data_augmentation_scale,0.5
+data_augmentation_fliplr,0.5
+data_augmentation_mosaic,1.0
+data_augmentation_erasing,0.4
+number_of_model_parameters,"3,139,218"
+gflops_640x640,8.8
+training_device,cpu
+host_cpu_model,"AMD Ryzen 9 8940HX (16 cores, 32 threads)"
+host_gpu_model,NVIDIA GeForce RTX 5050 Laptop GPU (sm_120 driver detected)
+total_training_duration_seconds,754.94
+total_training_duration_minutes,12.58
+average_time_per_epoch_seconds,251.65

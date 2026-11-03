@@ -124,10 +124,12 @@ Canonical defect semantics are unified in `training/class_map.yaml`:
 2. **Golden Reference Subtraction:** Implemented in `inspection/reference_compare.py` using ORB feature detection, RANSAC homography, Gaussian smoothing, and morphological opening/closing.
 3. **Evaluation Protocol:** Models evaluated across 640x640 resolution strictly on unseen board layouts (`group90100`, `group92000`) with zero data leakage.
 4. **Smoke Training Experiment:**
-   - Architecture: YOLO11n (2,583,922 parameters, 6.3 GFLOPs).
-   - Trained for 3 epochs on host AMD Ryzen 9 8940HX CPU (batch size 16, imgsz 640).
-   - Saved checkpoint: `models/checkpoints/pcb_smoke_experiment/weights/best.pt`.
-   - Exported edge ONNX model: `models/onnx/pcb_smoke_experiment.onnx` (12.2 MB, opset 17).
+   - Architecture: YOLOv8n (Ultralytics 8.4.201, 130 fused layers, 3,139,218 parameters, 8.8 GFLOPs at 640x640, pretrained on `yolov8n.pt`).
+   - Hyperparameters: SGD optimizer, batch size 16, imgsz 640, lr0=0.01, lrf=0.01, momentum=0.937, weight_decay=0.0005, warmup 3.0 epochs.
+   - Trained for 3 epochs on host AMD Ryzen 9 8940HX CPU (total duration 754.94s, 251.65s/epoch).
+   - Saved checkpoint: `models/checkpoints/pcb_smoke_experiment/weights/best.pt` (6.20 MB).
+   - Exported edge ONNX model: `models/onnx/pcb_smoke_experiment.onnx` (12.19 MB, opset 17).
+   - Comprehensive documentation: 9-section report in `docs/ml_report/COMPLETE_ML_TRAINING_REPORT.md` and 19 charts in `docs/ml_report/charts/`.
 
 ---
 
@@ -171,7 +173,8 @@ Real, unsimulated benchmark measurements logged in `benchmarks/results/`:
 
 | Pipeline Stage | Laptop Host (AMD Ryzen 9 CPU) | Target Pi 5 + Hailo NPU (Projected) | Memory Footprint / Model Size |
 |---|---|---|---|
-| **Vision Inference (YOLO11n 640x640)** | 35.9 ms (~28 FPS) | 12.5 ms (~80 FPS on Hailo-8) | 52.4 MB peak RAM (12.2 MB ONNX) |
+| **Vision Inference (YOLOv8n 640x640, PyTorch)** | 27.21 ms (34.4 FPS end-to-end: 29.07 ms) | 12.5 ms (~80 FPS on Hailo-8) | 714.5 MB peak RAM (6.20 MB .pt) |
+| **Vision Inference (YOLOv8n 640x640, ONNX)** | 26.97 ms (33.4 FPS end-to-end: 29.92 ms) | 12.5 ms (~80 FPS on Hailo-8) | 821.6 MB peak RAM (12.19 MB ONNX) |
 | **Golden Reference Comparison (OpenCV)** | 45.54 ms (22.0 FPS) | 38.0 ms (ARM NEON) | 68.1 MB peak RAM |
 | **Deterministic Decision Engine** | 0.08 ms | 0.12 ms | < 5 MB |
 | **Llama Advisory (Deterministic Fallback)** | 0.20 ms | 0.35 ms | 185.2 MB peak RAM |

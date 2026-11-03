@@ -1,0 +1,54 @@
+{
+  "timestamp_utc": "2026-11-03T20:10:24Z",
+  "model_architecture": "YOLOv8n (Ultralytics 8.4.201)",
+  "pretrained_weights": "yolov8n.pt",
+  "parameters": 3139218,
+  "gflops": 8.8,
+  "input_resolution": "640x640",
+  "model_files": {
+    "pytorch_checkpoint_pt": {
+      "path": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\models\\checkpoints\\pcb_smoke_experiment\\weights\\best.pt",
+      "size_mb": 6.2,
+      "size_bytes": 6504234
+    },
+    "onnx_model": {
+      "path": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\models\\onnx\\pcb_smoke_experiment.onnx",
+      "size_mb": 12.19,
+      "size_bytes": 12778173
+    }
+  },
+  "hardware": {
+    "cpu": "AMD Ryzen 9 8940HX (16 cores, 32 threads)",
+    "cuda_available": true,
+    "cuda_device_string": "NVIDIA GeForce RTX 5050 Laptop GPU",
+    "training_device": "cpu",
+    "inference_device": "cpu"
+  },
+  "latency_benchmarks": {
+    "single_image": {
+      "cold_start_ms": 1324.21,
+      "warm_run_ms": 62.71
+    },
+    "pytorch_cpu_100_images": {
+      "image_count": 100,
+      "preprocess_ms": 0.99,
+      "inference_ms": 27.21,
+      "postprocess_ms": 0.48,
+      "end_to_end_ms": 29.07,
+      "fps": 34.4,
+      "peak_ram_mb": 714.5
+    },
+    "onnxruntime_cpu_100_images": {
+      "image_count": 100,
+      "inference_ms": 26.97,
+      "end_to_end_ms": 29.92,
+      "fps": 33.4,
+      "peak_ram_mb": 821.6
+    }
+  },
+  "system_separation_note": {
+    "vision_latency": "~29.07 ms (34.4 FPS) for real-time defect localization",
+    "llama_advisory_fast_mode": "~0.18 ms deterministic IPC expert rules",
+    "llama_advisory_neural_mode": "~24-57 seconds on-device autoregressive generation"
+  }
+}

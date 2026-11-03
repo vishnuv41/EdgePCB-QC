@@ -177,3 +177,16 @@
   4. Restructured dashboard UI: Llama mode renders the neural reasoning as a dedicated primary card (`🤖 Primary AI Advisory`), keeping deterministic rules and SOP guidance separately visible.
   5. Implemented authoritative quantitative metrics in `decision_record["audit_counts"]`: Total Critical, High-Conf Critical, Review Required (< Conf), and Rule-Triggering Detections.
 - **Reasoning:** Guarantees 100% grammatically complete operator advisories, eliminates cryptic truncated fragments, preserves audit traceability, and ensures strict decoupling between deterministic gates and generative reasoning.
+
+---
+
+### DECISION 021: Comprehensive ML Training Profiling, Architectural Truthfulness, and 19-Chart Evaluation Pipeline
+- **Date:** 2026-11-04
+- **Context:** A full machine learning training and evaluation report was required for the Bharat AI-SoC Challenge technical documentation and presentation without retraining the existing model.
+- **Decision:**
+  1. Extracted all 21 training hyperparameters directly from physical training artifacts (`args.yaml`, `results.csv`, and checkpoint metadata). Clarified that the trained checkpoint is YOLOv8n (3,139,218 parameters, 8.8 GFLOPs at 640x640, 6.20 MB `.pt`, 12.19 MB `.onnx`), trained on CPU (AMD Ryzen 9 8940HX) over 3 epochs (754.94s total duration, 251.65s/epoch).
+  2. Verified zero-leakage group partitioning across DeepPCB: Train (1,120 images, 7,880 bboxes), Val (186 images, 990 bboxes), and Test (194 images, 1,143 bboxes) with 0 invalid lines and 0 empty labels.
+  3. Re-evaluated the checkpoint on the untouched test split: achieved 71.53% mAP@50, 41.29% mAP@50-95, 71.36% precision, 67.39% recall, and 69.32% F1-score across 1,143 defect instances.
+  4. Profiled 100 test images: measured 27.21 ms inference (29.07 ms end-to-end, 34.4 FPS) on PyTorch CPU, and 26.97 ms inference (29.92 ms end-to-end, 33.4 FPS) on ONNX Runtime CPU.
+  5. Generated all 19 required high-resolution PNG charts in `docs/ml_report/charts/` along with `training_parameters.csv`, `per_class_metrics.csv`, `test_metrics.json`, `COMPLETE_ML_TRAINING_REPORT.md`, and `ML_RESULTS_SUMMARY.md`.
+- **Reasoning:** Enforces strict academic and industrial rigor, zero metric fabrication, and complete transparency on model architecture and evaluation protocols.
