@@ -1,0 +1,540 @@
+{
+  "dual_mode_verification": {
+    "fast_mode": {
+      "inspection_id": "db369723-936a-45c0-8bcb-4363b6e65344",
+      "board_id": "PCB-MODE1-FAST",
+      "timestamp": "2026-11-03T18:08:28.250975",
+      "image_path": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\datasets\\raw\\deeppcb\\PCBData\\group00041\\00041\\00041000_test.jpg",
+      "decision": "REJECT",
+      "final_decision": "REJECT",
+      "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT",
+      "rule_description": "Rejected: Detected 4 critical defect(s) (open_circuit, short_circuit, pin_hole_missing_pad) with confidence >= 0.75.",
+      "preset_applied": "consumer",
+      "requires_electrical_test": true,
+      "coverage": 0.98,
+      "defects": [
+        {
+          "class": "open_circuit",
+          "confidence": 0.9609,
+          "bbox": [
+            536.3,
+            255.51,
+            594.69,
+            316.15
+          ],
+          "area_fraction": 0.00865,
+          "location": "upper-right region",
+          "bbox_width": 58.39,
+          "bbox_height": 60.64,
+          "is_confirmed": true,
+          "review_required": false,
+          "verification_status": "Visually Suspected (Electrical Continuity/Isolation Test Required)",
+          "severity": "critical"
+        },
+        {
+          "class": "short_circuit",
+          "confidence": 0.9525,
+          "bbox": [
+            453.71,
+            297.58,
+            494.38,
+            397.43
+          ],
+          "area_fraction": 0.00991,
+          "location": "lower-right region",
+          "bbox_width": 40.67,
+          "bbox_height": 99.85,
+          "is_confirmed": true,
+          "review_required": false,
+          "verification_status": "Visually Suspected (Electrical Continuity/Isolation Test Required)",
+          "severity": "critical"
+        },
+        {
+          "class": "spurious_copper",
+          "confidence": 0.926,
+          "bbox": [
+            88.86,
+            468.12,
+            127.83,
+            497.47
+          ],
+          "area_fraction": 0.00279,
+          "location": "lower-left region",
+          "bbox_width": 38.97,
+          "bbox_height": 29.35,
+          "is_confirmed": true,
+          "review_required": false,
+          "verification_status": "Visually Confirmed Surface Anomaly",
+          "severity": "major"
+        },
+        {
+          "class": "spurious_copper",
+          "confidence": 0.8766,
+          "bbox": [
+            150.99,
+            148.27,
+            182.23,
+            174.26
+          ],
+          "area_fraction": 0.00198,
+          "location": "upper-left region",
+          "bbox_width": 31.24,
+          "bbox_height": 25.99,
+          "is_confirmed": true,
+          "review_required": false,
+          "verification_status": "Visually Confirmed Surface Anomaly",
+          "severity": "major"
+        },
+        {
+          "class": "pin_hole_missing_pad",
+          "confidence": 0.8687,
+          "bbox": [
+            250.3,
+            340.72,
+            277.49,
+            370.59
+          ],
+          "area_fraction": 0.00198,
+          "location": "center region",
+          "bbox_width": 27.19,
+          "bbox_height": 29.87,
+          "is_confirmed": true,
+          "review_required": false,
+          "verification_status": "Visually Confirmed Pad Anomaly",
+          "severity": "critical"
+        },
+        {
+          "class": "pin_hole_missing_pad",
+          "confidence": 0.838,
+          "bbox": [
+            422.74,
+            23.52,
+            462.78,
+            54.32
+          ],
+          "area_fraction": 0.00301,
+          "location": "upper-right region",
+          "bbox_width": 40.04,
+          "bbox_height": 30.8,
+          "is_confirmed": true,
+          "review_required": false,
+          "verification_status": "Visually Confirmed Pad Anomaly",
+          "severity": "critical"
+        },
+        {
+          "class": "mouse_bite",
+          "confidence": 0.7978,
+          "bbox": [
+            467.04,
+            439.69,
+            497.15,
+            470.78
+          ],
+          "area_fraction": 0.00229,
+          "location": "lower-right region",
+          "bbox_width": 30.11,
+          "bbox_height": 31.09,
+          "is_confirmed": true,
+          "review_required": false,
+          "verification_status": "Visually Confirmed Surface Anomaly",
+          "severity": "major"
+        },
+        {
+          "class": "pin_hole_missing_pad",
+          "confidence": 0.6192,
+          "bbox": [
+            491.13,
+            27.28,
+            525.83,
+            55.51
+          ],
+          "area_fraction": 0.00239,
+          "location": "upper-right region",
+          "bbox_width": 34.7,
+          "bbox_height": 28.23,
+          "is_confirmed": false,
+          "review_required": true,
+          "verification_status": "Visually Confirmed Pad Anomaly",
+          "severity": "critical"
+        },
+        {
+          "class": "spur",
+          "confidence": 0.5658,
+          "bbox": [
+            334.29,
+            248.21,
+            364.07,
+            282.37
+          ],
+          "area_fraction": 0.00248,
+          "location": "center region",
+          "bbox_width": 29.78,
+          "bbox_height": 34.16,
+          "is_confirmed": false,
+          "review_required": true,
+          "verification_status": "Suspected Surface Anomaly",
+          "severity": "major"
+        },
+        {
+          "class": "short_circuit",
+          "confidence": 0.4393,
+          "bbox": [
+            462.99,
+            312.55,
+            495.54,
+            394.88
+          ],
+          "area_fraction": 0.00654,
+          "location": "lower-right region",
+          "bbox_width": 32.55,
+          "bbox_height": 82.33,
+          "is_confirmed": false,
+          "review_required": true,
+          "verification_status": "Visually Suspected (Electrical Continuity/Isolation Test Required)",
+          "severity": "critical"
+        }
+      ],
+      "defect_count": 10,
+      "summary_counts": {
+        "critical": 6,
+        "major": 4,
+        "minor": 0
+      },
+      "llm_explanation": {
+        "what_detected": "Detected 10 surface defect(s): Mouse Bite (1 instance[s]), Spurious Copper (2 instance[s]), Spur (1 instance[s]), Open Circuit (1 instance[s]), Short Circuit (2 instance[s]), Pin Hole / Missing Pad (3 instance[s]).",
+        "why_it_matters": "Void or notch on trace perimeter reduces effective cross-sectional conductor area, causing localized current crowding, elevated impedance, and thermal hot spots under load. Isolated island of unetched copper on dielectric substrate. High-frequency signals may suffer capacitive coupling, RF radiation, or inadvertent solder bridging during wave soldering.",
+        "operator_action": "[Engineering Guidance \u2014 Not Official Certification] [REJECT VERDICT] Measure remaining conductor width using calibrated optical magnification. Compare against product engineering design specifications; if conductor width or cross-sectional area falls below design allowance, submit for quality engineering review. Verify electrical isolation from adjacent nets using an insulation resistance or flying-probe test. Clean surface using filtered ionized air and an approved solvent wipe. Inspect laminate to ensure dielectric substrate is intact without conductive bridging or substrate damage.",
+        "electrical_confirmation_needed": true,
+        "confidence_caveat": "Vision model identifies visible morphological patterns. Optical defect detection is separate from electrical testing; electrical confirmation via flying-probe or DMM is mandatory for open or short circuits before disposition.",
+        "generated_text": null
+      },
+      "advisory_backend": "deterministic_fallback",
+      "advisory_model_id": "ipc_expert_rules_engine",
+      "advisory_status": "active",
+      "advisory_fallback_reason": "interactive_mode_fast",
+      "operator_override": null,
+      "vision_model_version": "YOLO11n-pcb-v1.0",
+      "llm_version": "None (Deterministic Expert Fallback)",
+      "config_version": "1.0-deterministic",
+      "vision_latency_ms": 1620.22,
+      "advisory_latency_ms": 0.18,
+      "total_latency_ms": 1620.39
+    },
+    "llama_mode": {
+      "inspection_id": "ea060fda-1feb-4e3e-8660-a88c71b37b64",
+      "board_id": "PCB-MODE2-LLAMA",
+      "timestamp": "2026-11-03T18:09:39.961479",
+      "image_path": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\datasets\\raw\\deeppcb\\PCBData\\group00041\\00041\\00041000_test.jpg",
+      "decision": "REJECT",
+      "final_decision": "REJECT",
+      "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT",
+      "rule_description": "Rejected: Detected 4 critical defect(s) (open_circuit, short_circuit, pin_hole_missing_pad) with confidence >= 0.75.",
+      "preset_applied": "consumer",
+      "requires_electrical_test": true,
+      "coverage": 0.98,
+      "defects": [
+        {
+          "class": "open_circuit",
+          "confidence": 0.9609,
+          "bbox": [
+            536.3,
+            255.51,
+            594.69,
+            316.15
+          ],
+          "area_fraction": 0.00865,
+          "location": "upper-right region",
+          "bbox_width": 58.39,
+          "bbox_height": 60.64,
+          "is_confirmed": true,
+          "review_required": false,
+          "verification_status": "Visually Suspected (Electrical Continuity/Isolation Test Required)",
+          "severity": "critical"
+        },
+        {
+          "class": "short_circuit",
+          "confidence": 0.9525,
+          "bbox": [
+            453.71,
+            297.58,
+            494.38,
+            397.43
+          ],
+          "area_fraction": 0.00991,
+          "location": "lower-right region",
+          "bbox_width": 40.67,
+          "bbox_height": 99.85,
+          "is_confirmed": true,
+          "review_required": false,
+          "verification_status": "Visually Suspected (Electrical Continuity/Isolation Test Required)",
+          "severity": "critical"
+        },
+        {
+          "class": "spurious_copper",
+          "confidence": 0.926,
+          "bbox": [
+            88.86,
+            468.12,
+            127.83,
+            497.47
+          ],
+          "area_fraction": 0.00279,
+          "location": "lower-left region",
+          "bbox_width": 38.97,
+          "bbox_height": 29.35,
+          "is_confirmed": true,
+          "review_required": false,
+          "verification_status": "Visually Confirmed Surface Anomaly",
+          "severity": "major"
+        },
+        {
+          "class": "spurious_copper",
+          "confidence": 0.8766,
+          "bbox": [
+            150.99,
+            148.27,
+            182.23,
+            174.26
+          ],
+          "area_fraction": 0.00198,
+          "location": "upper-left region",
+          "bbox_width": 31.24,
+          "bbox_height": 25.99,
+          "is_confirmed": true,
+          "review_required": false,
+          "verification_status": "Visually Confirmed Surface Anomaly",
+          "severity": "major"
+        },
+        {
+          "class": "pin_hole_missing_pad",
+          "confidence": 0.8687,
+          "bbox": [
+            250.3,
+            340.72,
+            277.49,
+            370.59
+          ],
+          "area_fraction": 0.00198,
+          "location": "center region",
+          "bbox_width": 27.19,
+          "bbox_height": 29.87,
+          "is_confirmed": true,
+          "review_required": false,
+          "verification_status": "Visually Confirmed Pad Anomaly",
+          "severity": "critical"
+        },
+        {
+          "class": "pin_hole_missing_pad",
+          "confidence": 0.838,
+          "bbox": [
+            422.74,
+            23.52,
+            462.78,
+            54.32
+          ],
+          "area_fraction": 0.00301,
+          "location": "upper-right region",
+          "bbox_width": 40.04,
+          "bbox_height": 30.8,
+          "is_confirmed": true,
+          "review_required": false,
+          "verification_status": "Visually Confirmed Pad Anomaly",
+          "severity": "critical"
+        },
+        {
+          "class": "mouse_bite",
+          "confidence": 0.7978,
+          "bbox": [
+            467.04,
+            439.69,
+            497.15,
+            470.78
+          ],
+          "area_fraction": 0.00229,
+          "location": "lower-right region",
+          "bbox_width": 30.11,
+          "bbox_height": 31.09,
+          "is_confirmed": true,
+          "review_required": false,
+          "verification_status": "Visually Confirmed Surface Anomaly",
+          "severity": "major"
+        },
+        {
+          "class": "pin_hole_missing_pad",
+          "confidence": 0.6192,
+          "bbox": [
+            491.13,
+            27.28,
+            525.83,
+            55.51
+          ],
+          "area_fraction": 0.00239,
+          "location": "upper-right region",
+          "bbox_width": 34.7,
+          "bbox_height": 28.23,
+          "is_confirmed": false,
+          "review_required": true,
+          "verification_status": "Visually Confirmed Pad Anomaly",
+          "severity": "critical"
+        },
+        {
+          "class": "spur",
+          "confidence": 0.5658,
+          "bbox": [
+            334.29,
+            248.21,
+            364.07,
+            282.37
+          ],
+          "area_fraction": 0.00248,
+          "location": "center region",
+          "bbox_width": 29.78,
+          "bbox_height": 34.16,
+          "is_confirmed": false,
+          "review_required": true,
+          "verification_status": "Suspected Surface Anomaly",
+          "severity": "major"
+        },
+        {
+          "class": "short_circuit",
+          "confidence": 0.4393,
+          "bbox": [
+            462.99,
+            312.55,
+            495.54,
+            394.88
+          ],
+          "area_fraction": 0.00654,
+          "location": "lower-right region",
+          "bbox_width": 32.55,
+          "bbox_height": 82.33,
+          "is_confirmed": false,
+          "review_required": true,
+          "verification_status": "Visually Suspected (Electrical Continuity/Isolation Test Required)",
+          "severity": "critical"
+        }
+      ],
+      "defect_count": 10,
+      "summary_counts": {
+        "critical": 6,
+        "major": 4,
+        "minor": 0
+      },
+      "llm_explanation": {
+        "what_detected": "Detected 10 surface defect(s): Mouse Bite (1 instance[s]), Spurious Copper (2 instance[s]), Spur (1 instance[s]), Open Circuit (1 instance[s]), Short Circuit (2 instance[s]), Pin Hole / Missing Pad (3 instance[s]).",
+        "why_it_matters": "Void or notch on trace perimeter reduces effective cross-sectional conductor area, causing localized current crowding, elevated impedance, and thermal hot spots under load. Isolated island of unetched copper on dielectric substrate. High-frequency signals may suffer capacitive coupling, RF radiation, or inadvertent solder bridging during wave soldering.",
+        "operator_action": "[Engineering Guidance \u2014 Not Official Certification] [REJECT VERDICT] Measure remaining conductor width using calibrated optical magnification. Compare against product engineering design specifications; if conductor width or cross-sectional area falls below design allowance, submit for quality engineering review. Verify electrical isolation from adjacent nets using an insulation resistance or flying-probe test. Clean surface using filtered ionized air and an approved solvent wipe. Inspect laminate to ensure dielectric substrate is intact without conductive bridging or substrate damage. [Llama 3.2 1B Inference]: The board PCB-MODE2-LLAMA has defects: open_circuit,",
+        "electrical_confirmation_needed": true,
+        "confidence_caveat": "Vision model identifies visible morphological patterns. Optical defect detection is separate from electrical testing; electrical confirmation via flying-probe or DMM is mandatory for open or short circuits before disposition.",
+        "generated_text": "The board PCB-MODE2-LLAMA has defects: open_circuit,"
+      },
+      "advisory_backend": "executorch_llama_3.2_1b",
+      "advisory_model_id": "meta-llama/Llama-3.2-1B-Instruct",
+      "advisory_status": "executed",
+      "advisory_fallback_reason": null,
+      "operator_override": null,
+      "vision_model_version": "YOLO11n-pcb-v1.0",
+      "llm_version": "Llama-3.2-1B-Instruct",
+      "config_version": "1.0-deterministic",
+      "vision_latency_ms": 1620.22,
+      "advisory_latency_ms": 71680.8,
+      "total_latency_ms": 73301.01
+    }
+  },
+  "performance_benchmark_matrix": [
+    {
+      "config": "Concise (42 prompt / 16 gen / 8 threads)",
+      "threads": 8,
+      "prompt_tokens": 42,
+      "generated_tokens": 16,
+      "ttft_ms": 24051.01,
+      "gen_time_s": 17.11,
+      "total_time_s": 41.16,
+      "overall_tokens_per_sec": 1.41,
+      "gen_tokens_per_sec": 0.94,
+      "peak_ram_mb": 3250.0
+    },
+    {
+      "config": "Concise (42 prompt / 16 gen / 4 threads)",
+      "threads": 4,
+      "prompt_tokens": 42,
+      "generated_tokens": 16,
+      "ttft_ms": 23960.33,
+      "gen_time_s": 16.72,
+      "total_time_s": 40.68,
+      "overall_tokens_per_sec": 1.43,
+      "gen_tokens_per_sec": 0.96,
+      "peak_ram_mb": 3250.0
+    },
+    {
+      "config": "Standard (64 prompt / 16 gen / 8 threads)",
+      "threads": 8,
+      "prompt_tokens": 64,
+      "generated_tokens": 16,
+      "ttft_ms": 35772.21,
+      "gen_time_s": 16.8,
+      "total_time_s": 52.58,
+      "overall_tokens_per_sec": 1.52,
+      "gen_tokens_per_sec": 0.95,
+      "peak_ram_mb": 3250.0
+    },
+    {
+      "config": "Medium (128 prompt / 16 gen / 8 threads)",
+      "threads": 8,
+      "prompt_tokens": 128,
+      "generated_tokens": 16,
+      "ttft_ms": 73217.89,
+      "gen_time_s": 16.9,
+      "total_time_s": 90.12,
+      "overall_tokens_per_sec": 1.6,
+      "gen_tokens_per_sec": 0.95,
+      "peak_ram_mb": 3250.3
+    },
+    {
+      "config": "Extended (42 prompt / 32 gen / 8 threads)",
+      "threads": 8,
+      "prompt_tokens": 42,
+      "generated_tokens": 32,
+      "ttft_ms": 23521.92,
+      "gen_time_s": 33.41,
+      "total_time_s": 56.93,
+      "overall_tokens_per_sec": 1.3,
+      "gen_tokens_per_sec": 0.96,
+      "peak_ram_mb": 3250.3
+    }
+  ],
+  "advisory_correctness": [
+    {
+      "defect_name": "Open Circuit",
+      "decision": "REJECT",
+      "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT",
+      "requires_electrical_test": true,
+      "advisory_electrical_flag": true,
+      "action_guidance_snippet": "[Engineering Guidance \u2014 Not Official Certification] [REJECT VERDICT] Quarantine ..."
+    },
+    {
+      "defect_name": "Short Circuit",
+      "decision": "REJECT",
+      "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT",
+      "requires_electrical_test": true,
+      "advisory_electrical_flag": true,
+      "action_guidance_snippet": "[Engineering Guidance \u2014 Not Official Certification] [REJECT VERDICT] Immediate q..."
+    },
+    {
+      "defect_name": "Mouse Bite",
+      "decision": "REJECT",
+      "rule_id": "RULE_002_EXCESS_MAJOR_DEFECTS",
+      "requires_electrical_test": false,
+      "advisory_electrical_flag": false,
+      "action_guidance_snippet": "[Engineering Guidance \u2014 Not Official Certification] [REJECT VERDICT] Measure rem..."
+    },
+    {
+      "defect_name": "Spurious Copper",
+      "decision": "REJECT",
+      "rule_id": "RULE_002_EXCESS_MAJOR_DEFECTS",
+      "requires_electrical_test": false,
+      "advisory_electrical_flag": false,
+      "action_guidance_snippet": "[Engineering Guidance \u2014 Not Official Certification] [REJECT VERDICT] Verify elec..."
+    }
+  ]
+}

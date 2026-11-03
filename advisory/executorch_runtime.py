@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 from .schema import AdvisoryExplanation, InspectionPayload
-from .prompt import format_llama_prompt
+from .prompt import format_llama_prompt, format_concise_prompt
 from .fallback import generate_fallback_advisory
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
@@ -97,15 +97,16 @@ class ExecuTorchLlamaRunner:
     def generate_advisory(
         self,
         payload: Dict[str, Any],
-        mode: str = "auto"
+        mode: str = "auto",
+        max_new_tokens: int = 16,
+        **kwargs
     ) -> Dict[str, Any]:
         """
         Generates an advisory explanation for the operator.
         Measures execution metrics and guarantees valid schema return.
         Supports:
-        - mode='auto': Runs ExecuTorch on-device forward evaluation if loaded.
-        - mode='fast': Instant deterministic IPC-A-600/2221 expert fallback (<1ms).
-        - mode='full': Full autoregressive token generation.
+        - mode='fast': Instant deterministic IPC expert fallback (<1ms).
+        - mode='auto' / 'full' / 'executorch': Genuine ExecuTorch on-device .pte inference & token generation.
         """
         norm_payload = self._normalize_payload(payload)
         process = psutil.Process(os.getpid())
@@ -143,31 +144,66 @@ class ExecuTorchLlamaRunner:
                 }
             }
 
-        # ExecuTorch execution path
-        prompt = format_llama_prompt(norm_payload)
+        # Genuine ExecuTorch execution path
         try:
             import torch
             # Thread tuning for CPU execution optimization
+            num_threads = kwargs.get("num_threads", min(8, os.cpu_count() or 4))
             if hasattr(torch, "set_num_threads"):
-                torch.set_num_threads(min(8, os.cpu_count() or 4))
+                torch.set_num_threads(num_threads)
+
+            # Use concise prompt (35-65 tokens) for bounded edge CPU efficiency
+            use_concise = kwargs.get("concise_prompt", True)
+            if use_concise:
+                prompt = format_concise_prompt(norm_payload)
+            else:
+                prompt = format_llama_prompt(norm_payload)
 
             token_ids = self.tokenizer.encode(prompt, bos=False, eos=False) if self.tokenizer else []
-            # Dynamic shape optimization: pass actual token slice without exceeding 255-element capacity
             seq_len = min(len(token_ids), 255)
             eval_tokens = token_ids[:seq_len]
             input_tokens = torch.tensor([eval_tokens], dtype=torch.long)
             input_pos = torch.tensor([0], dtype=torch.long)
 
+            # 1. Prefill pass
             t_infer_start = time.perf_counter()
             outputs = self.module.forward((input_tokens, input_pos))
-            t_infer_end = time.perf_counter()
-            ttft_ms = round((t_infer_end - t_infer_start) * 1000, 2)
+            t_prefill_end = time.perf_counter()
+            ttft_ms = round((t_prefill_end - t_infer_start) * 1000, 2)
 
-            # Grounded explanation generation matching schema
+            # 2. Autoregressive token generation
+            generated_tokens = []
+            curr_pos = len(eval_tokens)
+            logits = outputs[0]
+            max_gen = max(0, min(max_new_tokens, 64))
+
+            for _ in range(max_gen):
+                # Sample next token greedily
+                next_tok = torch.argmax(logits[0]).item()
+                if next_tok in (128001, 128009):  # Meta Llama EOS / EOT tokens
+                    break
+                generated_tokens.append(next_tok)
+                in_tok = torch.tensor([[next_tok]], dtype=torch.long)
+                pos = torch.tensor([curr_pos], dtype=torch.long)
+                logits = self.module.forward((in_tok, pos))[0]
+                curr_pos += 1
+
+            t_gen_end = time.perf_counter()
+            gen_text = self.tokenizer.decode(generated_tokens) if (self.tokenizer and generated_tokens) else ""
+            clean_gen_text = gen_text.strip().replace("<|eot_id|>", "").replace("<|start_header_id|>", "")
+
+            # Construct grounded advisory with genuine generated text
             advisory_obj = generate_fallback_advisory(norm_payload)
-            t_end = time.perf_counter()
+            if clean_gen_text:
+                advisory_obj.generated_text = clean_gen_text
+                # Append Llama reasoning to operator action while preserving deterministic safety rules
+                advisory_obj.operator_action = f"{advisory_obj.operator_action} [Llama 3.2 1B Inference]: {clean_gen_text}"
+
             ram_after = process.memory_info().rss / (1024 * 1024)
-            latency_ms = round((t_end - t_start) * 1000, 2)
+            total_time_s = t_gen_end - t_infer_start
+            total_tokens = len(eval_tokens) + len(generated_tokens)
+            tokens_per_sec = round(total_tokens / (total_time_s or 1.0), 2)
+            total_latency_ms = round(total_time_s * 1000, 2)
 
             return {
                 "source": "executorch_llama_3.2_1b",
@@ -185,9 +221,10 @@ class ExecuTorchLlamaRunner:
                     "model_artifact": self.pte_path.name,
                     "fallback_reason": None,
                     "tokens_evaluated": len(eval_tokens),
-                    "latency_ms": latency_ms,
+                    "tokens_generated": len(generated_tokens),
+                    "latency_ms": total_latency_ms,
                     "ttft_ms": ttft_ms,
-                    "tokens_per_second": round(len(eval_tokens) / ((t_infer_end - t_infer_start) or 1.0), 2),
+                    "tokens_per_second": tokens_per_sec,
                     "peak_ram_mb": round(max(ram_before, ram_after), 1)
                 }
             }

@@ -305,6 +305,8 @@ with tab_inspect:
         adv = advisory_result["advisory"]
         
         with st.container():
+            if adv.get("generated_text"):
+                st.info(f"**🤖 Llama 3.2 1B Generated Reasoning Output:**\n\n> *\"{adv['generated_text']}\"*")
             st.markdown(f"**What was detected:** {adv['what_detected']}")
             st.markdown(f"**Why it matters:** {adv['why_it_matters']}")
             st.markdown(f"**Recommended Operator Action:** {adv['operator_action']}")

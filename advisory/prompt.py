@@ -60,3 +60,24 @@ def format_llama_prompt(payload: Dict[str, Any]) -> str:
         f"<|start_header_id|>assistant<|end_header_id|>\n\n"
     )
     return prompt
+
+
+def format_concise_prompt(payload: Dict[str, Any]) -> str:
+    """
+    Constructs an edge-optimized concise prompt (35-65 tokens)
+    fitting within bounded tensor capacity for fast CPU execution.
+    """
+    board_id = payload.get("board_id", "PCB")
+    decision = payload.get("decision", "INSPECT")
+    defects = payload.get("defects", [])
+    classes = [d.get("class", "defect") for d in defects] or ["none"]
+    def_str = ", ".join(classes[:3])
+
+    prompt = (
+        f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n"
+        f"You are EdgePCB-QC Assistant. Explain PCB defects concisely. Decision: {decision}.<|eot_id|>"
+        f"<|start_header_id|>user<|end_header_id|>\n"
+        f"Board {board_id} has defects: {def_str}. Provide operator advisory.<|eot_id|>"
+        f"<|start_header_id|>assistant<|end_header_id|>\n"
+    )
+    return prompt

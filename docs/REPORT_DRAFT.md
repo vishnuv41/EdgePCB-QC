@@ -195,6 +195,48 @@ Measured empirical reliability under factory illumination shifts and high-resolu
    - Total tiled multi-panel latency: **258.29 ms** (28.7 ms per tile).
    - Panel Decision Verdict: `REJECT` via `RULE_001_HIGH_CONF_CRITICAL_DEFECT`.
 
+### D. Dual-Mode Advisory Verification & Attribution Integrity
+To guarantee both high line throughput and explainable engineering reasoning, EdgePCB-QC implements two decoupled advisory execution modes (Source: `benchmarks/results/advisory_modes_benchmark.json`):
+
+| Metric / Attribute | Mode 1: Fast Deterministic Fallback | Mode 2: ExecuTorch Llama 3.2 1B On-Device | Decision Invariance Verified? |
+|---|---|---|---|
+| **Primary Use-Case** | Real-time inline triage (<1ms) | In-depth failure analysis & operator assistance | Invariant across modes |
+| **Inspection Decision** | `REJECT` (`RULE_001_HIGH_CONF_CRITICAL_DEFECT`) | `REJECT` (`RULE_001_HIGH_CONF_CRITICAL_DEFECT`) | **Identical (REJECT)** |
+| **Requires Electrical Test** | `True` (Unconditionally flags open/short) | `True` (Unconditionally flags open/short) | **Identical (True)** |
+| **Advisory Backend** | `deterministic_fallback` | `executorch_llama_3.2_1b` | **Strictly Disjoint** |
+| **Model Identifier** | `ipc_expert_rules_engine` | `meta-llama/Llama-3.2-1B-Instruct` | **Strictly Disjoint** |
+| **Database `llm_version`** | `None (Deterministic Expert Fallback)` | `Llama-3.2-1B-Instruct` | **Zero False Attribution** |
+| **Advisory Latency** | **0.18 ms** | **71.68 s** (Autoregressive generation) | Traceable to exact backend |
+| **Generated Output** | Grounded IPC action guidance | Grounded guidance + Neural token generation | Non-conflicting |
+
+### E. ExecuTorch Llama 3.2 1B Empirical Token Benchmark Matrix
+Autoregressive token generation benchmarks measured on host AMD Ryzen 9 8940HX CPU across varying prompt lengths, generation budgets, and CPU thread pools (Source: `benchmarks/results/advisory_modes_benchmark.json`):
+
+| Configuration | Threads | Prompt Tokens | Generated Tokens | Time to First Token (TTFT) | Generation Time | Generation Throughput | Peak RAM Footprint |
+|---|---|---|---|---|---|---|---|
+| **Concise (8 Threads)** | 8 | 42 | 16 | **24,051.01 ms** (24.05s) | 17.11 s | **0.94 tokens/s** | 3,250.0 MB |
+| **Concise (4 Threads)** | 4 | 42 | 16 | **23,960.33 ms** (23.96s) | 16.72 s | **0.96 tokens/s** | 3,250.0 MB |
+| **Standard (8 Threads)** | 8 | 64 | 16 | **35,772.21 ms** (35.77s) | 16.80 s | **0.95 tokens/s** | 3,250.0 MB |
+| **Medium (8 Threads)** | 8 | 128 | 16 | **73,217.89 ms** (73.22s) | 16.90 s | **0.95 tokens/s** | 3,250.3 MB |
+| **Extended (8 Threads)** | 8 | 42 | 32 | **23,521.92 ms** (23.52s) | 33.41 s | **0.96 tokens/s** | 3,250.3 MB |
+
+*Key Findings:*
+1. **Dynamic Sequence Prefill:** Dynamic sequence slicing bounds TTFT to strictly scale with input token length ($\approx 570\text{ ms per prompt token}$), avoiding the 156-second delay of static 255-token padding.
+2. **Generation Stability:** Autoregressive decode throughput remains constant at **0.94 – 0.96 tokens/sec** on CPU across both 16-token and 32-token sequences.
+3. **Bounded Memory:** ExecuTorch runtime memory footprint is strictly bounded at **3,250 MB**, preventing out-of-memory crashes on embedded hosts.
+
+### F. Offline Air-Gapped Verification & Physical Artifact Audit
+EdgePCB-QC was audited under zero-network constraints to ensure full physical air-gap compliance:
+- **Physical Model Weights:**
+  - `models/llama/checkpoints/Llama-3.2-1B-Instruct/llama3_2_1b_fp16.pte`: 2,357.90 MB (`2,472,432,290 bytes`)
+  - `models/llama/tokenizer.model`: 2.08 MB (`2,185,274 bytes`)
+  - `models/checkpoints/pcb_smoke_experiment/weights/best.pt`: 5.69 MB (`5,964,281 bytes`)
+  - `models/onnx/pcb_smoke_experiment.onnx`: 11.68 MB (`12,243,303 bytes`)
+- **Socket Isolation Test (`scripts/test_offline_inference.py`, `scripts/test_offline_evidence.py`):**
+  - All outbound network calls (`socket.socket`, `socket.create_connection`, `socket.getaddrinfo`) systematically intercepted.
+  - Active outbound connections: **0**.
+  - All inferences execute purely from local RAM and disk without contacting remote endpoints.
+
 ---
 
 ## 13. Limitations & Engineering Disclaimers

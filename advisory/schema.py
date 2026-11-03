@@ -41,3 +41,4 @@ class AdvisoryExplanation(BaseModel):
     operator_action: str = Field(..., description="Actionable recommendation for the line operator or technician")
     electrical_confirmation_needed: bool = Field(..., description="Whether electrical multimeter/flying-probe test is required")
     confidence_caveat: str = Field(..., description="Explicit disclaimer on optical detection limitations")
+    generated_text: Optional[str] = Field(default=None, description="Actual on-device Llama 3.2 generated text")

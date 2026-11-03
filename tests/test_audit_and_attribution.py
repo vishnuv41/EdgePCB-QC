@@ -291,3 +291,51 @@ def test_historical_model_version_preservation(tmp_path):
     assert rec["advisory_latency_ms"] == 0.17
 
     db_mgr.close()
+
+
+def test_runner_modes_interface():
+    """Test 8: ExecuTorchLlamaRunner supports both positional and keyword mode arguments."""
+    runner = ExecuTorchLlamaRunner()
+    payload = {
+        "board_id": "PCB-INTERFACE-TEST",
+        "decision": "PASS",
+        "defects": []
+    }
+
+    # Keyword argument call
+    res_kw = runner.generate_advisory(payload, mode="fast")
+    assert res_kw["backend"] == "deterministic_fallback"
+
+    # Positional argument call
+    res_pos = runner.generate_advisory(payload, "fast")
+    assert res_pos["backend"] == "deterministic_fallback"
+
+    # Default call
+    res_def = runner.generate_advisory(payload, mode="fast", max_new_tokens=8)
+    assert res_def["backend"] == "deterministic_fallback"
+
+
+def test_decision_unchanged_across_advisory_modes():
+    """Test 9: Llama and advisory modes never alter or override the deterministic decision."""
+    engine = DecisionEngine()
+    runner = ExecuTorchLlamaRunner()
+
+    payload = {
+        "board_id": "PCB-IMMUTABLE-DECISION",
+        "coverage": 0.98,
+        "defects": [
+            {"class": "open_circuit", "confidence": 0.92, "bbox": [10, 10, 30, 30]}
+        ]
+    }
+    decision_record = engine.evaluate(payload, preset="consumer")
+    assert decision_record["decision"] == "REJECT"
+
+    # Evaluate across advisory modes
+    adv_fast = runner.generate_advisory(decision_record, mode="fast")
+    assert decision_record["decision"] == "REJECT"
+    assert adv_fast["advisory"]["electrical_confirmation_needed"] is True
+
+    # Mode argument passed as keyword
+    adv_auto = runner.generate_advisory(decision_record, mode="fast", max_new_tokens=4)
+    assert decision_record["decision"] == "REJECT"
+

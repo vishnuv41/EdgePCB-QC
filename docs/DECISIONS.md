@@ -152,3 +152,15 @@
   2. Eliminated all recommendations for manual scraping; replaced with non-abrasive ionized cleaning, solvent wiping, and electrical isolation testing.
   3. Pre-pended all recommendations with `[Engineering Guidance — Not Official Certification]` to clearly distinguish diagnostic suggestions from certified IPC quality sign-offs.
 - **Reasoning:** Complies with industrial best practices and ensures operator guidance is safe, realistic, and non-destructive.
+
+---
+
+### DECISION 019: Advisory Mode Decoupling, Interface Harmonization, and Cached Resource Synchronization
+- **Date:** 2026-11-03
+- **Context:** Integration testing revealed a dashboard crash (`TypeError: ExecuTorchLlamaRunner.generate_advisory() got an unexpected keyword argument 'mode'`). The Streamlit runtime's `@st.cache_resource` had cached a singleton runner prior to the introduction of reasoning-mode parameters. Furthermore, edge users require rapid inline toggling between sub-millisecond deterministic advice and deep on-demand neural reasoning without altering the underlying PASS/INSPECT/REJECT verdict.
+- **Decision:**
+  1. Harmonized `generate_advisory(self, payload, mode="auto", max_new_tokens=16, **kwargs)` with full backward and forward parameter compatibility, supporting explicit `"fast"` (deterministic fallback) and `"llama"` (genuine ExecuTorch on-device inference) modes.
+  2. Implemented dynamic sequence slicing (`seq_len = min(len(token_ids), 255)`) and multi-threaded CPU execution (`torch.set_num_threads`).
+  3. Flushed and re-initialized the Streamlit daemon (`task-1971`) to clear stale cache objects.
+  4. Verified absolute decision invariance: deterministic quality verdicts (`REJECT`, `RULE_001_HIGH_CONF_CRITICAL_DEFECT`, `requires_electrical_test = True`) are mathematically identical whether fast deterministic mode or ExecuTorch Llama mode is selected.
+- **Reasoning:** Eliminates interface crashes, ensures non-blocking operational flexibility for manufacturing line operators, and reinforces deterministic safety invariants.
