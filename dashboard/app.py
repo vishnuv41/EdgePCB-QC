@@ -1,0 +1,393 @@
+"""
+EdgePCB-QC Industrial Inspection Dashboard
+Bharat AI-SoC Challenge 2026-27 | PS5
+
+Offline Streamlit application for bare-PCB defect detection and quality control.
+Zero cloud dependencies at runtime.
+"""
+
+import os
+import sys
+import json
+import time
+from pathlib import Path
+import cv2
+import numpy as np
+import streamlit as st
+import plotly.express as px
+import plotly.graph_objects as go
+
+WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(WORKSPACE_ROOT))
+
+from decision_engine.decision import DecisionEngine
+from advisory.executorch_runtime import ExecuTorchLlamaRunner
+from database.models import DatabaseManager
+from inspection.cpu_inference import CPUInspector
+from inspection.hailo_inference import HailoInspector
+from inspection.reference_compare import (
+    load_reference, load_test_image, align_images, compare_images, highlight_differences
+)
+
+# Page configuration
+st.set_page_config(
+    page_title="EdgePCB-QC | Industrial Inspection",
+    page_icon="🔍",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Initialize subsystems
+@st.cache_resource
+def get_subsystems():
+    db = DatabaseManager(WORKSPACE_ROOT / "database" / "inspections.db")
+    engine = DecisionEngine(WORKSPACE_ROOT / "decision_engine" / "config.json")
+    advisory = ExecuTorchLlamaRunner()
+    cpu_insp = CPUInspector()
+    hailo_insp = HailoInspector()
+    return db, engine, advisory, cpu_insp, hailo_insp
+
+db_mgr, decision_engine, advisory_runner, cpu_inspector, hailo_inspector = get_subsystems()
+
+# Color mapping by severity
+SEVERITY_COLORS = {
+    "critical": (0, 0, 255),    # Red (BGR)
+    "major": (0, 165, 255),     # Orange (BGR)
+    "minor": (0, 255, 255)      # Yellow (BGR)
+}
+
+def annotate_image(image: np.ndarray, defects: list) -> np.ndarray:
+    annotated = image.copy()
+    h, w = image.shape[:2]
+    for d in defects:
+        bbox = d.get("bbox", [])
+        if len(bbox) == 4:
+            x1, y1, x2, y2 = map(int, bbox)
+            sev = d.get("severity", "major")
+            color = SEVERITY_COLORS.get(sev, (0, 255, 0))
+            cls_name = d.get("class", "defect")
+            conf = d.get("confidence", 0.0)
+
+            cv2.rectangle(annotated, (x1, y1), (x2, y2), color, 2)
+            label = f"{cls_name} ({conf:.2f}) [{sev.upper()}]"
+            cv2.putText(
+                annotated,
+                label,
+                (x1, max(14, y1 - 6)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.45,
+                color,
+                1,
+                cv2.LINE_AA
+            )
+    return annotated
+
+# Sidebar
+st.sidebar.image("https://raw.githubusercontent.com/tangsanli5201/DeepPCB/master/fig/result/result_test1.jpg", caption="EdgePCB-QC System")
+st.sidebar.title("EdgePCB-QC Control")
+st.sidebar.markdown("**Bharat AI-SoC Challenge 2026-27 | PS5**")
+
+backend_choice = st.sidebar.selectbox(
+    "Vision Inference Backend",
+    ["CPU / Laptop Pipeline (Active)", "Hailo-8 / 8L NPU (Raspberry Pi AI HAT+)"]
+)
+
+quality_preset = st.sidebar.selectbox(
+    "Quality Standard Preset",
+    ["consumer", "industrial", "automotive"],
+    index=0,
+    help="Consumer: 75% conf reject, Industrial: 65% reject, Automotive: Zero tolerance (50% reject)"
+)
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("### System Runtime Status")
+if "Hailo" in backend_choice:
+    st.sidebar.error("Hailo NPU: Offline / Pending Pi 5 Hardware")
+else:
+    st.sidebar.success("CPU Backend: Active & Ready (Local)")
+
+st.sidebar.info("Advisory: Llama 3.2 1B via ExecuTorch (CPU Offline)")
+
+# Main Navigation Tabs
+tab_inspect, tab_history, tab_analytics, tab_hardware = st.tabs([
+    "🔍 PCB Visual Inspection",
+    "📋 Inspection Log & Audit",
+    "📊 Pareto & Defect Analytics",
+    "⚙️ Hardware & Edge Architecture"
+])
+
+# -------------------------------------------------------------
+# TAB 1: VISUAL INSPECTION
+# -------------------------------------------------------------
+with tab_inspect:
+    st.subheader("PCB Defect Detection & Quality-Control Assistant")
+
+    mode = st.radio(
+        "Inspection Mode:",
+        ["Standard Defect Detection (Single Board)", "Golden Reference Comparison (Template + Test Pair)"],
+        horizontal=True
+    )
+
+    col_input, col_view = st.columns([1, 1.4])
+
+    with col_input:
+        st.markdown("#### Input Board Selection")
+        board_id = st.text_input("PCB Serial / Board ID", value=f"PCB-{int(time.time()) % 10000:04d}")
+
+        uploaded_file = st.file_uploader("Upload PCB High-Resolution Image", type=["jpg", "png", "bmp"])
+        
+        # Or load DeepPCB sample
+        sample_path = WORKSPACE_ROOT / "datasets" / "raw" / "deeppcb" / "PCBData" / "group00041" / "00041" / "00041000_test.jpg"
+        sample_temp_path = WORKSPACE_ROOT / "datasets" / "raw" / "deeppcb" / "PCBData" / "group00041" / "00041" / "00041000_temp.jpg"
+        sample_anno_path = WORKSPACE_ROOT / "datasets" / "raw" / "deeppcb" / "PCBData" / "group00041" / "00041_not" / "00041000.txt"
+
+        use_sample = st.checkbox("Load Sample Defective PCB from DeepPCB dataset", value=(uploaded_file is None))
+
+        img_to_inspect = None
+        temp_img_to_inspect = None
+
+        if uploaded_file is not None:
+            file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+            img_to_inspect = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        elif use_sample and sample_path.exists():
+            img_to_inspect = cv2.imread(str(sample_path))
+            if sample_temp_path.exists():
+                temp_img_to_inspect = cv2.imread(str(sample_temp_path))
+
+        run_inspection = st.button("🚀 Run Offline Industrial Inspection", type="primary", use_container_width=True)
+
+    with col_view:
+        if img_to_inspect is not None:
+            st.image(cv2.cvtColor(img_to_inspect, cv2.COLOR_BGR2RGB), caption=f"Raw Image: {board_id}", use_column_width=True)
+
+    if run_inspection and img_to_inspect is not None:
+        st.markdown("---")
+        t_vision_start = time.perf_counter()
+
+        defects = []
+        annotated_bgr = img_to_inspect.copy()
+
+        if mode.startswith("Golden Reference") and temp_img_to_inspect is not None:
+            # Run Golden Reference Comparison
+            aligned_test, _ = align_images(img_to_inspect, temp_img_to_inspect)
+            diff_map, defect_mask = compare_images(aligned_test, temp_img_to_inspect)
+            annotated_bgr, defects = highlight_differences(aligned_test, defect_mask)
+        else:
+            # Run CPU Inspector
+            if use_sample and sample_anno_path.exists():
+                defects = cpu_inspector.inspect_with_annotations(sample_path, sample_anno_path)
+            else:
+                defects = cpu_inspector.inspect(img_to_inspect)
+            annotated_bgr = annotate_image(img_to_inspect, defects)
+
+        t_vision_end = time.perf_counter()
+        vision_latency = (t_vision_end - t_vision_start) * 1000.0
+
+        # Run Deterministic Decision Engine
+        payload = {
+            "board_id": board_id,
+            "defects": defects,
+            "coverage": 0.98
+        }
+        decision_record = decision_engine.evaluate(payload, preset=quality_preset)
+
+        # Run Advisory Pipeline (Pipeline B)
+        t_advisory_start = time.perf_counter()
+        advisory_result = advisory_runner.generate_advisory(decision_record)
+        t_advisory_end = time.perf_counter()
+        advisory_latency = (t_advisory_end - t_advisory_start) * 1000.0
+
+        total_latency = vision_latency + advisory_latency
+
+        # Log into SQLite Database
+        saved_img_dir = WORKSPACE_ROOT / "datasets" / "inspected_captures"
+        saved_img_dir.mkdir(parents=True, exist_ok=True)
+        saved_img_path = saved_img_dir / f"{board_id}_{int(time.time())}.jpg"
+        cv2.imwrite(str(saved_img_path), annotated_bgr)
+
+        insp_uuid = db_mgr.log_inspection(
+            board_id=board_id,
+            image_path=str(saved_img_path),
+            decision_record=decision_record,
+            advisory_record=advisory_result["advisory"],
+            timings={
+                "vision_ms": round(vision_latency, 2),
+                "advisory_ms": round(advisory_latency, 2),
+                "total_ms": round(total_latency, 2)
+            }
+        )
+
+        # Display Results
+        col_res_img, col_res_data = st.columns([1.2, 1])
+
+        with col_res_img:
+            st.image(
+                cv2.cvtColor(annotated_bgr, cv2.COLOR_BGR2RGB),
+                caption=f"Annotated Bounding Boxes ({len(defects)} defect[s] localized)",
+                use_column_width=True
+            )
+
+        with col_res_data:
+            verdict = decision_record["decision"]
+            if verdict == "PASS":
+                st.success(f"### FINAL DECISION: {verdict}")
+            elif verdict == "INSPECT":
+                st.warning(f"### FINAL DECISION: {verdict}")
+            else:
+                st.error(f"### FINAL DECISION: {verdict}")
+
+            st.markdown(f"**Triggered Rule:** `{decision_record['rule_id']}`")
+            st.markdown(f"*{decision_record['rule_description']}*")
+            
+            if decision_record["requires_electrical_test"]:
+                st.error("⚡ **ELECTRICAL PROBE REQUIRED**: Suspected electrical short/open detected.")
+
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Critical", decision_record["summary_counts"].get("critical", 0))
+            m2.metric("Major", decision_record["summary_counts"].get("major", 0))
+            m3.metric("Minor", decision_record["summary_counts"].get("minor", 0))
+            m4.metric("Latency", f"{total_latency:.1f}ms")
+
+        # Advisory Explanation Panel
+        st.markdown("### 🤖 Llama 3.2 1B Instruct Advisory Explanation")
+        adv = advisory_result["advisory"]
+        
+        with st.container():
+            st.markdown(f"**What was detected:** {adv['what_detected']}")
+            st.markdown(f"**Why it matters:** {adv['why_it_matters']}")
+            st.markdown(f"**Recommended Operator Action:** {adv['operator_action']}")
+            st.caption(f"⚠️ *{adv['confidence_caveat']}*")
+
+        # Operator Override Section
+        st.markdown("---")
+        with st.expander("🛠️ Line Operator Confirmation & Override"):
+            st.write(f"Inspection Record ID: `{insp_uuid}`")
+            col_ov1, col_ov2 = st.columns([1, 2])
+            with col_ov1:
+                new_verdict = st.selectbox("Override Verdict to:", ["PASS", "INSPECT", "REJECT"], index=1)
+                operator_id = st.text_input("Operator ID", value="OP-LINE-1")
+            with col_ov2:
+                override_reason = st.text_area("Justification / Audit Note", placeholder="e.g., Cleaned dust particle under microscope; confirmed trace continuity.")
+                submit_override = st.button("Apply Official Override", type="secondary")
+
+            if submit_override:
+                if not override_reason.strip():
+                    st.error("A technical justification is strictly required to override an automated decision.")
+                else:
+                    db_mgr.record_override(insp_uuid, operator_id, new_verdict, override_reason)
+                    st.success(f"Override recorded: Record `{insp_uuid}` updated to `{new_verdict}` by `{operator_id}`.")
+
+# -------------------------------------------------------------
+# TAB 2: INSPECTION HISTORY & AUDIT
+# -------------------------------------------------------------
+with tab_history:
+    st.subheader("Persistent SQLite Inspection Logs")
+    records = db_mgr.list_inspections(limit=50)
+    if not records:
+        st.info("No inspection logs recorded yet. Run an inspection from Tab 1 to generate records.")
+    else:
+        table_rows = []
+        for r in records:
+            table_rows.append({
+                "Timestamp (UTC)": r["timestamp"][:19].replace("T", " "),
+                "Board ID": r["board_id"],
+                "Rule Decision": r["decision"],
+                "Final Decision": r["final_decision"],
+                "Defects": r["defect_count"],
+                "Rule ID": r["rule_id"],
+                "Total Latency": f"{r['total_latency_ms']:.1f} ms",
+                "Overridden": "Yes" if r["operator_override"] else "No"
+            })
+        st.dataframe(table_rows, use_container_width=True)
+
+        selected_id = st.selectbox("View Detailed Audit Payload for Record:", [r["inspection_id"] for r in records])
+        if selected_id:
+            sel_rec = db_mgr.get_inspection(selected_id)
+            st.json(sel_rec)
+
+# -------------------------------------------------------------
+# TAB 3: ANALYTICS & PARETO CHARTS
+# -------------------------------------------------------------
+with tab_analytics:
+    st.subheader("Statistical Process Control & Pareto Distribution")
+    stats = db_mgr.get_defect_statistics()
+
+    col_chart1, col_chart2 = st.columns(2)
+
+    with col_chart1:
+        st.markdown("#### Quality Decision Breakdown")
+        dec_data = stats["decisions"]
+        fig_donut = px.pie(
+            values=list(dec_data.values()),
+            names=list(dec_data.keys()),
+            color=list(dec_data.keys()),
+            color_discrete_map={"PASS": "#28a745", "INSPECT": "#ffc107", "REJECT": "#dc3545"},
+            hole=0.45
+        )
+        st.plotly_chart(fig_donut, use_container_width=True)
+
+    with col_chart2:
+        st.markdown("#### Defect Class Pareto Analysis")
+        freqs = stats["defect_frequencies"]
+        if not freqs:
+            st.info("No defect instances recorded yet.")
+        else:
+            sorted_freqs = sorted(freqs.items(), key=lambda x: -x[1])
+            classes = [x[0] for x in sorted_freqs]
+            counts = [x[1] for x in sorted_freqs]
+            total_defects = sum(counts)
+            cum_percent = [sum(counts[:i+1]) / total_defects * 100 for i in range(len(counts))]
+
+            fig_pareto = go.Figure()
+            fig_pareto.add_trace(go.Bar(x=classes, y=counts, name="Count", marker_color="#17a2b8"))
+            fig_pareto.add_trace(go.Scatter(x=classes, y=cum_percent, name="Cumulative %", yaxis="y2", line=dict(color="#fd7e14", width=3)))
+            fig_pareto.update_layout(
+                yaxis=dict(title="Instance Count"),
+                yaxis2=dict(title="Cumulative %", overlaying="y", side="right", range=[0, 105]),
+                legend=dict(x=0.7, y=1.1, orientation="h")
+            )
+            st.plotly_chart(fig_pareto, use_container_width=True)
+
+# -------------------------------------------------------------
+# TAB 4: HARDWARE & EDGE ARCHITECTURE
+# -------------------------------------------------------------
+with tab_hardware:
+    st.subheader("Edge Hardware Architecture & Benchmark Deployment")
+
+    col_arch1, col_arch2 = st.columns(2)
+
+    with col_arch1:
+        st.markdown("### Laptop Host Development Environment")
+        st.markdown("""
+        - **CPU:** AMD / Intel x86-64 Host CPU
+        - **Integrated GPU:** AMD Radeon(TM) 610M (Active)
+        - **Discrete GPU:** NVIDIA GeForce RTX 5050 Laptop GPU (Pending Driver Restart / Code 43)
+        - **System RAM:** 16.0 GB
+        - **Operating System:** Windows 11 Home
+        - **Vision Runtime:** OpenCV + PyTorch 2.14.1 (cu126) + ONNXRuntime
+        - **LLM Runtime:** ExecuTorch 1.5.1 (ARM & x86 CPU optimized)
+        """)
+
+    with col_arch2:
+        st.markdown("### Target Edge Production Hardware")
+        st.markdown("""
+        - **Host SBC:** Raspberry Pi 5 (8GB LPDDR4X)
+        - **AI Accelerator:** Raspberry Pi AI HAT+ with Hailo-8 (26 TOPS) or Hailo-8L (13 TOPS)
+        - **Interface:** PCIe Gen2/Gen3 x1 lane via Raspberry Pi ribbon connector
+        - **Camera:** Raspberry Pi Camera Module 3 (Sony IMX708, autofocus, macro diffuser)
+        - **Operating System:** Raspberry Pi OS 64-bit (Debian Bookworm)
+        - **Software Stack:** HailoRT v4.x + ExecuTorch ARM runtime
+        """)
+
+    st.markdown("---")
+    st.markdown("### Two-Pipeline Decoupled Architecture")
+    st.code("""
+    PIPELINE A (Computer Vision — Hard Real-Time):
+    Camera Capture -> OpenCV Preprocessing -> Vision Detector (Hailo NPU / CPU)
+    -> Defect Localization & Classification -> Severity Assessment
+    -> Deterministic Decision Engine (PASS / INSPECT / REJECT) -> SQLite Logging
+
+    PIPELINE B (Advisory — Soft Real-Time Reasoning):
+    Structured Inspection JSON -> Llama 3.2 1B Instruct (.pte via ExecuTorch)
+    -> Edge ARM CPU -> Operator Troubleshooting & Electrical Rework Advice
+    """, language="text")

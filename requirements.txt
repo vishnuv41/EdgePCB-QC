@@ -1,0 +1,18 @@
+# PyTorch with CUDA is installed separately (RTX 5050 needs a recent CUDA 12.8+ build).
+# See https://pytorch.org/get-started/locally/
+ultralytics
+opencv-python
+numpy
+pandas
+matplotlib
+streamlit
+plotly
+sqlalchemy
+pydantic
+scikit-learn
+onnx
+onnxruntime
+pytest
+pyyaml
+python-dotenv
+psutil

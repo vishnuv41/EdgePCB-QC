@@ -1,0 +1,43 @@
+{
+  "version": "1.0-deterministic",
+  "note": "Prototype industrial quality rules for Bharat AI-SoC Challenge PS5. Not certified IPC-A-600/IPC-A-610 standards.",
+  "default_preset": "consumer",
+  "presets": {
+    "consumer": {
+      "reject_conf": 0.75,
+      "inspect_conf": 0.40,
+      "max_major_defects_allowed": 0,
+      "max_minor_defects_allowed": 2,
+      "min_coverage_required": 0.90
+    },
+    "industrial": {
+      "reject_conf": 0.65,
+      "inspect_conf": 0.30,
+      "max_major_defects_allowed": 0,
+      "max_minor_defects_allowed": 1,
+      "min_coverage_required": 0.95
+    },
+    "automotive": {
+      "reject_conf": 0.50,
+      "inspect_conf": 0.20,
+      "max_major_defects_allowed": 0,
+      "max_minor_defects_allowed": 0,
+      "min_coverage_required": 0.99
+    }
+  },
+  "severity_by_class": {
+    "open_circuit": "critical",
+    "short_circuit": "critical",
+    "pin_hole_missing_pad": "critical",
+    "spur": "major",
+    "mouse_bite": "major",
+    "spurious_copper": "major",
+    "conductor_scratch": "minor",
+    "conductor_foreign_object": "major",
+    "base_material_foreign_object": "minor"
+  },
+  "area_thresholds": {
+    "large_area_fraction": 0.05,
+    "medium_area_fraction": 0.01
+  }
+}

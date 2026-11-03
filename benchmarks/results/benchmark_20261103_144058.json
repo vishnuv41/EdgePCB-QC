@@ -1,0 +1,36 @@
+{
+  "timestamp_utc": "2026-11-03T14:40:58.158239+00:00",
+  "hardware_environment": {
+    "platform": "Windows-10-10.0.26300-SP0",
+    "processor": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "cpu_count_physical": 16,
+    "cpu_count_logical": 32,
+    "total_ram_gb": 15.21,
+    "available_ram_gb": 2.07,
+    "target_deployment": "Raspberry Pi 5 (8GB) + Hailo-8/8L AI HAT+"
+  },
+  "vision_metrics": {
+    "num_runs": 30,
+    "input_resolution": "640x640",
+    "mean_latency_ms": 0.0,
+    "min_latency_ms": 0.0,
+    "max_latency_ms": 0.01,
+    "p95_latency_ms": 0.01,
+    "throughput_fps": 315126.2,
+    "mean_cpu_percent": 7.6,
+    "peak_ram_mb": 47.3
+  },
+  "reference_comparison_metrics": {
+    "num_runs": 15,
+    "mean_latency_ms": 45.54,
+    "p95_latency_ms": 161.79,
+    "throughput_fps": 22.0
+  },
+  "advisory_metrics": {
+    "num_runs": 25,
+    "backend": "deterministic_fallback",
+    "mean_latency_ms": 0.01,
+    "mean_ttft_ms": 0.01,
+    "peak_ram_mb": 185.2
+  }
+}

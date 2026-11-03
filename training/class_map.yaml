@@ -1,0 +1,80 @@
+# EdgePCB-QC Explicit Class Mapping
+# Verified from primary annotations on 2026-11-03
+# Canonical classes, integer IDs, and per-dataset source labels
+
+canonical_classes:
+  0:
+    name: open_circuit
+    description: Break or discontinuity in a conductive trace causing electrical disconnection.
+    severity_default: critical
+    sources:
+      dspcbsd: "OP"
+      deeppcb: "open"
+      pcb_defect_v2: "open circuit"
+
+  1:
+    name: short_circuit
+    description: Unintended conductive connection bridging adjacent traces or pads.
+    severity_default: critical
+    sources:
+      dspcbsd: "SH"
+      deeppcb: "short"
+      pcb_defect_v2: "short circuit"
+
+  2:
+    name: mouse_bite
+    description: Void, notch, or bite taken out of trace edge reducing trace cross-section.
+    severity_default: major
+    sources:
+      dspcbsd: "MB"
+      deeppcb: "mousebite"
+      pcb_defect_v2: "mouse bite"
+
+  3:
+    name: spur
+    description: Projection or prong extending from conductive trace edge toward adjacent features.
+    severity_default: major
+    sources:
+      dspcbsd: "SP"
+      deeppcb: "spur"
+      pcb_defect_v2: "spur"
+
+  4:
+    name: spurious_copper
+    description: Isolated island, fleck, or splash of copper in non-conductive area.
+    severity_default: major
+    sources:
+      dspcbsd: "SC"
+      deeppcb: "copper"
+      pcb_defect_v2: "spurious copper"
+
+  5:
+    name: pin_hole_missing_pad
+    description: Missing or improperly etched pad, or void/pin-hole in copper pad.
+    severity_default: critical
+    sources:
+      dspcbsd: "HB"          # Hole breakout / missing pad annular ring
+      deeppcb: "pin-hole"
+      pcb_defect_v2: "missing pad"
+
+extended_classes:
+  6:
+    name: conductor_scratch
+    description: Surface scratch across conductive trace.
+    severity_default: minor
+    sources:
+      dspcbsd: "CS"
+
+  7:
+    name: conductor_foreign_object
+    description: Conductive particulate or debris resting on traces.
+    severity_default: major
+    sources:
+      dspcbsd: "CFO"
+
+  8:
+    name: base_material_foreign_object
+    description: Non-conductive contaminant or debris on substrate laminate.
+    severity_default: minor
+    sources:
+      dspcbsd: "BMFO"

@@ -1,0 +1,22 @@
+dataset,source,licence,class_name,count,notes
+DsPCBSD+,Figshare DOI: 10.6084/m9.figshare.24970329.v1,CC BY 4.0,CS,2490,"9 industrial classes, cropped patches"
+DsPCBSD+,Figshare DOI: 10.6084/m9.figshare.24970329.v1,CC BY 4.0,BMFO,1680,"9 industrial classes, cropped patches"
+DsPCBSD+,Figshare DOI: 10.6084/m9.figshare.24970329.v1,CC BY 4.0,HB,2883,"9 industrial classes, cropped patches"
+DsPCBSD+,Figshare DOI: 10.6084/m9.figshare.24970329.v1,CC BY 4.0,OP,1770,"9 industrial classes, cropped patches"
+DsPCBSD+,Figshare DOI: 10.6084/m9.figshare.24970329.v1,CC BY 4.0,CFO,1832,"9 industrial classes, cropped patches"
+DsPCBSD+,Figshare DOI: 10.6084/m9.figshare.24970329.v1,CC BY 4.0,MB,2529,"9 industrial classes, cropped patches"
+DsPCBSD+,Figshare DOI: 10.6084/m9.figshare.24970329.v1,CC BY 4.0,SH,915,"9 industrial classes, cropped patches"
+DsPCBSD+,Figshare DOI: 10.6084/m9.figshare.24970329.v1,CC BY 4.0,SP,4584,"9 industrial classes, cropped patches"
+DsPCBSD+,Figshare DOI: 10.6084/m9.figshare.24970329.v1,CC BY 4.0,SC,1593,"9 industrial classes, cropped patches"
+DeepPCB,GitHub tangsanli5201/DeepPCB,MIT License,mousebite,1965,Paired template/test 640x640 images across board groups
+DeepPCB,GitHub tangsanli5201/DeepPCB,MIT License,short,1506,Paired template/test 640x640 images across board groups
+DeepPCB,GitHub tangsanli5201/DeepPCB,MIT License,spur,1625,Paired template/test 640x640 images across board groups
+DeepPCB,GitHub tangsanli5201/DeepPCB,MIT License,copper,1474,Paired template/test 640x640 images across board groups
+DeepPCB,GitHub tangsanli5201/DeepPCB,MIT License,pin-hole,1501,Paired template/test 640x640 images across board groups
+DeepPCB,GitHub tangsanli5201/DeepPCB,MIT License,open,1942,Paired template/test 640x640 images across board groups
+PCB-Defect V2,Mendeley Data DOI: 10.17632/vdj74sngvn.2,CC BY 4.0,short,254,Whole-board high-resolution images
+PCB-Defect V2,Mendeley Data DOI: 10.17632/vdj74sngvn.2,CC BY 4.0,spur,296,Whole-board high-resolution images
+PCB-Defect V2,Mendeley Data DOI: 10.17632/vdj74sngvn.2,CC BY 4.0,spurious_copper,246,Whole-board high-resolution images
+PCB-Defect V2,Mendeley Data DOI: 10.17632/vdj74sngvn.2,CC BY 4.0,mouse_bite,356,Whole-board high-resolution images
+PCB-Defect V2,Mendeley Data DOI: 10.17632/vdj74sngvn.2,CC BY 4.0,open_circuit,276,Whole-board high-resolution images
+PCB-Defect V2,Mendeley Data DOI: 10.17632/vdj74sngvn.2,CC BY 4.0,missing_pad,276,Whole-board high-resolution images
