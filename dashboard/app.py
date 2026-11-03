@@ -101,6 +101,13 @@ quality_preset = st.sidebar.selectbox(
     help="Consumer: 75% conf reject, Industrial: 65% reject, Automotive: Zero tolerance (50% reject)"
 )
 
+advisory_mode_choice = st.sidebar.selectbox(
+    "Advisory Reasoning Mode",
+    ["Fast Deterministic Fallback (<1ms, IPC-A-600)", "ExecuTorch Llama 3.2 1B (On-Device CPU)"],
+    index=0,
+    help="Fast mode produces instant IPC-A-600/2221 grounded advice. ExecuTorch runs genuine local Llama 3.2 1B .pte forward evaluation."
+)
+
 st.sidebar.markdown("---")
 st.sidebar.markdown("### System Runtime Status")
 if "Hailo" in backend_choice:
@@ -108,7 +115,11 @@ if "Hailo" in backend_choice:
 else:
     st.sidebar.success("CPU Backend: Active & Ready (AMD Ryzen 9 8940HX ~28 FPS)")
 
-st.sidebar.info("Advisory: Deterministic Fallback Active (ExecuTorch Ready)")
+if advisory_runner.is_loaded:
+    st.sidebar.success(f"Advisory: ExecuTorch Llama 3.2 1B Active ({advisory_runner.pte_path.name})")
+else:
+    st.sidebar.info("Advisory: Deterministic Fallback Active (ExecuTorch Ready)")
+
 st.sidebar.caption("RTX 5050 Laptop GPU (sm_120) detected; PyTorch running on verified CPU fallback.")
 
 # Main Navigation Tabs
@@ -197,7 +208,8 @@ with tab_inspect:
 
         # Run Advisory Pipeline (Pipeline B)
         t_advisory_start = time.perf_counter()
-        advisory_result = advisory_runner.generate_advisory(decision_record)
+        adv_mode = "auto" if "ExecuTorch" in advisory_mode_choice else "fast"
+        advisory_result = advisory_runner.generate_advisory(decision_record, mode=adv_mode)
         t_advisory_end = time.perf_counter()
         advisory_latency = (t_advisory_end - t_advisory_start) * 1000.0
 
@@ -271,12 +283,14 @@ with tab_inspect:
             st.dataframe(table_rows, use_container_width=True)
 
         # Advisory Explanation Panel
-        adv_source = advisory_result.get("source", "deterministic_fallback")
-        if adv_source == "executorch_pte":
-            st.markdown("### 🤖 Llama 3.2 1B Instruct Advisory Explanation (ExecuTorch .pte)")
+        adv_source = advisory_result.get("source") or advisory_result.get("metrics", {}).get("backend", "deterministic_fallback")
+        adv_metrics = advisory_result.get("metrics", {})
+        if adv_source in ["executorch_pte", "executorch_cpu"]:
+            st.markdown(f"### 🤖 Llama 3.2 1B Instruct Advisory Explanation (ExecuTorch `{adv_metrics.get('model_artifact', advisory_runner.pte_path.name)}`)")
+            st.caption(f"⚡ *On-Device CPU Evaluation: {adv_metrics.get('tokens_evaluated', 0)} tokens in {adv_metrics.get('latency_ms', 0):.1f}ms ({adv_metrics.get('tokens_per_second', 0):.1f} tok/s, TTFT: {adv_metrics.get('ttft_ms', 0):.1f}ms, Peak RAM: {adv_metrics.get('peak_ram_mb', 0):.1f} MB)*")
         else:
             st.markdown("### 🤖 Quality-Control Advisory Explanation (Deterministic Expert Fallback)")
-            st.caption("ℹ️ *Local IPC-A-600 / IPC-2221 expert rules active. Official Llama 3.2 1B ExecuTorch `.pte` ready to load upon Hugging Face access approval.*")
+            st.caption("ℹ️ *Local IPC-A-600 / IPC-2221 expert rules active (<1ms deterministic reasoning). Official Llama 3.2 1B ExecuTorch `.pte` model is verified and selectable via sidebar.*")
         
         adv = advisory_result["advisory"]
         

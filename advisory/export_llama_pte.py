@@ -25,6 +25,8 @@ load_dotenv(WORKSPACE_ROOT / ".env")
 LLAMA_DIR = WORKSPACE_ROOT / "models" / "llama"
 LLAMA_DIR.mkdir(parents=True, exist_ok=True)
 CHECKPOINT_DIR = LLAMA_DIR / "checkpoints" / "Llama-3.2-1B-Instruct"
+ORIGINAL_WEIGHTS = CHECKPOINT_DIR / "original" / "consolidated.00.pth"
+ORIGINAL_PARAMS = CHECKPOINT_DIR / "original" / "params.json"
 OUTPUT_PTE_PATH = LLAMA_DIR / "llama3_2_1b.pte"
 OUTPUT_TOKENIZER_PATH = LLAMA_DIR / "tokenizer.model"
 
@@ -87,29 +89,67 @@ def download_llama_weights(hf_token: str):
     print("[+] Model snapshot downloaded successfully.")
 
 
-def export_to_executorch_pte(checkpoint_dir: Path, output_pte: Path, quant_mode: str = "int8"):
+def export_to_executorch_pte(
+    checkpoint_path: Path = ORIGINAL_WEIGHTS,
+    params_path: Path = ORIGINAL_PARAMS,
+    output_dir: Path = LLAMA_DIR,
+    output_name: str = "llama3_2_1b_fp16.pte",
+    quant_mode: str = "fp16"
+):
     print("\n" + "=" * 65)
     print("COMPILING LLAMA 3.2 1B TO EXECUTORCH (.pte)")
     print("=" * 65)
-    print(f"[*] Source:        {checkpoint_dir}")
-    print(f"[*] Target Binary: {output_pte}")
-    print(f"[*] Quantization:  {quant_mode}")
+    print(f"[*] Checkpoint:     {checkpoint_path}")
+    print(f"[*] Params:         {params_path}")
+    print(f"[*] Output Dir:     {output_dir}")
+    print(f"[*] Output Name:    {output_name}")
+    print(f"[*] Quantization:   {quant_mode}")
 
-    # Step 1: Verify ExecuTorch and TorchAO
+    if not checkpoint_path.exists():
+        raise FileNotFoundError(f"Checkpoint not found at: {checkpoint_path}")
+    if not params_path.exists():
+        raise FileNotFoundError(f"Params not found at: {params_path}")
+
     import torch
-    import torchao
+    # Ensure Windows loads PyTorch DLLs for ExecuTorch
+    torch_lib = Path(torch.__file__).parent / "lib"
+    if torch_lib.exists() and hasattr(os, "add_dll_directory"):
+        os.add_dll_directory(str(torch_lib))
+
     import executorch
-    from executorch.exir import capture, EdgeCompileConfig, to_edge
+    from executorch.examples.models.llama import export_llama_lib
 
-    print(f"[+] ExecuTorch Version: {executorch.__version__}")
-    print(f"[+] TorchAO Version:    {torchao.__version__}")
+    import importlib.metadata
+    et_ver = importlib.metadata.version('executorch')
+    print(f"[+] ExecuTorch Version: {et_ver}")
+    print(f"[+] PyTorch Version:    {torch.__version__}")
 
-    # Note: Full weight compilation requires the downloaded Hugging Face checkpoint.
-    # When checkpoint_dir exists, loads Transformer module and applies export graph:
-    # 1. model = LlamaTransformer.from_pretrained(checkpoint_dir)
-    # 2. quantized_model = torchao.quantization.quantize_(model, int8_dynamic_activation_int8_weight())
-    # 3. edge_program = to_edge(capture(quantized_model, sample_inputs))
-    # 4. edge_program.to_executorch().write_to_file(output_pte)
+    extra_opts = f"-kv -d {quant_mode} --max_seq_length 256 --max_context_length 512 -n {output_name}"
+    print(f"[*] Running ExecuTorch build_model with extra_opts: {extra_opts}")
+
+    t0 = time.perf_counter()
+    # On Windows, shlex.split in build_model requires forward slashes to avoid backslash escape stripping
+    pte_filename = export_llama_lib.build_model(
+        model="llama3_2",
+        checkpoint=checkpoint_path.resolve().as_posix(),
+        params=params_path.resolve().as_posix(),
+        output_dir=output_dir.resolve().as_posix(),
+        extra_opts=extra_opts
+    )
+    t_export = time.perf_counter() - t0
+
+    out_file = output_dir / output_name
+    if not out_file.exists():
+        cwd_file = Path(output_name)
+        if cwd_file.exists():
+            import shutil
+            target_cache = Path(r"E:\EdgePCB-QC_cache\models\llama3_2_1b") / output_name
+            shutil.move(str(cwd_file), str(target_cache))
+            out_file = target_cache
+
+    print(f"[+] ExecuTorch compilation successful in {t_export:.2f}s!")
+    print(f"[+] Artifact saved: {out_file} ({out_file.stat().st_size / (1024**2):.2f} MB)")
+    return out_file
 
 
 def verify_pte_runtime(pte_path: Path):
@@ -122,19 +162,38 @@ def verify_pte_runtime(pte_path: Path):
         print("    Operating with verified deterministic fallback advisory engine.")
         return False
 
-    from executorch.runtime import Runtime
-    runtime = Runtime()
-    program = runtime.load_program(str(pte_path))
-    print(f"[+] Successfully loaded {pte_path.name} into ExecuTorch runtime!")
+    import torch
+    torch_lib = Path(torch.__file__).parent / "lib"
+    if torch_lib.exists() and hasattr(os, "add_dll_directory"):
+        os.add_dll_directory(str(torch_lib))
+
+    from executorch.extension.pybindings._C import _load_for_executorch
+    t0 = time.perf_counter()
+    module = _load_for_executorch(str(pte_path))
+    t_load = time.perf_counter() - t0
+
+    print(f"[+] Successfully loaded {pte_path.name} into ExecuTorch runtime in {t_load*1000:.2f}ms!")
+    print(f"[+] Available methods: {module.method_names()}")
     return True
 
 
 if __name__ == "__main__":
     approved, token = check_hf_access()
     if approved and token:
-        download_llama_weights(token)
-        export_to_executorch_pte(CHECKPOINT_DIR, OUTPUT_PTE_PATH)
-        verify_pte_runtime(OUTPUT_PTE_PATH)
+        if not ORIGINAL_WEIGHTS.exists():
+            print(f"[*] Checkpoint weights not found at {ORIGINAL_WEIGHTS}")
+            print(f"[*] Running fast multi-part download...")
+            from scripts.fast_download import run_parallel_download
+            run_parallel_download()
+
+        out_pte = export_to_executorch_pte(
+            checkpoint_path=ORIGINAL_WEIGHTS,
+            params_path=ORIGINAL_PARAMS,
+            output_dir=LLAMA_DIR,
+            output_name="llama3_2_1b_fp16.pte",
+            quant_mode="fp16"
+        )
+        verify_pte_runtime(out_pte)
     else:
         print("\n[i] Export pipeline is prepared and ready.")
         print("    Awaiting Meta approval of Hugging Face access request.")

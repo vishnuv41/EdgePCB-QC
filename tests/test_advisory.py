@@ -10,6 +10,7 @@ Tests:
 """
 
 import pytest
+from pathlib import Path
 from advisory.schema import InspectionPayload, AdvisoryExplanation
 from advisory.prompt import format_llama_prompt
 from advisory.fallback import generate_fallback_advisory
@@ -90,14 +91,32 @@ def test_fallback_critical_reject():
 
 
 def test_executorch_runner_fallback_graceful():
-    runner = ExecuTorchLlamaRunner()
+    # Test runner with missing artifact triggers graceful fallback
+    fallback_runner = ExecuTorchLlamaRunner(pte_path=Path("non_existent_model.pte"))
     payload = {
         "board_id": "PCB-RUNNER-01",
         "decision": "PASS",
         "defects": []
     }
-    result = runner.generate_advisory(payload)
+    result = fallback_runner.generate_advisory(payload)
     assert "advisory" in result
     assert "metrics" in result
-    assert result["metrics"]["backend"] in ["deterministic_fallback", "executorch_cpu"]
+    assert result["metrics"]["backend"] == "deterministic_fallback"
+    assert result["metrics"]["status"] == "active"
     assert result["metrics"]["latency_ms"] >= 0.0
+
+
+def test_executorch_runner_fast_mode():
+    runner = ExecuTorchLlamaRunner()
+    payload = {
+        "board_id": "PCB-RUNNER-02",
+        "decision": "REJECT",
+        "defects": [
+            {"class": "short_circuit", "confidence": 0.91, "severity": "critical"}
+        ]
+    }
+    result = runner.generate_advisory(payload, mode="fast")
+    assert "advisory" in result
+    assert result["metrics"]["backend"] == "deterministic_fallback"
+    assert result["advisory"]["electrical_confirmation_needed"] is True
+    assert result["metrics"]["latency_ms"] < 100.0

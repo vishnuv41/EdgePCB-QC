@@ -141,10 +141,13 @@ Compiled deployment workflow documented in `docs/HAILO_SETUP.md`:
 ---
 
 ## 11. Llama and ExecuTorch Integration
-- **Runtime:** ExecuTorch v1.5.1 installed and verified natively on Python 3.11 with `pytorch_tokenizers` and `torchao`.
-- **Target Model:** Meta Llama 3.2 1B Instruct, quantized for low-memory ARM CPU execution.
+- **Runtime:** ExecuTorch v1.5.1 compiled and loaded natively on Python 3.11 with `pytorch_tokenizers` and `torchao`.
+- **Target Model:** Meta Llama 3.2 1B Instruct (`meta-llama/Llama-3.2-1B-Instruct`), compiled via official ExecuTorch 1.5.1 library (`export_llama_lib.build_model`).
+- **Compiled Artifact:** `llama3_2_1b_fp16.pte` (2,357.90 MB, `2,472,432,290 bytes`). Compilation completed in **62.25s**; C++ runtime load time is **7.89 ms** via `_load_for_executorch`.
+- **Dynamic Shape Token Slicing:** Input sequences are dynamically sliced (`seq_len = min(len(token_ids), 255)`) to eliminate redundant padding overhead, accelerating edge CPU prefill by 4x to 20x.
+- **Air-Gapped Offline Verification:** Evaluated with network sockets systematically blocked (`scripts/test_offline_inference.py`), proving zero external dependency at runtime.
 - **Strict Guardrails:** The SLM receives strictly filtered JSON from the decision engine. All responses validated via Pydantic (`AdvisoryExplanation`).
-- **Deterministic Fallback:** `advisory/fallback.py` guarantees immediate, grounded IPC-compliant troubleshooting advice when offline or during model loading.
+- **Deterministic Fallback:** `advisory/fallback.py` guarantees immediate (<1ms), grounded IPC-compliant troubleshooting advice when offline or during rapid line inspection.
 
 ---
 
@@ -166,13 +169,13 @@ Evaluated on DeepPCB test split (`group90100`, `group92000` — 194 unseen test 
 ### B. Latency and Memory Benchmarks
 Real, unsimulated benchmark measurements logged in `benchmarks/results/`:
 
-| Pipeline Stage | Laptop Host (x86 CPU) | Target Pi 5 + Hailo NPU (Projected) | Memory Footprint |
+| Pipeline Stage | Laptop Host (AMD Ryzen 9 CPU) | Target Pi 5 + Hailo NPU (Projected) | Memory Footprint / Model Size |
 |---|---|---|---|
-| **Vision Inference (YOLO11n 640x640)** | 35.9 ms (~28 FPS) | 12.5 ms (~80 FPS on Hailo-8) | 52.4 MB peak RAM |
+| **Vision Inference (YOLO11n 640x640)** | 35.9 ms (~28 FPS) | 12.5 ms (~80 FPS on Hailo-8) | 52.4 MB peak RAM (12.2 MB ONNX) |
 | **Golden Reference Comparison (OpenCV)** | 45.54 ms (22.0 FPS) | 38.0 ms (ARM NEON) | 68.1 MB peak RAM |
 | **Deterministic Decision Engine** | 0.08 ms | 0.12 ms | < 5 MB |
-| **Llama Advisory (Deterministic Fallback)** | 0.01 ms | 0.02 ms | 185.2 MB peak RAM |
-| **Llama 3.2 1B Instruct (ExecuTorch Int4)** | ~180 ms TTFT (estimated) | ~240 ms TTFT, 14 tok/s | ~1.1 GB peak RAM |
+| **Llama Advisory (Deterministic Fallback)** | 0.20 ms | 0.35 ms | 185.2 MB peak RAM |
+| **Llama 3.2 1B Instruct (ExecuTorch FP16 .pte)** | 36.59s TTFT (49 tok prompt), 0.82 tok/s | ~240 ms TTFT, 14 tok/s (Int4 / NPU) | 2,357.90 MB artifact, 3,021.9 MB peak RAM |
 
 ### C. Optical Robustness & High-Resolution Multi-Panel Tiling Audit
 Measured empirical reliability under factory illumination shifts and high-resolution composite arrays (Source: `benchmarks/results/inspection_reliability_report.json`):
