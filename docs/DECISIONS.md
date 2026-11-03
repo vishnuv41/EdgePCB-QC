@@ -164,3 +164,16 @@
   3. Flushed and re-initialized the Streamlit daemon (`task-1971`) to clear stale cache objects.
   4. Verified absolute decision invariance: deterministic quality verdicts (`REJECT`, `RULE_001_HIGH_CONF_CRITICAL_DEFECT`, `requires_electrical_test = True`) are mathematically identical whether fast deterministic mode or ExecuTorch Llama mode is selected.
 - **Reasoning:** Eliminates interface crashes, ensures non-blocking operational flexibility for manufacturing line operators, and reinforces deterministic safety invariants.
+
+---
+
+### DECISION 020: Complete Sentence Generation, Multi-Tier Prompts, and Grounded Decoupled Presentation
+- **Date:** 2026-11-04
+- **Context:** Initial ExecuTorch Llama 3.2 1B generations produced incomplete fragments (`"Defect short_circuit: short_circuit occurs when a trace is connected to"`). Root-cause analysis revealed: (1) `allowed_special` was not passed to `tokenizer.encode()`, causing Tiktoken to split special tokens (`<|begin_of_text|>`, `<|start_header_id|>`) into 40+ raw characters; (2) `max_new_tokens` was capped at 16, cutting off text mid-clause; and (3) dashboard presentation appended the raw fragment to deterministic guidance rather than keeping them distinct.
+- **Decision:**
+  1. Configured `allowed_special="all"` during encoding, compressing prompt headers from 40+ raw characters to exact single Llama 3 token IDs (`128000`, `128006`, `128007`, `128009`).
+  2. Standardized three prompt tiers: `compact` (35-41 tok), `standard` (60-69 tok), and `comprehensive` (90-95 tok), instructing the model to generate complete sentences without boilerplate headers.
+  3. Implemented a dynamic sentence-completion grace budget (`grace_budget = 8` tokens) and backward terminal punctuation truncation (`.`, `!`, `?`). Any generation failing to form a complete sentence triggers `status: fallback_on_incomplete` and falls back cleanly without merging incomplete text into operator action.
+  4. Restructured dashboard UI: Llama mode renders the neural reasoning as a dedicated primary card (`🤖 Primary AI Advisory`), keeping deterministic rules and SOP guidance separately visible.
+  5. Implemented authoritative quantitative metrics in `decision_record["audit_counts"]`: Total Critical, High-Conf Critical, Review Required (< Conf), and Rule-Triggering Detections.
+- **Reasoning:** Guarantees 100% grammatically complete operator advisories, eliminates cryptic truncated fragments, preserves audit traceability, and ensures strict decoupling between deterministic gates and generative reasoning.

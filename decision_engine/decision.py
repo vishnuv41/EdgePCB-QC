@@ -55,6 +55,36 @@ class DecisionEngine:
         # Evaluate rules
         rule_result = evaluate_rules(defects, severities, coverage, preset_config)
 
+        # Compute audit counts for quality dashboards (Requirement 5)
+        reject_conf = preset_config.get("reject_conf", 0.75)
+        inspect_conf = preset_config.get("inspect_conf", 0.40)
+
+        total_critical = sum(1 for d in defects if d.get("severity") == "critical")
+        high_conf_critical = sum(1 for d in defects if d.get("severity") == "critical" and float(d.get("confidence", 0.0)) >= reject_conf)
+        low_conf_review = sum(1 for d in defects if float(d.get("confidence", 0.0)) < inspect_conf)
+
+        if "RULE_001" in rule_result.rule_id:
+            rule_triggering = high_conf_critical
+        elif "RULE_002" in rule_result.rule_id:
+            rule_triggering = sum(1 for d in defects if d.get("severity") == "major" and float(d.get("confidence", 0.0)) >= reject_conf)
+        elif "RULE_003" in rule_result.rule_id:
+            rule_triggering = sum(1 for d in defects if d.get("severity") == "critical" and float(d.get("confidence", 0.0)) < reject_conf)
+        elif "RULE_004" in rule_result.rule_id:
+            rule_triggering = sum(1 for d in defects if d.get("severity") == "major")
+        elif "RULE_006" in rule_result.rule_id:
+            rule_triggering = sum(1 for d in defects if d.get("severity") == "minor")
+        elif "RULE_007" in rule_result.rule_id:
+            rule_triggering = low_conf_review
+        else:
+            rule_triggering = 0
+
+        audit_counts = {
+            "total_critical": total_critical,
+            "high_conf_critical": high_conf_critical,
+            "low_conf_review": low_conf_review,
+            "rule_triggering": rule_triggering
+        }
+
         timestamp = datetime.now(timezone.utc).isoformat()
 
         record = {
@@ -68,6 +98,7 @@ class DecisionEngine:
             "coverage": coverage,
             "defects": defects,
             "summary_counts": sev_counts,
+            "audit_counts": audit_counts,
             "config_version": self.config.get("version", "1.0"),
             "operator_override": None
         }

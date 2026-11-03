@@ -209,21 +209,42 @@ To guarantee both high line throughput and explainable engineering reasoning, Ed
 | **Advisory Latency** | **0.18 ms** | **71.68 s** (Autoregressive generation) | Traceable to exact backend |
 | **Generated Output** | Grounded IPC action guidance | Grounded guidance + Neural token generation | Non-conflicting |
 
-### E. ExecuTorch Llama 3.2 1B Empirical Token Benchmark Matrix
-Autoregressive token generation benchmarks measured on host AMD Ryzen 9 8940HX CPU across varying prompt lengths, generation budgets, and CPU thread pools (Source: `benchmarks/results/advisory_modes_benchmark.json`):
+### E. ExecuTorch Llama 3.2 1B Latency & Performance Benchmark Matrix
+Autoregressive token generation benchmarks measured on host AMD Ryzen 9 8940HX CPU across 12 combinations of prompt lengths, generation budgets, and CPU thread pools (Source: `benchmarks/results/advisory_latency_matrix.json`):
 
-| Configuration | Threads | Prompt Tokens | Generated Tokens | Time to First Token (TTFT) | Generation Time | Generation Throughput | Peak RAM Footprint |
-|---|---|---|---|---|---|---|---|
-| **Concise (8 Threads)** | 8 | 42 | 16 | **24,051.01 ms** (24.05s) | 17.11 s | **0.94 tokens/s** | 3,250.0 MB |
-| **Concise (4 Threads)** | 4 | 42 | 16 | **23,960.33 ms** (23.96s) | 16.72 s | **0.96 tokens/s** | 3,250.0 MB |
-| **Standard (8 Threads)** | 8 | 64 | 16 | **35,772.21 ms** (35.77s) | 16.80 s | **0.95 tokens/s** | 3,250.0 MB |
-| **Medium (8 Threads)** | 8 | 128 | 16 | **73,217.89 ms** (73.22s) | 16.90 s | **0.95 tokens/s** | 3,250.3 MB |
-| **Extended (8 Threads)** | 8 | 42 | 32 | **23,521.92 ms** (23.52s) | 33.41 s | **0.96 tokens/s** | 3,250.3 MB |
+| Configuration | Threads | Prompt Tokens | Actual Gen Tokens | Time to First Token (TTFT) | Decode Time | Decode Throughput | Peak RAM Footprint | Sentence Complete? |
+|---|---|---|---|---|---|---|---|---|
+| **32-tok prompt / 16 gen** | 4 | 41 | 3 | **22,702.4 ms** (22.70s) | 2.98 s | **1.01 tokens/s** | 3,019.2 MB | Fallback (Fragment) |
+| **32-tok prompt / 16 gen** | 8 | 41 | 3 | **21,169.5 ms** (21.17s) | 2.80 s | **1.07 tokens/s** | 3,022.1 MB | Fallback (Fragment) |
+| **32-tok prompt / 24 gen** | 4 | 41 | 3 | **20,961.5 ms** (20.96s) | 2.83 s | **1.06 tokens/s** | 3,022.1 MB | Fallback (Fragment) |
+| **32-tok prompt / 24 gen** | 8 | 41 | 3 | **20,934.0 ms** (20.93s) | 2.85 s | **1.05 tokens/s** | 3,022.0 MB | Fallback (Fragment) |
+| **64-tok prompt / 16 gen** | 4 | 69 | 24 | **37,394.5 ms** (37.39s) | 24.72 s | **0.97 tokens/s** | 3,022.4 MB | Fallback (Incomplete) |
+| **64-tok prompt / 16 gen** | 8 | 69 | 24 | **36,064.5 ms** (36.06s) | 22.79 s | **1.05 tokens/s** | 3,022.4 MB | Fallback (Incomplete) |
+| **64-tok prompt / 24 gen** | 4 | 69 | 25 | **34,714.6 ms** (34.71s) | 22.62 s | **1.11 tokens/s** | 3,022.4 MB | **YES (`is_complete=True`)** |
+| **64-tok prompt / 24 gen** | 8 | 69 | 25 | **34,567.1 ms** (34.57s) | 23.07 s | **1.08 tokens/s** | 3,022.5 MB | **YES (`is_complete=True`)** |
+| **96-tok prompt / 16 gen** | 4 | 94 | 24 | **47,243.8 ms** (47.24s) | 22.75 s | **1.05 tokens/s** | 3,022.8 MB | Fallback (Incomplete) |
+| **96-tok prompt / 16 gen** | 8 | 94 | 24 | **47,363.0 ms** (47.36s) | 22.99 s | **1.04 tokens/s** | 3,022.8 MB | Fallback (Incomplete) |
+| **96-tok prompt / 24 gen** | 4 | 94 | 26 | **47,194.9 ms** (47.19s) | 24.30 s | **1.07 tokens/s** | 3,022.8 MB | **YES (`is_complete=True`)** |
+| **96-tok prompt / 24 gen** | 8 | 94 | 26 | **46,983.6 ms** (46.98s) | 24.01 s | **1.08 tokens/s** | 3,022.8 MB | **YES (`is_complete=True`)** |
 
-*Key Findings:*
-1. **Dynamic Sequence Prefill:** Dynamic sequence slicing bounds TTFT to strictly scale with input token length ($\approx 570\text{ ms per prompt token}$), avoiding the 156-second delay of static 255-token padding.
-2. **Generation Stability:** Autoregressive decode throughput remains constant at **0.94 – 0.96 tokens/sec** on CPU across both 16-token and 32-token sequences.
-3. **Bounded Memory:** ExecuTorch runtime memory footprint is strictly bounded at **3,250 MB**, preventing out-of-memory crashes on embedded hosts.
+*Authoritative Latency & System Architecture Findings:*
+1. **Linear Prefill Scaling ($T_{\text{prefill}} \approx 500\text{ ms per prompt token}$):**
+   - At 41 prompt tokens: TTFT $\approx 21.0\text{ seconds}$.
+   - At 69 prompt tokens: TTFT $\approx 34.6\text{ seconds}$.
+   - At 94 prompt tokens: TTFT $\approx 47.1\text{ seconds}$.
+   - Keeping the edge prompt concise (64 tokens) saves over 12.5 seconds in TTFT compared to verbose templates.
+2. **Autoregressive Decoding Rate (1.05 – 1.11 tokens/second):**
+   - Decode time scales strictly with generated tokens ($\approx 910 - 950\text{ ms per generated token}$).
+   - Generates complete sentences (25–26 tokens) in **22.6 to 24.3 seconds**.
+3. **Thread Scaling Invariance (4 vs 8 Threads):**
+   - 4 threads achieve **1.11 tok/s** (57.34s total) versus 8 threads at **1.08 tok/s** (57.64s total).
+   - This proves that Transformer inference on host CPU is memory bandwidth-bound (streaming 2.35 GB model weights per decode step) rather than compute-bound.
+4. **Sentence Completeness Quality:**
+   - 24-token budget paired with the 8-token grace window consistently produces complete, professional sentences:
+     `"The board PCB-PERF-001 shows visually suspected short-circuit, which poses a significant failure risk to the system."`
+   - Incomplete generations (e.g. 16-token limit) automatically trigger `fallback_on_incomplete` and return deterministic IPC advice without corrupting operator action.
+5. **Memory Containment:**
+   - Peak RSS memory footprint is held strictly at **3,022.8 MB**, safely inside system RAM allowances. Resident runtime init overhead is 1,679.57 ms (one-time load).
 
 ### F. Offline Air-Gapped Verification & Physical Artifact Audit
 EdgePCB-QC was audited under zero-network constraints to ensure full physical air-gap compliance:

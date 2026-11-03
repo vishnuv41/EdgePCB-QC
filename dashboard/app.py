@@ -209,7 +209,7 @@ with tab_inspect:
         # Run Advisory Pipeline (Pipeline B)
         t_advisory_start = time.perf_counter()
         adv_mode = "auto" if "ExecuTorch" in advisory_mode_choice else "fast"
-        advisory_result = advisory_runner.generate_advisory(decision_record, mode=adv_mode)
+        advisory_result = advisory_runner.generate_advisory(decision_record, mode=adv_mode, max_new_tokens=24)
         t_advisory_end = time.perf_counter()
         advisory_latency = (t_advisory_end - t_advisory_start) * 1000.0
 
@@ -261,11 +261,14 @@ with tab_inspect:
                 st.error("⚡ **ELECTRICAL VERIFICATION MANDATORY**: Visually suspected open or short circuit detected. Electrical continuity/isolation test (DMM / Flying-Probe) is required prior to final disposition.")
                 st.caption("⚠️ *Optical defect detection evaluates surface geometry only; electrical integrity must be verified with contact test equipment before final panel sign-off.*")
 
+            # Quantitative Defect Audit Counts (Requirement 5: from single authoritative inspection record)
+            audit_counts = decision_record.get("audit_counts", {})
             m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Critical", decision_record["summary_counts"].get("critical", 0))
-            m2.metric("Major", decision_record["summary_counts"].get("major", 0))
-            m3.metric("Minor", decision_record["summary_counts"].get("minor", 0))
-            m4.metric("Latency", f"{total_latency:.2f} ms")
+            m1.metric("Total Critical", audit_counts.get("total_critical", 0))
+            m2.metric("High-Conf Critical", audit_counts.get("high_conf_critical", 0))
+            m3.metric("Review Required (< Conf)", audit_counts.get("low_conf_review", 0))
+            m4.metric("Triggered Rule Detections", audit_counts.get("rule_triggering", 0))
+            st.caption(f"⏱️ Inspection Latency: Vision {vision_latency:.2f} ms + Advisory {advisory_latency:.2f} ms = **{total_latency:.2f} ms total**")
 
         # Localized Defect Manifest Table
         if defects:
@@ -286,31 +289,48 @@ with tab_inspect:
                 })
             st.dataframe(table_rows, use_container_width=True)
 
-        # Advisory Explanation Panel
+        # Advisory Explanation Panel (Requirement 3: Clean Separation & Primary Llama AI Reasoning)
         adv_metrics = advisory_result.get("metrics", {})
         adv_backend = adv_metrics.get("backend", "deterministic_fallback")
         adv_model_id = adv_metrics.get("model_id", "ipc_expert_rules_engine")
         adv_status = adv_metrics.get("status", "active")
         fallback_reason = adv_metrics.get("fallback_reason")
+        adv = advisory_result["advisory"]
 
-        if adv_backend == "executorch_llama_3.2_1b":
-            st.markdown("### 🤖 Llama 3.2 1B Instruct Advisory (`executorch_llama_3.2_1b`)")
-            st.markdown(f"**Backend:** `executorch_llama_3.2_1b` | **Model ID:** `{adv_model_id}` | **Status:** `{adv_status}`")
-            st.caption(f"⚡ On-Device CPU: Evaluated {adv_metrics.get('tokens_evaluated', 0)} tokens in {adv_metrics.get('latency_ms', 0):.2f} ms ({adv_metrics.get('tokens_per_second', 0):.2f} tok/s, TTFT: {adv_metrics.get('ttft_ms', 0):.2f} ms, Peak RAM: {adv_metrics.get('peak_ram_mb', 0):.1f} MB)")
+        if adv_backend == "executorch_llama_3.2_1b" and adv.get("generated_text"):
+            st.markdown("### 🤖 Primary AI Advisory: Meta Llama 3.2 1B Instruct (`executorch_llama_3.2_1b`)")
+            st.markdown(f"**Execution Backend:** `executorch_llama_3.2_1b` | **Model ID:** `{adv_model_id}` | **Status:** `{adv_status}`")
+            st.caption(f"⚡ On-Device CPU Inference: {adv_metrics.get('tokens_evaluated', 0)} prompt tokens, {adv_metrics.get('tokens_generated', 0)} generated tokens in {adv_metrics.get('latency_ms', 0):.2f} ms ({adv_metrics.get('tokens_per_second', 0):.2f} tok/s, TTFT: {adv_metrics.get('ttft_ms', 0):.2f} ms, Peak RAM: {adv_metrics.get('peak_ram_mb', 0):.1f} MB)")
+            
+            with st.container():
+                st.info(f"**🤖 Primary AI Generated Reasoning:**\n\n> *\"{adv['generated_text']}\"*")
+                
+                st.markdown("#### 🔍 Grounded Inspection Rationale & SOP")
+                st.markdown(f"**Visual Findings:** {adv['what_detected']}")
+                st.markdown(f"**Physical Failure Mechanics:** {adv['why_it_matters']}")
+                st.markdown(f"**Standard Operating Procedure (SOP):** {adv['operator_action']}")
+                st.caption(f"⚠️ *{adv['confidence_caveat']}*")
+
+        elif adv_status in ("fallback_on_incomplete", "fallback_on_error") or fallback_reason:
+            st.markdown("### ⚠️ Quality-Control Advisory: Fallback Activated")
+            st.warning(f"**Llama Advisory Notice**: Status is `{adv_status}` ({fallback_reason or 'No complete sentence formed within budget'}). Deterministic IPC Expert Guidance active.")
+            st.markdown(f"**Active Rules Engine:** `{adv_model_id}` | **Backend:** `{adv_backend}`")
+            
+            with st.container():
+                st.markdown(f"**Visual Findings:** {adv['what_detected']}")
+                st.markdown(f"**Physical Failure Mechanics:** {adv['why_it_matters']}")
+                st.markdown(f"**Recommended Operator Action:** {adv['operator_action']}")
+                st.caption(f"⚠️ *{adv['confidence_caveat']}*")
         else:
-            st.markdown("### 📋 Quality-Control Advisory (`deterministic_fallback`)")
+            st.markdown("### 📋 Fast Deterministic Advisory (`deterministic_fallback`)")
             st.markdown(f"**Backend:** `deterministic_fallback` | **Rules Engine:** `{adv_model_id}` | **Status:** `{adv_status}`")
             st.caption(f"ℹ️ Engineering Guidance Engine active (<1ms deterministic latency: {adv_metrics.get('latency_ms', 0):.2f} ms). Official Llama 3.2 1B ExecuTorch `.pte` model is verified and selectable via sidebar.")
-        
-        adv = advisory_result["advisory"]
-        
-        with st.container():
-            if adv.get("generated_text"):
-                st.info(f"**🤖 Llama 3.2 1B Generated Reasoning Output:**\n\n> *\"{adv['generated_text']}\"*")
-            st.markdown(f"**What was detected:** {adv['what_detected']}")
-            st.markdown(f"**Why it matters:** {adv['why_it_matters']}")
-            st.markdown(f"**Recommended Operator Action:** {adv['operator_action']}")
-            st.caption(f"⚠️ *{adv['confidence_caveat']}*")
+
+            with st.container():
+                st.markdown(f"**Visual Findings:** {adv['what_detected']}")
+                st.markdown(f"**Physical Failure Mechanics:** {adv['why_it_matters']}")
+                st.markdown(f"**Recommended Operator Action:** {adv['operator_action']}")
+                st.caption(f"⚠️ *{adv['confidence_caveat']}*")
 
         # Operator Override Section
         st.markdown("---")

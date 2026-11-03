@@ -33,6 +33,7 @@ class InspectionPayload(BaseModel):
     coverage: float = Field(default=1.0, description="Visual coverage fraction (0.0 to 1.0)")
     defects: List[DefectRecord] = Field(default_factory=list, description="List of detected defects")
     summary_counts: Dict[str, int] = Field(default_factory=dict, description="Counts of critical, major, minor")
+    audit_counts: Optional[Dict[str, int]] = Field(default_factory=dict, description="Detailed counts for dashboard display")
 
 
 class AdvisoryExplanation(BaseModel):
@@ -42,3 +43,4 @@ class AdvisoryExplanation(BaseModel):
     electrical_confirmation_needed: bool = Field(..., description="Whether electrical multimeter/flying-probe test is required")
     confidence_caveat: str = Field(..., description="Explicit disclaimer on optical detection limitations")
     generated_text: Optional[str] = Field(default=None, description="Actual on-device Llama 3.2 generated text")
+    is_complete: bool = Field(default=True, description="Whether generated advisory consists of complete sentences")

@@ -152,14 +152,16 @@ class ExecuTorchLlamaRunner:
             if hasattr(torch, "set_num_threads"):
                 torch.set_num_threads(num_threads)
 
-            # Use concise prompt (35-65 tokens) for bounded edge CPU efficiency
+            # Select prompt tier ('compact' ~32, 'standard' ~64, 'comprehensive' ~96)
+            prompt_tier = kwargs.get("prompt_tier", "standard")
             use_concise = kwargs.get("concise_prompt", True)
             if use_concise:
-                prompt = format_concise_prompt(norm_payload)
+                prompt = format_concise_prompt(norm_payload, tier=prompt_tier)
             else:
                 prompt = format_llama_prompt(norm_payload)
 
-            token_ids = self.tokenizer.encode(prompt, bos=False, eos=False) if self.tokenizer else []
+            # Tokenize with allowed_special='all' so Llama 3 special tokens are parsed correctly
+            token_ids = self.tokenizer.encode(prompt, bos=False, eos=False, allowed_special='all') if self.tokenizer else []
             seq_len = min(len(token_ids), 255)
             eval_tokens = token_ids[:seq_len]
             input_tokens = torch.tensor([eval_tokens], dtype=torch.long)
@@ -171,33 +173,57 @@ class ExecuTorchLlamaRunner:
             t_prefill_end = time.perf_counter()
             ttft_ms = round((t_prefill_end - t_infer_start) * 1000, 2)
 
-            # 2. Autoregressive token generation
+            # 2. Autoregressive token generation with sentence completion
             generated_tokens = []
             curr_pos = len(eval_tokens)
             logits = outputs[0]
-            max_gen = max(0, min(max_new_tokens, 64))
+            max_gen = max(1, min(max_new_tokens, 64))
+            grace_budget = 8  # Allow up to 8 extra tokens to cleanly close the sentence
+            stop_token_ids = {128001, 128008, 128009}  # <|end_of_text|>, <|eom_id|>, <|eot_id|>
 
-            for _ in range(max_gen):
-                # Sample next token greedily
+            total_token_budget = max_gen + grace_budget
+            for step in range(total_token_budget):
                 next_tok = torch.argmax(logits[0]).item()
-                if next_tok in (128001, 128009):  # Meta Llama EOS / EOT tokens
+                if next_tok in stop_token_ids:
                     break
+
                 generated_tokens.append(next_tok)
+
+                # If we passed max_gen, check if sentence boundary was reached
+                if step >= max_gen:
+                    if self.tokenizer:
+                        latest_char = self.tokenizer.decode([next_tok])
+                        if any(p in latest_char for p in (".", "!", "?", "\n")):
+                            break
+
                 in_tok = torch.tensor([[next_tok]], dtype=torch.long)
                 pos = torch.tensor([curr_pos], dtype=torch.long)
                 logits = self.module.forward((in_tok, pos))[0]
                 curr_pos += 1
 
             t_gen_end = time.perf_counter()
-            gen_text = self.tokenizer.decode(generated_tokens) if (self.tokenizer and generated_tokens) else ""
-            clean_gen_text = gen_text.strip().replace("<|eot_id|>", "").replace("<|start_header_id|>", "")
+            raw_gen_text = self.tokenizer.decode(generated_tokens) if (self.tokenizer and generated_tokens) else ""
+            clean_gen_text = (
+                raw_gen_text.strip()
+                .replace("<|eot_id|>", "")
+                .replace("<|start_header_id|>", "")
+                .replace("<|end_header_id|>", "")
+                .replace("<|begin_of_text|>", "")
+                .replace("<|end_of_text|>", "")
+                .strip()
+            )
 
-            # Construct grounded advisory with genuine generated text
-            advisory_obj = generate_fallback_advisory(norm_payload)
-            if clean_gen_text:
-                advisory_obj.generated_text = clean_gen_text
-                # Append Llama reasoning to operator action while preserving deterministic safety rules
-                advisory_obj.operator_action = f"{advisory_obj.operator_action} [Llama 3.2 1B Inference]: {clean_gen_text}"
+            # Verify sentence completeness and truncate dangling incomplete fragments
+            last_punc = max(clean_gen_text.rfind("."), clean_gen_text.rfind("!"), clean_gen_text.rfind("?"))
+            if last_punc != -1 and last_punc >= 15:
+                complete_gen_text = clean_gen_text[:last_punc + 1].strip()
+                is_complete = True
+            elif len(clean_gen_text) >= 20 and clean_gen_text.endswith((".", "!", "?")):
+                complete_gen_text = clean_gen_text
+                is_complete = True
+            else:
+                complete_gen_text = ""
+                is_complete = False
 
             ram_after = process.memory_info().rss / (1024 * 1024)
             total_time_s = t_gen_end - t_infer_start
@@ -205,29 +231,71 @@ class ExecuTorchLlamaRunner:
             tokens_per_sec = round(total_tokens / (total_time_s or 1.0), 2)
             total_latency_ms = round(total_time_s * 1000, 2)
 
-            return {
-                "source": "executorch_llama_3.2_1b",
-                "backend": "executorch_llama_3.2_1b",
-                "model_id": "meta-llama/Llama-3.2-1B-Instruct",
-                "model_version": "Llama-3.2-1B-Instruct",
-                "status": "executed",
-                "fallback_reason": None,
-                "advisory": advisory_obj.model_dump(),
-                "metrics": {
+            if is_complete and complete_gen_text:
+                # Valid Llama generation: create advisory with standalone neural explanation
+                advisory_obj = generate_fallback_advisory(norm_payload)
+                advisory_obj.generated_text = complete_gen_text
+                advisory_obj.is_complete = True
+                # NOTE: Never append Llama text into operator_action; keep them cleanly separated
+
+                return {
+                    "source": "executorch_llama_3.2_1b",
                     "backend": "executorch_llama_3.2_1b",
                     "model_id": "meta-llama/Llama-3.2-1B-Instruct",
                     "model_version": "Llama-3.2-1B-Instruct",
                     "status": "executed",
-                    "model_artifact": self.pte_path.name,
                     "fallback_reason": None,
-                    "tokens_evaluated": len(eval_tokens),
-                    "tokens_generated": len(generated_tokens),
-                    "latency_ms": total_latency_ms,
-                    "ttft_ms": ttft_ms,
-                    "tokens_per_second": tokens_per_sec,
-                    "peak_ram_mb": round(max(ram_before, ram_after), 1)
+                    "advisory": advisory_obj.model_dump(),
+                    "metrics": {
+                        "backend": "executorch_llama_3.2_1b",
+                        "model_id": "meta-llama/Llama-3.2-1B-Instruct",
+                        "model_version": "Llama-3.2-1B-Instruct",
+                        "status": "executed",
+                        "model_artifact": self.pte_path.name,
+                        "fallback_reason": None,
+                        "prompt_tokens": len(eval_tokens),
+                        "tokens_evaluated": len(eval_tokens),
+                        "tokens_generated": len(generated_tokens),
+                        "is_complete": True,
+                        "latency_ms": total_latency_ms,
+                        "ttft_ms": ttft_ms,
+                        "tokens_per_second": tokens_per_sec,
+                        "peak_ram_mb": round(max(ram_before, ram_after), 1)
+                    }
                 }
-            }
+            else:
+                # Incomplete or empty generation: activate clean deterministic fallback
+                advisory_obj = generate_fallback_advisory(norm_payload)
+                advisory_obj.generated_text = None
+                advisory_obj.is_complete = False
+                fallback_reason = "generation_incomplete_or_fragmented"
+
+                return {
+                    "source": "fallback_on_incomplete",
+                    "backend": "deterministic_fallback",
+                    "model_id": "ipc_expert_rules_engine",
+                    "model_version": "None (Deterministic Expert Fallback)",
+                    "status": "fallback_on_incomplete",
+                    "fallback_reason": fallback_reason,
+                    "advisory": advisory_obj.model_dump(),
+                    "metrics": {
+                        "backend": "deterministic_fallback",
+                        "model_id": "ipc_expert_rules_engine",
+                        "model_version": "None (Deterministic Expert Fallback)",
+                        "status": "fallback_on_incomplete",
+                        "model_artifact": self.pte_path.name,
+                        "fallback_reason": fallback_reason,
+                        "raw_incomplete_output": clean_gen_text,
+                        "prompt_tokens": len(eval_tokens),
+                        "tokens_evaluated": len(eval_tokens),
+                        "tokens_generated": len(generated_tokens),
+                        "is_complete": False,
+                        "latency_ms": total_latency_ms,
+                        "ttft_ms": ttft_ms,
+                        "tokens_per_second": tokens_per_sec,
+                        "peak_ram_mb": round(max(ram_before, ram_after), 1)
+                    }
+                }
         except Exception as e:
             # Graceful recovery on any runtime fault
             advisory_obj = generate_fallback_advisory(norm_payload)

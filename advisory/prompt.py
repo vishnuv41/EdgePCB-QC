@@ -62,10 +62,31 @@ def format_llama_prompt(payload: Dict[str, Any]) -> str:
     return prompt
 
 
-def format_concise_prompt(payload: Dict[str, Any]) -> str:
+def format_compact_prompt(payload: Dict[str, Any]) -> str:
     """
-    Constructs an edge-optimized concise prompt (35-65 tokens)
-    fitting within bounded tensor capacity for fast CPU execution.
+    Constructs an ultra-compact prompt (~32-38 tokens)
+    optimized for fast edge CPU prefill (<20s TTFT).
+    """
+    board_id = payload.get("board_id", "PCB")
+    decision = payload.get("decision", "INSPECT")
+    defects = payload.get("defects", [])
+    classes = [d.get("class", "defect") for d in defects] or ["none"]
+    def_str = ", ".join(classes[:2])
+
+    prompt = (
+        f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n"
+        f"EdgePCB-QC: {decision}. Complete sentence only.<|eot_id|>"
+        f"<|start_header_id|>user<|end_header_id|>\n"
+        f"{board_id} {def_str}. Advisory?<|eot_id|>"
+        f"<|start_header_id|>assistant<|end_header_id|>\n"
+    )
+    return prompt
+
+
+def format_standard_prompt(payload: Dict[str, Any]) -> str:
+    """
+    Constructs a balanced standard prompt (~60-66 tokens)
+    directing Llama to explain impact, action, and electrical testing in complete sentences.
     """
     board_id = payload.get("board_id", "PCB")
     decision = payload.get("decision", "INSPECT")
@@ -75,9 +96,50 @@ def format_concise_prompt(payload: Dict[str, Any]) -> str:
 
     prompt = (
         f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n"
-        f"You are EdgePCB-QC Assistant. Explain PCB defects concisely. Decision: {decision}.<|eot_id|>"
+        f"You are EdgePCB-QC Assistant, an edge AI quality inspector. Advise in complete sentences without headers. Decision: {decision}.<|eot_id|>"
         f"<|start_header_id|>user<|end_header_id|>\n"
-        f"Board {board_id} has defects: {def_str}. Provide operator advisory.<|eot_id|>"
+        f"Board {board_id} shows visually suspected {def_str}. State failure risk, electrical test requirements, and operator action.<|eot_id|>"
         f"<|start_header_id|>assistant<|end_header_id|>\n"
     )
     return prompt
+
+
+def format_comprehensive_prompt(payload: Dict[str, Any]) -> str:
+    """
+    Constructs a detailed prompt (~90-96 tokens)
+    including confidence metrics and industrial context.
+    """
+    board_id = payload.get("board_id", "PCB")
+    decision = payload.get("decision", "INSPECT")
+    defects = payload.get("defects", [])
+    classes = [d.get("class", "defect") for d in defects] or ["none"]
+    def_str = ", ".join(classes[:3])
+
+    conf_vals = [f"{d.get('confidence', 0.0)*100:.1f}%" for d in defects if 'confidence' in d]
+    conf_str = f"confidence: {conf_vals[0]}" if conf_vals else "visually suspected"
+
+    prompt = (
+        f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n"
+        f"You are EdgePCB-QC Assistant, an edge industrial quality-control reasoning agent for printed circuit board manufacturing. "
+        f"Explain visual inspection findings concisely in complete sentences. The deterministic decision is {decision}.<|eot_id|>"
+        f"<|start_header_id|>user<|end_header_id|>\n"
+        f"Inspection of {board_id} detected visually suspected {def_str} ({conf_str}). "
+        f"Explain defect failure risks, why electrical testing is required, and recommend operator handling.<|eot_id|>"
+        f"<|start_header_id|>assistant<|end_header_id|>\n"
+    )
+    return prompt
+
+
+def format_concise_prompt(payload: Dict[str, Any], tier: str = "standard") -> str:
+    """
+    Dispatcher for edge-optimized concise prompts across token tiers:
+    - 'compact': ~32-38 tokens
+    - 'standard': ~60-66 tokens
+    - 'comprehensive': ~90-96 tokens
+    """
+    if tier == "compact":
+        return format_compact_prompt(payload)
+    elif tier == "comprehensive":
+        return format_comprehensive_prompt(payload)
+    else:
+        return format_standard_prompt(payload)
