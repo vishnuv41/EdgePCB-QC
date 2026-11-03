@@ -57,17 +57,20 @@ def run_live_test():
     t_vision = (time.perf_counter() - t0) * 1000.0
     print(f"    Extracted {len(anomalies)} discrepancy regions in {t_vision:.2f} ms")
 
-    print("[*] 3. Running Ground-Truth Annotated Inspection...")
-    annotated_defects = cpu_insp.inspect_with_annotations(sample_test_path, sample_anno_path)
-    print(f"    Loaded {len(annotated_defects)} localized defects from annotations:")
-    for d in annotated_defects[:3]:
-        print(f"      - {d['class']:20s} conf={d['confidence']:.2f} loc={d['location']}")
+    print("[*] 3. Running Real Trained Model (best.pt) Inspection...")
+    t_model_0 = time.perf_counter()
+    real_defects = cpu_insp.inspect(test_img)
+    t_model = (time.perf_counter() - t_model_0) * 1000.0
+    print(f"    Detected {len(real_defects)} defect instances in {t_model:.2f} ms using trained best.pt:")
+    for d in real_defects[:3]:
+        bbox = d.get('bbox', [0, 0, 0, 0])
+        print(f"      - {d['class']:20s} conf={d['confidence']:.2f} bbox=[{bbox[0]:.1f}, {bbox[1]:.1f}, {bbox[2]:.1f}, {bbox[3]:.1f}] loc={d['location']}")
 
     print("[*] 4. Evaluating with Deterministic Decision Engine (Consumer Preset)...")
     board_id = f"PCB-VERIFY-{int(time.time()) % 10000}"
     payload = {
         "board_id": board_id,
-        "defects": annotated_defects,
+        "defects": real_defects,
         "coverage": 0.98
     }
     decision_record = engine.evaluate(payload, preset="consumer")

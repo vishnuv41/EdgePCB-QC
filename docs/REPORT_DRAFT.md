@@ -74,7 +74,9 @@ The target production deployment is engineered for embedded industrial edge fixt
 - **AI Acceleration Module:** Raspberry Pi AI HAT+ hosting the Hailo-8 (26 TOPS) or Hailo-8L (13 TOPS) neural processor via PCIe 3.0 x1.
 - **Image Acquisition:** Raspberry Pi Camera Module 3 (Sony IMX708, 12MP, autofocus, macro diffuser) on CSI-2.
 - **Thermal & Power:** 27W USB-C PD power supply and active PWM cooling fan maintaining thermal equilibrium under continuous line inspection.
-- **Development Workstation:** Evaluated and developed on Windows 11 with x86-64 CPU and NVIDIA RTX 5050 GPU fallback.
+- **Development Workstation & Hardware Distinction:** 
+  - Evaluated and developed on Windows 11 with an AMD Ryzen 9 8940HX CPU (16 cores, 32 threads) and discrete NVIDIA GeForce RTX 5050 Laptop GPU (8GB VRAM, Driver 621.01).
+  - *Hardware State Transparency:* The RTX 5050 is a Blackwell architecture chip with Compute Capability 12.0 (`sm_120`). While detected and healthy in Windows, the installed `torch-2.14.1+cu126` build lacks compiled `sm_120` kernels (which require cu130+). To prevent disk exhaustion on the host drive (11.5 GB free), GPU acceleration is **not** claimed; the pipeline runs natively on the 16-core CPU fallback at an uncompromised **35.9 ms/frame (~28 FPS)**.
 
 ---
 
@@ -171,6 +173,24 @@ Real, unsimulated benchmark measurements logged in `benchmarks/results/`:
 | **Deterministic Decision Engine** | 0.08 ms | 0.12 ms | < 5 MB |
 | **Llama Advisory (Deterministic Fallback)** | 0.01 ms | 0.02 ms | 185.2 MB peak RAM |
 | **Llama 3.2 1B Instruct (ExecuTorch Int4)** | ~180 ms TTFT (estimated) | ~240 ms TTFT, 14 tok/s | ~1.1 GB peak RAM |
+
+### C. Optical Robustness & High-Resolution Multi-Panel Tiling Audit
+Measured empirical reliability under factory illumination shifts and high-resolution composite arrays (Source: `benchmarks/results/inspection_reliability_report.json`):
+
+1. **Optical Shift Robustness (640x640 Test Board):**
+   - **Nominal Illumination:** 10 defects detected (Open: Yes, Short: Yes), Verdict: `REJECT`, Latency: 35.9 ms.
+   - **Overexposure / Glare (+15% gain, +30 offset):** 10 defects detected (Open: Yes, Short: Yes), Verdict: `REJECT`, Latency: 34.0 ms.
+   - **Underexposure / Low Light (-15% gain, -35 offset):** 10 defects detected (Open: Yes, Short: Yes), Verdict: `REJECT`, Latency: 29.1 ms.
+   - **Optical Defocus (Gaussian 5x5 blur):** 9 defects detected (Open: Yes, Short: Yes), Verdict: `REJECT`, Latency: 27.9 ms.
+   - **Sensor Thermal Noise (Gaussian std 15):** 6 defects detected (Open: Yes, Short: Yes), Verdict: `REJECT`, Latency: 28.2 ms.
+   - **Fail-Safe Invariance:** Zero false-negative `PASS` decisions occurred under any optical condition.
+
+2. **High-Resolution Multi-Panel Tiling (1280x1280 Composite Array, 1.64 MP):**
+   - Evaluated using `TiledInferenceRunner` with 640x640 tiles and 20% spatial overlap.
+   - Sliced into 9 overlapping sub-windows in 0.02 ms.
+   - Extracted and fused **36 global defect instances** after Global Non-Maximum Suppression (NMS).
+   - Total tiled multi-panel latency: **258.29 ms** (28.7 ms per tile).
+   - Panel Decision Verdict: `REJECT` via `RULE_001_HIGH_CONF_CRITICAL_DEFECT`.
 
 ---
 

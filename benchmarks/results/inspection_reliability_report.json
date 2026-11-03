@@ -1,0 +1,101 @@
+{
+  "timestamp_utc": "2026-11-03T16:11:08Z",
+  "base_image": "00041000_test.jpg",
+  "optical_robustness_test": {
+    "nominal": {
+      "defects_count": 10,
+      "classes_detected": [
+        "short_circuit",
+        "spur",
+        "mouse_bite",
+        "pin_hole_missing_pad",
+        "open_circuit",
+        "spurious_copper"
+      ],
+      "decision": "REJECT",
+      "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT",
+      "requires_electrical_test": true,
+      "latency_ms": 1866.03,
+      "open_circuit_detected": true,
+      "short_circuit_detected": true
+    },
+    "overexposed_glare": {
+      "defects_count": 10,
+      "classes_detected": [
+        "short_circuit",
+        "spur",
+        "mouse_bite",
+        "pin_hole_missing_pad",
+        "open_circuit",
+        "spurious_copper"
+      ],
+      "decision": "REJECT",
+      "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT",
+      "requires_electrical_test": true,
+      "latency_ms": 30.71,
+      "open_circuit_detected": true,
+      "short_circuit_detected": true
+    },
+    "underexposed_dim": {
+      "defects_count": 10,
+      "classes_detected": [
+        "short_circuit",
+        "spur",
+        "mouse_bite",
+        "pin_hole_missing_pad",
+        "open_circuit",
+        "spurious_copper"
+      ],
+      "decision": "REJECT",
+      "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT",
+      "requires_electrical_test": true,
+      "latency_ms": 30.17,
+      "open_circuit_detected": true,
+      "short_circuit_detected": true
+    },
+    "optical_defocus": {
+      "defects_count": 9,
+      "classes_detected": [
+        "short_circuit",
+        "spur",
+        "mouse_bite",
+        "pin_hole_missing_pad",
+        "open_circuit",
+        "spurious_copper"
+      ],
+      "decision": "REJECT",
+      "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT",
+      "requires_electrical_test": true,
+      "latency_ms": 30.09,
+      "open_circuit_detected": true,
+      "short_circuit_detected": true
+    },
+    "sensor_noise": {
+      "defects_count": 6,
+      "classes_detected": [
+        "short_circuit",
+        "spurious_copper",
+        "pin_hole_missing_pad",
+        "open_circuit"
+      ],
+      "decision": "REJECT",
+      "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT",
+      "requires_electrical_test": true,
+      "latency_ms": 28.78,
+      "open_circuit_detected": true,
+      "short_circuit_detected": true
+    }
+  },
+  "high_res_tiling_test": {
+    "composite_dimensions": "1280x1280",
+    "num_tiles": 9,
+    "tile_size": 640,
+    "overlap": 0.2,
+    "fused_defects_count": 36,
+    "total_latency_ms": 276.2,
+    "latency_per_tile_ms": 30.69,
+    "verdict": "REJECT",
+    "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT"
+  },
+  "fail_safe_audit_passed": true
+}

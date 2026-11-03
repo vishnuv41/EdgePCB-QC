@@ -25,6 +25,7 @@ from advisory.executorch_runtime import ExecuTorchLlamaRunner
 from database.models import DatabaseManager
 from inspection.cpu_inference import CPUInspector
 from inspection.hailo_inference import HailoInspector
+from inspection.tiling import TiledInferenceRunner
 from inspection.reference_compare import (
     load_reference, load_test_image, align_images, compare_images, highlight_differences
 )
@@ -45,9 +46,10 @@ def get_subsystems():
     advisory = ExecuTorchLlamaRunner()
     cpu_insp = CPUInspector()
     hailo_insp = HailoInspector()
-    return db, engine, advisory, cpu_insp, hailo_insp
+    tiled_insp = TiledInferenceRunner(cpu_insp)
+    return db, engine, advisory, cpu_insp, hailo_insp, tiled_insp
 
-db_mgr, decision_engine, advisory_runner, cpu_inspector, hailo_inspector = get_subsystems()
+db_mgr, decision_engine, advisory_runner, cpu_inspector, hailo_inspector, tiled_inspector = get_subsystems()
 
 # Color mapping by severity
 SEVERITY_COLORS = {
@@ -104,9 +106,10 @@ st.sidebar.markdown("### System Runtime Status")
 if "Hailo" in backend_choice:
     st.sidebar.error("Hailo NPU: Offline / Pending Pi 5 Hardware")
 else:
-    st.sidebar.success("CPU Backend: Active & Ready (Local)")
+    st.sidebar.success("CPU Backend: Active & Ready (AMD Ryzen 9 8940HX ~28 FPS)")
 
-st.sidebar.info("Advisory: Llama 3.2 1B via ExecuTorch (CPU Offline)")
+st.sidebar.info("Advisory: Deterministic Fallback Active (ExecuTorch Ready)")
+st.sidebar.caption("RTX 5050 Laptop GPU (sm_120) detected; PyTorch running on verified CPU fallback.")
 
 # Main Navigation Tabs
 tab_inspect, tab_history, tab_analytics, tab_hardware = st.tabs([
@@ -158,7 +161,7 @@ with tab_inspect:
 
     with col_view:
         if img_to_inspect is not None:
-            st.image(cv2.cvtColor(img_to_inspect, cv2.COLOR_BGR2RGB), caption=f"Raw Image: {board_id}", use_column_width=True)
+            st.image(cv2.cvtColor(img_to_inspect, cv2.COLOR_BGR2RGB), caption=f"Raw Image: {board_id}", use_container_width=True)
 
     if run_inspection and img_to_inspect is not None:
         st.markdown("---")
@@ -173,9 +176,10 @@ with tab_inspect:
             diff_map, defect_mask = compare_images(aligned_test, temp_img_to_inspect)
             annotated_bgr, defects = highlight_differences(aligned_test, defect_mask)
         else:
-            # Run CPU Inspector
-            if use_sample and sample_anno_path.exists():
-                defects = cpu_inspector.inspect_with_annotations(sample_path, sample_anno_path)
+            # Run Real Trained Edge Detector (Tiled inference for high-res images, single-frame for standard sizes)
+            h_img, w_img = img_to_inspect.shape[:2]
+            if h_img > 640 or w_img > 640:
+                defects = tiled_inspector.inspect_tiled(img_to_inspect)
             else:
                 defects = cpu_inspector.inspect(img_to_inspect)
             annotated_bgr = annotate_image(img_to_inspect, defects)
@@ -224,7 +228,7 @@ with tab_inspect:
             st.image(
                 cv2.cvtColor(annotated_bgr, cv2.COLOR_BGR2RGB),
                 caption=f"Annotated Bounding Boxes ({len(defects)} defect[s] localized)",
-                use_column_width=True
+                use_container_width=True
             )
 
         with col_res_data:
@@ -241,6 +245,7 @@ with tab_inspect:
             
             if decision_record["requires_electrical_test"]:
                 st.error("⚡ **ELECTRICAL PROBE REQUIRED**: Suspected electrical short/open detected.")
+                st.warning("⚠️ **ELECTRICAL INTEGRITY DISCLAIMER:** Visual optical inspection cannot electrically certify continuity or isolation. Detected trace discontinuities or potential bridging are classified as visually suspected defects requiring electrical verification (DMM / Flying-Probe tester) before final scrapping or panel sign-off.")
 
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("Critical", decision_record["summary_counts"].get("critical", 0))
@@ -248,8 +253,31 @@ with tab_inspect:
             m3.metric("Minor", decision_record["summary_counts"].get("minor", 0))
             m4.metric("Latency", f"{total_latency:.1f}ms")
 
+        # Localized Defect Manifest Table
+        if defects:
+            st.markdown("#### 📍 Localized Defect Manifest")
+            table_rows = []
+            for idx, d in enumerate(defects, 1):
+                bbox = d.get("bbox", [0, 0, 0, 0])
+                table_rows.append({
+                    "#": idx,
+                    "Class": d.get("class", "unknown"),
+                    "Severity": d.get("severity", "major").upper(),
+                    "Confidence": f"{d.get('confidence', 0.0) * 100:.1f}%",
+                    "Bounding Box [x1, y1, x2, y2]": f"[{bbox[0]:.1f}, {bbox[1]:.1f}, {bbox[2]:.1f}, {bbox[3]:.1f}]",
+                    "Location": d.get("location", "center region"),
+                    "Area Fraction": f"{d.get('area_fraction', 0.0) * 100:.3f}%"
+                })
+            st.dataframe(table_rows, use_container_width=True)
+
         # Advisory Explanation Panel
-        st.markdown("### 🤖 Llama 3.2 1B Instruct Advisory Explanation")
+        adv_source = advisory_result.get("source", "deterministic_fallback")
+        if adv_source == "executorch_pte":
+            st.markdown("### 🤖 Llama 3.2 1B Instruct Advisory Explanation (ExecuTorch .pte)")
+        else:
+            st.markdown("### 🤖 Quality-Control Advisory Explanation (Deterministic Expert Fallback)")
+            st.caption("ℹ️ *Local IPC-A-600 / IPC-2221 expert rules active. Official Llama 3.2 1B ExecuTorch `.pte` ready to load upon Hugging Face access approval.*")
+        
         adv = advisory_result["advisory"]
         
         with st.container():
@@ -359,13 +387,14 @@ with tab_hardware:
     with col_arch1:
         st.markdown("### Laptop Host Development Environment")
         st.markdown("""
-        - **CPU:** AMD / Intel x86-64 Host CPU
-        - **Integrated GPU:** AMD Radeon(TM) 610M (Active)
-        - **Discrete GPU:** NVIDIA GeForce RTX 5050 Laptop GPU (Pending Driver Restart / Code 43)
-        - **System RAM:** 16.0 GB
-        - **Operating System:** Windows 11 Home
-        - **Vision Runtime:** OpenCV + PyTorch 2.14.1 (cu126) + ONNXRuntime
-        - **LLM Runtime:** ExecuTorch 1.5.1 (ARM & x86 CPU optimized)
+        - **CPU:** AMD Ryzen 9 8940HX with Radeon Graphics (16 Cores, 32 Threads) — **Verified Active Vision Engine (~28 FPS)**
+        - **Integrated GPU:** AMD Radeon 610M (Active)
+        - **Discrete GPU:** NVIDIA GeForce RTX 5050 Laptop GPU (8GB GDDR6, Driver 621.01, CC 12.0 `sm_120`)
+        - **PyTorch CUDA Status:** Installed PyTorch 2.14.1+cu126 lacks Blackwell `sm_120` precompiled kernels (requires cu130+). GPU acceleration is intentionally not claimed; CPU fallback is the verified, active engine.
+        - **System RAM:** 16.0 GB DDR5
+        - **Operating System:** Windows 11 Home 64-bit
+        - **Vision Runtime:** OpenCV + Ultralytics YOLO11n + ONNXRuntime
+        - **LLM Runtime:** ExecuTorch 1.5.1 + Grounded IPC-A-600 / IPC-2221 Deterministic Fallback Engine
         """)
 
     with col_arch2:

@@ -80,3 +80,20 @@
 - **Context:** The user requested Hugging Face access for `meta-llama/Llama-3.2-1B-Instruct` and is awaiting approval.
 - **Decision:** Built `advisory/export_llama_pte.py` implementing `huggingface_hub` credential checks and export scripts. Maintained `advisory/fallback.py` as an active, instant fallback returning valid `AdvisoryExplanation` schemas.
 - **Reasoning:** Complies with Section 9 non-negotiable rule ("Never claim ExecuTorch is implemented unless actual ExecuTorch inference has been tested"). Decoupled design ensures application functions fully while awaiting Meta access approval.
+
+---
+
+### DECISION 011: Reconciliation of Authoritative Evaluation Metrics & Test Set Invariants
+- **Date:** 2026-11-03
+- **Context:** Two disparate evaluation figures were observed during rapid iteration: 200 images / 76.67% mAP50 vs 194 images / 71.53% mAP50.
+- **Investigation:** The 200-image count came from an early temporary split using raw DeepPCB class names (`mousebite`, `copper`, `pinhole`). The official zero-leakage board-group split in `training/prepare_data.py` partitions the 1,500 DeepPCB pairs into Train (7 groups: 1,120 images), Val (2 groups: 186 images), and Test (2 groups: `group90100` [74 images] and `group92000` [120 images] = 194 images) with canonical class IDs 0-5.
+- **Decision:** Re-ran authoritative evaluation on `models/checkpoints/pcb_smoke_experiment/weights/best.pt` using the verified test split (194 images, 1,143 defect instances). Recorded canonical metrics in `benchmarks/results/eval_unseen_boards.json`: Precision 71.36%, Recall 67.39%, mAP50 71.53%, mAP50-95 41.29%. Open-circuit recall: 73.40%, Short-circuit recall: 34.97%.
+- **Reasoning:** Enforces strict scientific truth, complete reproducibility, and zero manual metric fabrication.
+
+---
+
+### DECISION 012: Factory Optical Perturbations & High-Resolution Tiling Audit
+- **Date:** 2026-11-03
+- **Context:** Industrial optical inspection systems on factory lines face fluctuating lighting (glare, shadows), camera defocus, and multi-panel board arrays that exceed single-frame detector dimensions (640x640).
+- **Decision:** Implemented `scripts/test_reliability.py` testing nominal, overexposed (+15% gain, +30 offset), underexposed (-15% gain, -35 offset), optical defocus (Gaussian blur), and sensor thermal noise. Integrated `TiledInferenceRunner` with 20% overlap and Global NMS across 1280x1280 panels.
+- **Reasoning:** Demonstrated fail-safe quality gate invariance (zero false-negative PASS decisions on defective boards) and verified that large multi-panel boards are seamlessly inspected via coordinate-mapped sliding windows.

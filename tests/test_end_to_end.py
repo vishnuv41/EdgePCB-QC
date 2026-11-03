@@ -92,3 +92,53 @@ def test_full_offline_pipeline_flow(tmp_path):
     assert analytics["decisions"]["INSPECT"] == 1
 
     db_mgr.close()
+
+
+def test_real_model_inference_pipeline_flow(tmp_path):
+    """Verifies that actual model weights (best.pt) run without mocking in the end-to-end pipeline."""
+    db_path = tmp_path / "real_model_integration.db"
+    db_mgr = DatabaseManager(db_path)
+    cpu_inspector = CPUInspector()
+    decision_engine = DecisionEngine()
+    advisory_runner = ExecuTorchLlamaRunner()
+
+    assert SAMPLE_IMG.exists(), f"Sample image missing at {SAMPLE_IMG}"
+    assert cpu_inspector.is_loaded is True, "Trained model checkpoint should be loaded"
+
+    # Stage 1: Real Model Vision Inference
+    defects = cpu_inspector.inspect(SAMPLE_IMG)
+    assert len(defects) > 0, "Real YOLO model should detect defect instances from test PCB"
+    for d in defects:
+        assert "class" in d
+        assert "confidence" in d
+        assert "bbox" in d
+        assert len(d["bbox"]) == 4
+        assert "location" in d
+
+    # Stage 2: Decision Engine with real predictions
+    board_id = "PCB-REAL-MODEL-002"
+    payload = {
+        "board_id": board_id,
+        "defects": defects,
+        "coverage": 0.99
+    }
+    decision_res = decision_engine.evaluate(payload, preset="industrial")
+    assert decision_res["decision"] in ["PASS", "INSPECT", "REJECT"]
+
+    # Stage 3: Advisory
+    adv_res = advisory_runner.generate_advisory(decision_res)
+    assert "advisory" in adv_res
+
+    # Stage 4: DB persistence
+    insp_id = db_mgr.log_inspection(
+        board_id=board_id,
+        image_path=str(SAMPLE_IMG),
+        decision_record=decision_res,
+        advisory_record=adv_res["advisory"],
+        timings={"vision_ms": 35.0, "advisory_ms": 1.2, "total_ms": 36.2}
+    )
+    rec = db_mgr.get_inspection(insp_id)
+    assert rec["board_id"] == board_id
+    assert len(rec["defects"]) == len(defects)
+
+    db_mgr.close()

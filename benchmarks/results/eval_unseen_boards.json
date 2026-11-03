@@ -1,5 +1,5 @@
 {
-  "timestamp_utc": "2026-11-03T15:37:30.292567+00:00",
+  "timestamp_utc": "2026-11-03T16:05:42.170073+00:00",
   "weights": "models\\checkpoints\\pcb_smoke_experiment\\weights\\best.pt",
   "split_evaluated": "test",
   "input_resolution": "640x640",
