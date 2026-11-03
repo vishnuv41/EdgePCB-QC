@@ -40,6 +40,9 @@ def evaluate_rules(
     max_minor = preset_config.get("max_minor_defects_allowed", 2)
     min_cov = preset_config.get("min_coverage_required", 0.90)
 
+    # Check for suspected electrical discontinuity or bridging across ALL defects
+    has_electrical_risk = any(d.get("class") in ["open_circuit", "short_circuit"] for d in defects)
+
     # Count defects by severity
     critical_defects = []
     major_defects = []
@@ -63,12 +66,11 @@ def evaluate_rules(
     high_conf_critical = [d for d in critical_defects if float(d.get("confidence", 0.0)) >= reject_conf]
     if high_conf_critical:
         classes = {d.get("class") for d in high_conf_critical}
-        requires_elec = any(c in ["open_circuit", "short_circuit"] for c in classes)
         return RuleResult(
             decision="REJECT",
             rule_id="RULE_001_HIGH_CONF_CRITICAL_DEFECT",
             description=f"Rejected: Detected {len(high_conf_critical)} critical defect(s) ({', '.join(classes)}) with confidence >= {reject_conf:.2f}.",
-            requires_electrical_test=requires_elec
+            requires_electrical_test=has_electrical_risk
         )
 
     # 2. Major defects exceeding preset allowance -> REJECT
@@ -78,7 +80,7 @@ def evaluate_rules(
             decision="REJECT",
             rule_id="RULE_002_EXCESS_MAJOR_DEFECTS",
             description=f"Rejected: Detected {len(high_conf_major)} high-confidence major defect(s); preset allowance is {max_major}.",
-            requires_electrical_test=False
+            requires_electrical_test=has_electrical_risk
         )
 
     # 3. Medium-confidence critical defects -> INSPECT
@@ -88,7 +90,7 @@ def evaluate_rules(
             decision="INSPECT",
             rule_id="RULE_003_SUSPECTED_CRITICAL_DEFECT",
             description=f"Manual Inspection Required: Visually suspected critical defect(s) ({', '.join(classes)}) detected with confidence < {reject_conf:.2f}.",
-            requires_electrical_test=True
+            requires_electrical_test=has_electrical_risk
         )
 
     # 4. Any major defect within threshold -> INSPECT
@@ -98,7 +100,7 @@ def evaluate_rules(
             decision="INSPECT",
             rule_id="RULE_004_MAJOR_DEFECT_FLAGGED",
             description=f"Manual Inspection Required: Detected {len(major_defects)} major defect(s) ({', '.join(classes)}).",
-            requires_electrical_test=False
+            requires_electrical_test=has_electrical_risk
         )
 
     # 5. Insufficient inspection coverage -> INSPECT
@@ -107,7 +109,7 @@ def evaluate_rules(
             decision="INSPECT",
             rule_id="RULE_005_INSUFFICIENT_COVERAGE",
             description=f"Manual Inspection Required: Inspection image coverage ({coverage*100:.1f}%) is below minimum threshold ({min_cov*100:.1f}%).",
-            requires_electrical_test=False
+            requires_electrical_test=has_electrical_risk
         )
 
     # 6. Minor defects exceeding allowed limit -> INSPECT
@@ -116,16 +118,16 @@ def evaluate_rules(
             decision="INSPECT",
             rule_id="RULE_006_EXCESS_MINOR_DEFECTS",
             description=f"Manual Inspection Required: Detected {len(minor_defects)} minor defect(s); threshold is {max_minor}.",
-            requires_electrical_test=False
+            requires_electrical_test=has_electrical_risk
         )
 
     # 7. Unclassified or uncertain anomalies -> INSPECT
-    if low_conf_defects and len(low_conf_defects) > 2:
+    if low_conf_defects:
         return RuleResult(
             decision="INSPECT",
             rule_id="RULE_007_UNCERTAIN_SURFACE_ANOMALIES",
-            description=f"Manual Inspection Required: Multiple uncertain surface anomalies ({len(low_conf_defects)}) below baseline confidence threshold.",
-            requires_electrical_test=False
+            description=f"Manual Inspection Required: Detected {len(low_conf_defects)} low-confidence surface anomalie(s) flagged for operator review.",
+            requires_electrical_test=has_electrical_risk
         )
 
     # 8. All checks passed -> PASS

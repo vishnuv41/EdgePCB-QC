@@ -46,17 +46,21 @@ class InspectionRecord(Base):
     defect_count = Column(Integer, default=0)
     summary_counts_json = Column(Text, nullable=False)  # {"critical": x, "major": y, "minor": z}
     
-    # Advisory outputs
+    # Advisory outputs & explicit backend attribution
     llm_explanation_json = Column(Text, nullable=True)  # AdvisoryExplanation dict
+    advisory_backend = Column(String(64), default="deterministic_fallback", nullable=False)
+    advisory_model_id = Column(String(64), default="ipc_expert_rules_engine", nullable=False)
+    advisory_status = Column(String(32), default="active", nullable=False)
+    advisory_fallback_reason = Column(String(256), nullable=True)
     
     # Operator Override
     operator_override_json = Column(Text, nullable=True)
     final_decision = Column(String(16), index=True, nullable=False)
     
     # Versions & Hardware benchmarks
-    vision_model_version = Column(String(32), default="v1.0")
-    llm_version = Column(String(32), default="Llama-3.2-1B-Instruct")
-    config_version = Column(String(32), default="1.0")
+    vision_model_version = Column(String(64), default="YOLO11n-pcb-v1.0")
+    llm_version = Column(String(64), default="None (Deterministic Expert Fallback)")
+    config_version = Column(String(32), default="1.0-deterministic")
     vision_latency_ms = Column(Float, default=0.0)
     advisory_latency_ms = Column(Float, default=0.0)
     total_latency_ms = Column(Float, default=0.0)
@@ -70,7 +74,40 @@ class DatabaseManager:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.engine = create_engine(f"sqlite:///{self.db_path}", echo=False)
         Base.metadata.create_all(self.engine)
+        self._migrate_schema()
         self.Session = sessionmaker(bind=self.engine)
+
+    def _migrate_schema(self):
+        """Ensures all audit and attribution columns exist in the SQLite database and reconciles history."""
+        try:
+            with self.engine.connect() as conn:
+                result = conn.exec_driver_sql("PRAGMA table_info(inspection_records)")
+                existing_cols = {row[1] for row in result.fetchall()}
+                
+                columns_to_add = [
+                    ("advisory_backend", "VARCHAR(64) DEFAULT 'deterministic_fallback'"),
+                    ("advisory_model_id", "VARCHAR(64) DEFAULT 'ipc_expert_rules_engine'"),
+                    ("advisory_status", "VARCHAR(32) DEFAULT 'active'"),
+                    ("advisory_fallback_reason", "VARCHAR(256) DEFAULT NULL")
+                ]
+                for col_name, col_type in columns_to_add:
+                    if col_name not in existing_cols:
+                        conn.exec_driver_sql(f"ALTER TABLE inspection_records ADD COLUMN {col_name} {col_type}")
+                
+                # Historical integrity reconciliation:
+                # Correct past records where fallback latency (<1ms) was falsely attributed to Llama
+                conn.exec_driver_sql("""
+                    UPDATE inspection_records
+                    SET llm_version = 'None (Deterministic Expert Fallback)',
+                        advisory_backend = 'deterministic_fallback',
+                        advisory_model_id = 'ipc_expert_rules_engine',
+                        advisory_status = 'active',
+                        advisory_fallback_reason = 'historical_sub_millisecond_fallback'
+                    WHERE advisory_latency_ms < 1.0 AND (llm_version LIKE '%Llama%' OR advisory_backend IS NULL)
+                """)
+                conn.commit()
+        except Exception as e:
+            print(f"[i] Schema migration note: {e}")
 
     def close(self):
         """Disposes the database connection pool."""
@@ -82,21 +119,54 @@ class DatabaseManager:
         image_path: str,
         decision_record: Dict[str, Any],
         advisory_record: Optional[Dict[str, Any]] = None,
+        advisory_metrics: Optional[Dict[str, Any]] = None,
         timings: Optional[Dict[str, float]] = None,
-        vision_model_version: str = "v1.0",
-        llm_version: str = "Llama-3.2-1B-Instruct"
+        vision_model_version: str = "YOLO11n-pcb-v1.0",
+        advisory_backend: Optional[str] = None,
+        advisory_model_id: Optional[str] = None,
+        advisory_status: Optional[str] = None,
+        advisory_fallback_reason: Optional[str] = None,
+        llm_version: Optional[str] = None
     ) -> str:
         """
-        Persists a complete end-to-end inspection record to SQLite.
+        Persists a complete end-to-end inspection record to SQLite with truthful attribution.
         Returns the unique inspection_id.
         """
         inspection_id = str(uuid.uuid4())
         timings = timings or {}
+        advisory_metrics = advisory_metrics or {}
         
         defects = decision_record.get("defects", [])
         decision = decision_record.get("decision", "INSPECT")
         summary_counts = decision_record.get("summary_counts", {})
         
+        # Resolve explicit backend attribution
+        backend = (
+            advisory_backend or
+            advisory_metrics.get("backend") or
+            "deterministic_fallback"
+        )
+        model_id = (
+            advisory_model_id or
+            advisory_metrics.get("model_id") or
+            ("meta-llama/Llama-3.2-1B-Instruct" if backend == "executorch_llama_3.2_1b" else "ipc_expert_rules_engine")
+        )
+        status = (
+            advisory_status or
+            advisory_metrics.get("status") or
+            ("executed" if backend == "executorch_llama_3.2_1b" else "active")
+        )
+        fallback_reason = (
+            advisory_fallback_reason or
+            advisory_metrics.get("fallback_reason")
+        )
+
+        # Strictly enforce Llama attribution only when ExecuTorch actually generated/executed
+        if backend == "executorch_llama_3.2_1b" and status == "executed":
+            actual_llm_version = llm_version or advisory_metrics.get("model_version", "Llama-3.2-1B-Instruct")
+        else:
+            actual_llm_version = "None (Deterministic Expert Fallback)"
+
         record = InspectionRecord(
             inspection_id=inspection_id,
             board_id=board_id,
@@ -113,10 +183,14 @@ class DatabaseManager:
             defect_count=len(defects),
             summary_counts_json=json.dumps(summary_counts),
             llm_explanation_json=json.dumps(advisory_record) if advisory_record else None,
+            advisory_backend=backend,
+            advisory_model_id=model_id,
+            advisory_status=status,
+            advisory_fallback_reason=fallback_reason,
             operator_override_json=None,
             vision_model_version=vision_model_version,
-            llm_version=llm_version,
-            config_version=decision_record.get("config_version", "1.0"),
+            llm_version=actual_llm_version,
+            config_version=decision_record.get("config_version", "1.0-deterministic"),
             vision_latency_ms=timings.get("vision_ms", 0.0),
             advisory_latency_ms=timings.get("advisory_ms", 0.0),
             total_latency_ms=timings.get("total_ms", 0.0)
@@ -212,6 +286,10 @@ class DatabaseManager:
             "defect_count": record.defect_count,
             "summary_counts": json.loads(record.summary_counts_json) if record.summary_counts_json else {},
             "llm_explanation": json.loads(record.llm_explanation_json) if record.llm_explanation_json else None,
+            "advisory_backend": getattr(record, "advisory_backend", "deterministic_fallback"),
+            "advisory_model_id": getattr(record, "advisory_model_id", "ipc_expert_rules_engine"),
+            "advisory_status": getattr(record, "advisory_status", "active"),
+            "advisory_fallback_reason": getattr(record, "advisory_fallback_reason", None),
             "operator_override": json.loads(record.operator_override_json) if record.operator_override_json else None,
             "vision_model_version": record.vision_model_version,
             "llm_version": record.llm_version,

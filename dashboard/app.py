@@ -103,9 +103,9 @@ quality_preset = st.sidebar.selectbox(
 
 advisory_mode_choice = st.sidebar.selectbox(
     "Advisory Reasoning Mode",
-    ["Fast Deterministic Fallback (<1ms, IPC-A-600)", "ExecuTorch Llama 3.2 1B (On-Device CPU)"],
+    ["Fast Deterministic Fallback (<1ms, IPC Engineering Guidance)", "ExecuTorch Llama 3.2 1B (On-Device CPU)"],
     index=0,
-    help="Fast mode produces instant IPC-A-600/2221 grounded advice. ExecuTorch runs genuine local Llama 3.2 1B .pte forward evaluation."
+    help="Fast mode produces instant grounded IPC troubleshooting advice. ExecuTorch runs genuine local Llama 3.2 1B .pte forward evaluation."
 )
 
 st.sidebar.markdown("---")
@@ -115,10 +115,10 @@ if "Hailo" in backend_choice:
 else:
     st.sidebar.success("CPU Backend: Active & Ready (AMD Ryzen 9 8940HX ~28 FPS)")
 
-if advisory_runner.is_loaded:
+if "ExecuTorch" in advisory_mode_choice and advisory_runner.is_loaded:
     st.sidebar.success(f"Advisory: ExecuTorch Llama 3.2 1B Active ({advisory_runner.pte_path.name})")
 else:
-    st.sidebar.info("Advisory: Deterministic Fallback Active (ExecuTorch Ready)")
+    st.sidebar.info("Advisory: Deterministic Fallback Active (IPC Engineering Guidance)")
 
 st.sidebar.caption("RTX 5050 Laptop GPU (sm_120) detected; PyTorch running on verified CPU fallback.")
 
@@ -226,11 +226,13 @@ with tab_inspect:
             image_path=str(saved_img_path),
             decision_record=decision_record,
             advisory_record=advisory_result["advisory"],
+            advisory_metrics=advisory_result.get("metrics"),
             timings={
                 "vision_ms": round(vision_latency, 2),
                 "advisory_ms": round(advisory_latency, 2),
                 "total_ms": round(total_latency, 2)
-            }
+            },
+            vision_model_version="YOLO11n-pcb-v1.0"
         )
 
         # Display Results
@@ -256,14 +258,14 @@ with tab_inspect:
             st.markdown(f"*{decision_record['rule_description']}*")
             
             if decision_record["requires_electrical_test"]:
-                st.error("⚡ **ELECTRICAL PROBE REQUIRED**: Suspected electrical short/open detected.")
-                st.warning("⚠️ **ELECTRICAL INTEGRITY DISCLAIMER:** Visual optical inspection cannot electrically certify continuity or isolation. Detected trace discontinuities or potential bridging are classified as visually suspected defects requiring electrical verification (DMM / Flying-Probe tester) before final scrapping or panel sign-off.")
+                st.error("⚡ **ELECTRICAL VERIFICATION MANDATORY**: Visually suspected open or short circuit detected. Electrical continuity/isolation test (DMM / Flying-Probe) is required prior to final disposition.")
+                st.caption("⚠️ *Optical defect detection evaluates surface geometry only; electrical integrity must be verified with contact test equipment before final panel sign-off.*")
 
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("Critical", decision_record["summary_counts"].get("critical", 0))
             m2.metric("Major", decision_record["summary_counts"].get("major", 0))
             m3.metric("Minor", decision_record["summary_counts"].get("minor", 0))
-            m4.metric("Latency", f"{total_latency:.1f}ms")
+            m4.metric("Latency", f"{total_latency:.2f} ms")
 
         # Localized Defect Manifest Table
         if defects:
@@ -275,7 +277,9 @@ with tab_inspect:
                     "#": idx,
                     "Class": d.get("class", "unknown"),
                     "Severity": d.get("severity", "major").upper(),
-                    "Confidence": f"{d.get('confidence', 0.0) * 100:.1f}%",
+                    "Confidence": f"{d.get('confidence', 0.0) * 100:.2f}%",
+                    "Verification Status": d.get("verification_status", "Visually Confirmed"),
+                    "Review Flag": "⚠️ Review Required" if d.get("review_required") else "Confirmed",
                     "Bounding Box [x1, y1, x2, y2]": f"[{bbox[0]:.1f}, {bbox[1]:.1f}, {bbox[2]:.1f}, {bbox[3]:.1f}]",
                     "Location": d.get("location", "center region"),
                     "Area Fraction": f"{d.get('area_fraction', 0.0) * 100:.3f}%"
@@ -283,14 +287,20 @@ with tab_inspect:
             st.dataframe(table_rows, use_container_width=True)
 
         # Advisory Explanation Panel
-        adv_source = advisory_result.get("source") or advisory_result.get("metrics", {}).get("backend", "deterministic_fallback")
         adv_metrics = advisory_result.get("metrics", {})
-        if adv_source in ["executorch_pte", "executorch_cpu"]:
-            st.markdown(f"### 🤖 Llama 3.2 1B Instruct Advisory Explanation (ExecuTorch `{adv_metrics.get('model_artifact', advisory_runner.pte_path.name)}`)")
-            st.caption(f"⚡ *On-Device CPU Evaluation: {adv_metrics.get('tokens_evaluated', 0)} tokens in {adv_metrics.get('latency_ms', 0):.1f}ms ({adv_metrics.get('tokens_per_second', 0):.1f} tok/s, TTFT: {adv_metrics.get('ttft_ms', 0):.1f}ms, Peak RAM: {adv_metrics.get('peak_ram_mb', 0):.1f} MB)*")
+        adv_backend = adv_metrics.get("backend", "deterministic_fallback")
+        adv_model_id = adv_metrics.get("model_id", "ipc_expert_rules_engine")
+        adv_status = adv_metrics.get("status", "active")
+        fallback_reason = adv_metrics.get("fallback_reason")
+
+        if adv_backend == "executorch_llama_3.2_1b":
+            st.markdown("### 🤖 Llama 3.2 1B Instruct Advisory (`executorch_llama_3.2_1b`)")
+            st.markdown(f"**Backend:** `executorch_llama_3.2_1b` | **Model ID:** `{adv_model_id}` | **Status:** `{adv_status}`")
+            st.caption(f"⚡ On-Device CPU: Evaluated {adv_metrics.get('tokens_evaluated', 0)} tokens in {adv_metrics.get('latency_ms', 0):.2f} ms ({adv_metrics.get('tokens_per_second', 0):.2f} tok/s, TTFT: {adv_metrics.get('ttft_ms', 0):.2f} ms, Peak RAM: {adv_metrics.get('peak_ram_mb', 0):.1f} MB)")
         else:
-            st.markdown("### 🤖 Quality-Control Advisory Explanation (Deterministic Expert Fallback)")
-            st.caption("ℹ️ *Local IPC-A-600 / IPC-2221 expert rules active (<1ms deterministic reasoning). Official Llama 3.2 1B ExecuTorch `.pte` model is verified and selectable via sidebar.*")
+            st.markdown("### 📋 Quality-Control Advisory (`deterministic_fallback`)")
+            st.markdown(f"**Backend:** `deterministic_fallback` | **Rules Engine:** `{adv_model_id}` | **Status:** `{adv_status}`")
+            st.caption(f"ℹ️ Engineering Guidance Engine active (<1ms deterministic latency: {adv_metrics.get('latency_ms', 0):.2f} ms). Official Llama 3.2 1B ExecuTorch `.pte` model is verified and selectable via sidebar.")
         
         adv = advisory_result["advisory"]
         
@@ -323,7 +333,7 @@ with tab_inspect:
 # TAB 2: INSPECTION HISTORY & AUDIT
 # -------------------------------------------------------------
 with tab_history:
-    st.subheader("Persistent SQLite Inspection Logs")
+    st.subheader("Persistent SQLite Inspection Logs & Individual Board Audit")
     records = db_mgr.list_inspections(limit=50)
     if not records:
         st.info("No inspection logs recorded yet. Run an inspection from Tab 1 to generate records.")
@@ -336,22 +346,29 @@ with tab_history:
                 "Rule Decision": r["decision"],
                 "Final Decision": r["final_decision"],
                 "Defects": r["defect_count"],
-                "Rule ID": r["rule_id"],
-                "Total Latency": f"{r['total_latency_ms']:.1f} ms",
+                "Electrical Test": "⚡ Required" if r.get("requires_electrical_test") else "No",
+                "Advisory Backend": r.get("advisory_backend", "deterministic_fallback"),
+                "Advisory Model": r.get("llm_version", "None"),
+                "Vision Latency": f"{r['vision_latency_ms']:.2f} ms",
+                "Advisory Latency": f"{r['advisory_latency_ms']:.2f} ms",
+                "Total Latency": f"{r['total_latency_ms']:.2f} ms",
                 "Overridden": "Yes" if r["operator_override"] else "No"
             })
         st.dataframe(table_rows, use_container_width=True)
 
-        selected_id = st.selectbox("View Detailed Audit Payload for Record:", [r["inspection_id"] for r in records])
+        st.markdown("### Individual Board Inspection Audit Record")
+        selected_id = st.selectbox("Select Inspection Record to Inspect Full Audit Payload:", [f"{r['board_id']} ({r['inspection_id']})" for r in records])
         if selected_id:
-            sel_rec = db_mgr.get_inspection(selected_id)
+            raw_uuid = selected_id.split("(")[-1].rstrip(")")
+            sel_rec = db_mgr.get_inspection(raw_uuid)
             st.json(sel_rec)
 
 # -------------------------------------------------------------
 # TAB 3: ANALYTICS & PARETO CHARTS
 # -------------------------------------------------------------
 with tab_analytics:
-    st.subheader("Statistical Process Control & Pareto Distribution")
+    st.subheader("Statistical Process Control & Pareto Distribution (Aggregate)")
+    st.caption("Aggregated statistical analysis across all inspected boards in the local database.")
     stats = db_mgr.get_defect_statistics()
 
     col_chart1, col_chart2 = st.columns(2)

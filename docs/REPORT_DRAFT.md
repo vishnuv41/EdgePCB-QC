@@ -83,8 +83,8 @@ The target production deployment is engineered for embedded industrial edge fixt
 ## 6. Software Architecture & Interfaces
 - **Vision Abstraction (`inspection/base.py`):** Standardized `VisionInspector` class enabling transparent switching between `CPUInspector` (laptop development/PyTorch/ONNX) and `HailoInspector` (HailoRT C++/Python API on ARM64) without touching application logic.
 - **Deterministic Decision Engine (`decision_engine/`):** Evaluates defects against prioritized quality rules (`RULE_001` through `RULE_008`) across configurable presets (`consumer`, `industrial`, `automotive`). Never permits probabilistic LLM decision-making.
-- **Advisory Engine (`advisory/`):** Formats inputs into Llama 3 Instruct tokens. Executes on-device through ExecuTorch, with automatic fallback (`advisory/fallback.py`) providing zero-latency deterministic explanations when LLM weights are unavailable or in export transition.
-- **Persistence Layer (`database/`):** SQLAlchemy ORM over local SQLite (`inspections.db`), storing inspection IDs, defect coordinates, timings, and operator override audits.
+- **Advisory Engine (`advisory/`):** Formats inputs into Llama 3 Instruct tokens. Executes on-device through ExecuTorch, with automatic fallback (`advisory/fallback.py`) providing sub-millisecond deterministic engineering guidance. Enforces explicit backend attribution (`deterministic_fallback` vs `executorch_llama_3.2_1b`), guaranteeing zero attribution of fallback output to Llama.
+- **Persistence Layer (`database/`):** SQLAlchemy ORM over local SQLite (`inspections.db`), storing inspection IDs, defect coordinates, unrounded timings, vision and advisory model versions, electrical test flags, and operator override audits with mandatory technical justification.
 
 ---
 

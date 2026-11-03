@@ -44,8 +44,8 @@ def test_full_offline_pipeline_flow(tmp_path):
     assert decision_res["decision"] in ["PASS", "INSPECT", "REJECT"]
     assert decision_res["rule_id"].startswith("RULE_")
 
-    # Stage 3: LLM Advisory via ExecuTorch
-    advisory_res = advisory_runner.generate_advisory(decision_res)
+    # Stage 3: LLM Advisory via ExecuTorch (fast mode for end-to-end integration testing)
+    advisory_res = advisory_runner.generate_advisory(decision_res, mode="fast")
     assert "advisory" in advisory_res
     adv = advisory_res["advisory"]
     assert len(adv["what_detected"]) > 0
@@ -58,6 +58,7 @@ def test_full_offline_pipeline_flow(tmp_path):
         image_path=str(SAMPLE_IMG),
         decision_record=decision_res,
         advisory_record=adv,
+        advisory_metrics=advisory_res.get("metrics"),
         timings={
             "vision_ms": vision_ms,
             "advisory_ms": advisory_ms,
@@ -126,7 +127,7 @@ def test_real_model_inference_pipeline_flow(tmp_path):
     assert decision_res["decision"] in ["PASS", "INSPECT", "REJECT"]
 
     # Stage 3: Advisory
-    adv_res = advisory_runner.generate_advisory(decision_res)
+    adv_res = advisory_runner.generate_advisory(decision_res, mode="fast")
     assert "advisory" in adv_res
 
     # Stage 4: DB persistence
@@ -135,6 +136,7 @@ def test_real_model_inference_pipeline_flow(tmp_path):
         image_path=str(SAMPLE_IMG),
         decision_record=decision_res,
         advisory_record=adv_res["advisory"],
+        advisory_metrics=adv_res.get("metrics"),
         timings={"vision_ms": 35.0, "advisory_ms": 1.2, "total_ms": 36.2}
     )
     rec = db_mgr.get_inspection(insp_id)

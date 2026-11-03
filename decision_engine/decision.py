@@ -39,10 +39,10 @@ class DecisionEngine:
         if not preset_config:
             raise ValueError(f"Unknown preset '{preset}'. Available: {list(self.config.get('presets', {}).keys())}")
 
-        # Assess severity for each defect
+        # Assess severity for each defect incorporating preset thresholds
         severities = []
         for defect in defects:
-            sev = assess_defect_severity(defect, self.config)
+            sev = assess_defect_severity(defect, self.config, preset=preset)
             defect["severity"] = sev
             severities.append(sev)
 

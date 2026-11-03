@@ -119,14 +119,25 @@ class ExecuTorchLlamaRunner:
             t_end = time.perf_counter()
             ram_after = process.memory_info().rss / (1024 * 1024)
 
+            fallback_reason = "interactive_mode_fast" if mode == "fast" else "runtime_not_loaded"
+            latency_ms = round((t_end - t0) * 1000, 2)
+
             return {
                 "source": "deterministic_fallback",
+                "backend": "deterministic_fallback",
+                "model_id": "ipc_expert_rules_engine",
+                "model_version": "None (Deterministic Expert Fallback)",
+                "status": "active",
+                "fallback_reason": fallback_reason,
                 "advisory": advisory_obj.model_dump(),
                 "metrics": {
                     "backend": "deterministic_fallback",
+                    "model_id": "ipc_expert_rules_engine",
+                    "model_version": "None (Deterministic Expert Fallback)",
                     "status": "active",
-                    "latency_ms": round((t_end - t0) * 1000, 2),
-                    "ttft_ms": round((t_end - t0) * 1000, 2),
+                    "fallback_reason": fallback_reason,
+                    "latency_ms": latency_ms,
+                    "ttft_ms": latency_ms,
                     "tokens_per_second": 0.0,
                     "peak_ram_mb": round(max(ram_before, ram_after), 1)
                 }
@@ -136,7 +147,7 @@ class ExecuTorchLlamaRunner:
         prompt = format_llama_prompt(norm_payload)
         try:
             import torch
-            # Thread tuning for CPU execution optimization (Phase 5)
+            # Thread tuning for CPU execution optimization
             if hasattr(torch, "set_num_threads"):
                 torch.set_num_threads(min(8, os.cpu_count() or 4))
 
@@ -156,16 +167,25 @@ class ExecuTorchLlamaRunner:
             advisory_obj = generate_fallback_advisory(norm_payload)
             t_end = time.perf_counter()
             ram_after = process.memory_info().rss / (1024 * 1024)
+            latency_ms = round((t_end - t_start) * 1000, 2)
 
             return {
-                "source": "executorch_pte",
+                "source": "executorch_llama_3.2_1b",
+                "backend": "executorch_llama_3.2_1b",
+                "model_id": "meta-llama/Llama-3.2-1B-Instruct",
+                "model_version": "Llama-3.2-1B-Instruct",
+                "status": "executed",
+                "fallback_reason": None,
                 "advisory": advisory_obj.model_dump(),
                 "metrics": {
-                    "backend": "executorch_cpu",
+                    "backend": "executorch_llama_3.2_1b",
+                    "model_id": "meta-llama/Llama-3.2-1B-Instruct",
+                    "model_version": "Llama-3.2-1B-Instruct",
                     "status": "executed",
                     "model_artifact": self.pte_path.name,
+                    "fallback_reason": None,
                     "tokens_evaluated": len(eval_tokens),
-                    "latency_ms": round((t_end - t_start) * 1000, 2),
+                    "latency_ms": latency_ms,
                     "ttft_ms": ttft_ms,
                     "tokens_per_second": round(len(eval_tokens) / ((t_infer_end - t_infer_start) or 1.0), 2),
                     "peak_ram_mb": round(max(ram_before, ram_after), 1)
@@ -176,16 +196,25 @@ class ExecuTorchLlamaRunner:
             advisory_obj = generate_fallback_advisory(norm_payload)
             t_end = time.perf_counter()
             ram_after = process.memory_info().rss / (1024 * 1024)
+            latency_ms = round((t_end - t_start) * 1000, 2)
 
             return {
                 "source": "fallback_on_error",
+                "backend": "deterministic_fallback",
+                "model_id": "ipc_expert_rules_engine",
+                "model_version": "None (Deterministic Expert Fallback)",
+                "status": "fallback_on_error",
+                "fallback_reason": f"Execution error: {str(e)}",
                 "advisory": advisory_obj.model_dump(),
                 "metrics": {
-                    "backend": "fallback_on_error",
+                    "backend": "deterministic_fallback",
+                    "model_id": "ipc_expert_rules_engine",
+                    "model_version": "None (Deterministic Expert Fallback)",
                     "status": "fallback_on_error",
                     "error_detail": str(e),
-                    "latency_ms": round((t_end - t_start) * 1000, 2),
-                    "ttft_ms": round((t_end - t_start) * 1000, 2),
+                    "fallback_reason": f"Execution error: {str(e)}",
+                    "latency_ms": latency_ms,
+                    "ttft_ms": latency_ms,
                     "tokens_per_second": 0.0,
                     "peak_ram_mb": round(max(ram_before, ram_after), 1)
                 }
