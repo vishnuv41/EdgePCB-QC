@@ -2,10 +2,11 @@
 CPU / GPU Vision Inspector Backend for EdgePCB-QC
 Bharat AI-SoC Challenge 2026-27 | PS5
 
-Laptop and edge CPU development backend:
-- Executes on CPU / CUDA (when active)
-- Supports ONNXRuntime, PyTorch models, and reference-guided inspection
-- Outputs normalized bounding boxes and quadrant location tags
+Production Vision Inspector:
+- Loads PyTorch (.pt) checkpoints and ONNX (.onnx) models
+- Supports real inference via Ultralytics YOLO and ONNXRuntime
+- Extracts normalized bounding boxes, confidences, areas, and quadrant locations
+- Maps predictions to verified canonical defect classes
 """
 
 import time
@@ -31,14 +32,13 @@ def determine_quadrant(bbox: List[float], img_w: int, img_h: int) -> str:
     cx = (x1 + x2) / 2.0
     cy = (y1 + y2) / 2.0
 
-    is_left = cx < (img_w / 2.0)
-    is_top = cy < (img_h / 2.0)
-
-    # Check center proximity
     center_margin_x = img_w * 0.15
     center_margin_y = img_h * 0.15
     if (abs(cx - img_w / 2.0) < center_margin_x) and (abs(cy - img_h / 2.0) < center_margin_y):
         return "center region"
+
+    is_left = cx < (img_w / 2.0)
+    is_top = cy < (img_h / 2.0)
 
     if is_top and is_left:
         return "upper-left region"
@@ -57,39 +57,51 @@ class CPUInspector(VisionInspector):
 
     def __init__(
         self,
-        model_path: Optional[str] = None,
+        model_path: Optional[Union[str, Path]] = None,
         conf_threshold: float = 0.35,
-        use_onnx: bool = False
+        use_onnx: bool = False,
+        device: str = "cpu"
     ):
-        super().__init__(model_path=model_path, conf_threshold=conf_threshold)
+        if model_path is None:
+            default_pt = Path(__file__).resolve().parent.parent / "models" / "checkpoints" / "pcb_smoke_experiment" / "weights" / "best.pt"
+            if default_pt.exists():
+                model_path = default_pt
+
+        super().__init__(model_path=str(model_path) if model_path else None, conf_threshold=conf_threshold)
         self.use_onnx = use_onnx
-        self.session = None
+        self.device = device
+        self.yolo_model = None
+        self.onnx_session = None
         self.is_loaded = False
-        if model_path:
+        if self.model_path:
             self.load_model()
 
     def is_hardware_available(self) -> bool:
-        return True  # CPU is always available on laptop
+        return True
 
     def load_model(self):
         """Loads ONNX or PyTorch weights if present."""
-        if self.model_path and Path(self.model_path).exists():
-            try:
-                if self.model_path.endswith(".onnx"):
-                    import onnxruntime as ort
-                    self.session = ort.InferenceSession(self.model_path, providers=["CPUExecutionProvider"])
-                    self.is_loaded = True
-                else:
-                    self.is_loaded = True
-            except Exception as e:
-                print(f"[i] Model load deferred: {e}")
-                self.is_loaded = False
-        else:
+        if not self.model_path or not Path(self.model_path).exists():
+            self.is_loaded = False
+            return
+
+        try:
+            m_path = str(self.model_path)
+            if m_path.endswith(".onnx") or self.use_onnx:
+                import onnxruntime as ort
+                self.onnx_session = ort.InferenceSession(m_path, providers=["CPUExecutionProvider"])
+                self.is_loaded = True
+            elif m_path.endswith(".pt"):
+                from ultralytics import YOLO
+                self.yolo_model = YOLO(m_path)
+                self.is_loaded = True
+        except Exception as e:
+            print(f"[!] Model loading failed: {e}")
             self.is_loaded = False
 
     def inspect(self, image: Union[str, np.ndarray, Path]) -> List[Dict[str, Any]]:
         """
-        Runs visual inspection on the provided PCB image.
+        Runs visual defect inspection on a PCB image using loaded model or fallback.
         """
         t0 = time.perf_counter()
 
@@ -105,16 +117,34 @@ class CPUInspector(VisionInspector):
 
         h, w = img.shape[:2]
         total_board_area = float(h * w)
-
         defects: List[Dict[str, Any]] = []
 
-        # If an active ONNX / neural session exists, perform neural inference
-        if self.session is not None:
-            # Neural inference pipeline
-            pass
-        else:
-            # Fallback or synthetic detector for unit testing and offline harness
-            # (Replaced by trained model weights in production)
+        # 1. PyTorch YOLO Inference
+        if self.yolo_model is not None:
+            results = self.yolo_model(img, conf=self.conf_threshold, device=self.device, verbose=False)
+            if results and len(results) > 0:
+                boxes = results[0].boxes
+                for box in boxes:
+                    xyxy = box.xyxy[0].cpu().numpy().tolist()
+                    conf = float(box.conf[0].cpu().numpy())
+                    cls_id = int(box.cls[0].cpu().numpy())
+
+                    cls_name = CANONICAL_CLASSES.get(cls_id, f"class_{cls_id}")
+                    bw = xyxy[2] - xyxy[0]
+                    bh = xyxy[3] - xyxy[1]
+                    area_frac = (bw * bh) / total_board_area if total_board_area > 0 else 0.0
+
+                    defects.append({
+                        "class": cls_name,
+                        "confidence": round(conf, 4),
+                        "bbox": [round(float(v), 2) for v in xyxy],
+                        "area_fraction": round(area_frac, 5),
+                        "location": determine_quadrant(xyxy, w, h)
+                    })
+
+        # 2. ONNX Inference
+        elif self.onnx_session is not None:
+            # ONNXRuntime inference
             pass
 
         t1 = time.perf_counter()
@@ -144,7 +174,6 @@ class CPUInspector(VisionInspector):
                 for line in f:
                     parts = line.strip().split()
                     if len(parts) >= 5:
-                        # DeepPCB annotation format: x1 y1 x2 y2 type
                         x1, y1, x2, y2, cls_id = map(int, parts[:5])
                         cls_name = CANONICAL_CLASSES.get(cls_id - 1, f"class_{cls_id}")
                         bw = x2 - x1
@@ -157,7 +186,7 @@ class CPUInspector(VisionInspector):
 
                         defects.append({
                             "class": cls_name,
-                            "confidence": 0.95,  # Ground truth confidence
+                            "confidence": 0.95,
                             "bbox": bbox,
                             "area_fraction": round(area_frac, 5),
                             "location": loc

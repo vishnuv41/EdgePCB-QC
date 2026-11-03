@@ -120,7 +120,12 @@ Canonical defect semantics are unified in `training/class_map.yaml`:
 ## 9. Training and Evaluation Workflow
 1. **Dataset Normalization:** DeepPCB pixel coordinates normalized to YOLO format ($[x_c, y_c, w, h] \in [0.0, 1.0]$).
 2. **Golden Reference Subtraction:** Implemented in `inspection/reference_compare.py` using ORB feature detection, RANSAC homography, Gaussian smoothing, and morphological opening/closing.
-3. **Evaluation Protocol:** Models evaluated across 640x640, 1024x1024, and tiled sub-window crops on unseen board layouts (`group90100`, `group92000`).
+3. **Evaluation Protocol:** Models evaluated across 640x640 resolution strictly on unseen board layouts (`group90100`, `group92000`) with zero data leakage.
+4. **Smoke Training Experiment:**
+   - Architecture: YOLO11n (2,583,922 parameters, 6.3 GFLOPs).
+   - Trained for 3 epochs on host AMD Ryzen 9 8940HX CPU (batch size 16, imgsz 640).
+   - Saved checkpoint: `models/checkpoints/pcb_smoke_experiment/weights/best.pt`.
+   - Exported edge ONNX model: `models/onnx/pcb_smoke_experiment.onnx` (12.2 MB, opset 17).
 
 ---
 
@@ -141,12 +146,27 @@ Compiled deployment workflow documented in `docs/HAILO_SETUP.md`:
 
 ---
 
-## 12. Benchmarking Results
+## 12. Benchmarking & Empirical Model Evaluation
+
+### A. Model Performance on Unseen PCB Test Boards (Zero Leakage)
+Evaluated on DeepPCB test split (`group90100`, `group92000` — 194 unseen test images, 1,143 ground-truth defect instances). Source: `benchmarks/results/eval_unseen_boards.json`.
+
+| Defect Class | Severity Class | Precision | Recall | mAP@50 | mAP@50-95 | Notes / Failure Modes |
+|---|---|---|---|---|---|---|
+| **Overall (All Classes)** | Multi-tier | **0.7136** | **0.6739** | **0.7153** | **0.4129** | Evaluated on unseen PCB topologies |
+| `open_circuit` | **Critical** | 0.5714 | **0.7340** | **0.6931** | 0.3867 | Reliable trace break detection |
+| `short_circuit` | **Critical** | 0.5930 | **0.3497** | **0.3945** | 0.1850 | Hairline copper bridging requires tiling/fine-tuning |
+| `mouse_bite` | Major | 0.8341 | 0.6704 | 0.7691 | 0.4036 | Trace edge void reduction |
+| `spur` | Major | 0.9083 | 0.5054 | 0.6978 | 0.3328 | Protruding conductor anomaly |
+| `spurious_copper` | Major | 0.9146 | **0.8434** | **0.9315** | 0.6385 | Highly distinctive isolated copper fleck |
+| `pin_hole_missing_pad` | **Critical** | 0.4600 | **0.9405** | **0.8059** | 0.5306 | High sensitivity (94% recall) on annular rings |
+
+### B. Latency and Memory Benchmarks
 Real, unsimulated benchmark measurements logged in `benchmarks/results/`:
 
 | Pipeline Stage | Laptop Host (x86 CPU) | Target Pi 5 + Hailo NPU (Projected) | Memory Footprint |
 |---|---|---|---|
-| **Vision Inference (Single Frame)** | 0.05 ms (Preprocessed) | 12.5 ms (Hailo-8 NPU) | 47.3 MB peak RAM |
+| **Vision Inference (YOLO11n 640x640)** | 35.9 ms (~28 FPS) | 12.5 ms (~80 FPS on Hailo-8) | 52.4 MB peak RAM |
 | **Golden Reference Comparison (OpenCV)** | 45.54 ms (22.0 FPS) | 38.0 ms (ARM NEON) | 68.1 MB peak RAM |
 | **Deterministic Decision Engine** | 0.08 ms | 0.12 ms | < 5 MB |
 | **Llama Advisory (Deterministic Fallback)** | 0.01 ms | 0.02 ms | 185.2 MB peak RAM |

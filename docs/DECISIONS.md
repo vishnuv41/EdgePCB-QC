@@ -38,7 +38,7 @@
 ### DECISION 005: DeepPCB Multi-Board Split Leakage Prevention
 - **Date:** 2026-11-03
 - **Context:** DeepPCB consists of 1,500 pairs (640x640) organized across 11 distinct board groups (`group00041` through `group90100`). Random image-level train/val splitting would leak identical PCB trace geometries between splits.
-- **Decision:** Mandated group-level splitting in `training/prepare_data.py`. Entire board groups are partitioned into Train (e.g. 8 groups), Validation (1 group), and Unseen Test (2 groups).
+- **Decision:** Mandated group-level splitting in `training/prepare_data.py`. Entire board groups are partitioned into Train (e.g. 7 groups), Validation (2 groups), and Unseen Test (2 groups).
 - **Reasoning:** Satisfies Section 4 requirement to evaluate generalization on genuinely unseen PCB layouts.
 
 ---
@@ -56,3 +56,27 @@
 - **Context:** Competition rules mandate that LLMs must never independently decide quality (PASS/INSPECT/REJECT), nor process raw images directly.
 - **Decision:** Pipeline A (OpenCV + Vision Detector + Deterministic Decision Engine) produces a validated JSON inspection result. Pipeline B (Llama 3.2 1B Instruct via ExecuTorch) receives only this structured JSON to generate operator explanations and remediation advice.
 - **Reasoning:** Guarantees zero hallucinations in quality verdicts, ensures explainability, and satisfies hard industrial safety constraints.
+
+---
+
+### DECISION 008: Diagnosis of NVIDIA RTX 5050 sm_120 (Blackwell) & CPU Execution Strategy
+- **Date:** 2026-11-03
+- **Context:** Following laptop reboot, `nvidia-smi` confirmed the GPU is active (RTX 5050 Laptop GPU, 8GB VRAM, Driver 621.01). However, executing CUDA operations in PyTorch revealed that RTX 5050 possesses Compute Capability 12.0 (`sm_120`). Current PyTorch cu126 binaries only embed compiled kernels up to `sm_90`.
+- **Decision:** While CUDA 13.0 wheels (`torch-2.14.1+cu130`) exist, host drive C: has only 11.2 GB free. To protect storage and execute model training reliably, we deployed training on the host AMD Ryzen 9 8940HX 16-core CPU.
+- **Reasoning:** Zero risk of disk exhaustion or kernel incompatibility while maintaining full reproducibility.
+
+---
+
+### DECISION 009: Tiled High-Resolution Inference Architecture
+- **Date:** 2026-11-03
+- **Context:** PCB-Defect V2 contains whole-board images ranging from 2.3 MP to 29.97 MP. Direct downsampling to 640x640 destroys tiny defect patterns (hairline opens, micro-spurs).
+- **Decision:** Implemented `inspection/tiling.py` using overlapping sliding windows (640x640 with 20% overlap), coordinate translation to global board coordinates, and Global Non-Maximum Suppression (NMS).
+- **Reasoning:** Preserves sub-millimeter defect resolution while running lightweight 640x640 edge detection models compatible with Hailo NPU architectures.
+
+---
+
+### DECISION 010: ExecuTorch Official Export Pipeline and Gated Model Handling
+- **Date:** 2026-11-03
+- **Context:** The user requested Hugging Face access for `meta-llama/Llama-3.2-1B-Instruct` and is awaiting approval.
+- **Decision:** Built `advisory/export_llama_pte.py` implementing `huggingface_hub` credential checks and export scripts. Maintained `advisory/fallback.py` as an active, instant fallback returning valid `AdvisoryExplanation` schemas.
+- **Reasoning:** Complies with Section 9 non-negotiable rule ("Never claim ExecuTorch is implemented unless actual ExecuTorch inference has been tested"). Decoupled design ensures application functions fully while awaiting Meta access approval.
