@@ -1,0 +1,1605 @@
+{
+  "board_id": "PCB-5655",
+  "image_metadata": {
+    "path": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\datasets\\inspected_captures\\PCB-5655_1793785655.jpg",
+    "width": 226,
+    "height": 226,
+    "channels": 3,
+    "sha256": "ac859397b0fbbe8aee66446b690d7cb30732fe3e7065c32fb624873ec349bc79",
+    "file_size": 13728
+  },
+  "preprocessing_parity": {
+    "dashboard_uses_bgr": true,
+    "direct_inference_uses_bgr": true,
+    "ultralytics_internal_rgb_conversion": true,
+    "identical_letterbox": true
+  },
+  "inference_across_thresholds": {
+    "0.05": {
+      "detections_count": 48,
+      "detections": [
+        {
+          "cls_id": 1,
+          "class_name": "short_circuit",
+          "conf": 0.7065,
+          "bbox": [
+            84,
+            103,
+            118,
+            131
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5692,
+          "bbox": [
+            35,
+            102,
+            66,
+            118
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5159,
+          "bbox": [
+            147,
+            27,
+            172,
+            41
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5047,
+          "bbox": [
+            170,
+            117,
+            198,
+            134
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.4669,
+          "bbox": [
+            63,
+            156,
+            91,
+            172
+          ]
+        },
+        {
+          "cls_id": 1,
+          "class_name": "short_circuit",
+          "conf": 0.4461,
+          "bbox": [
+            207,
+            103,
+            226,
+            132
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3963,
+          "bbox": [
+            207,
+            157,
+            225,
+            171
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3889,
+          "bbox": [
+            92,
+            26,
+            116,
+            39
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3332,
+          "bbox": [
+            3,
+            158,
+            25,
+            172
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3253,
+          "bbox": [
+            206,
+            103,
+            225,
+            133
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.288,
+          "bbox": [
+            0,
+            50,
+            14,
+            60
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2834,
+          "bbox": [
+            190,
+            26,
+            208,
+            38
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2616,
+          "bbox": [
+            0,
+            52,
+            14,
+            61
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2575,
+          "bbox": [
+            155,
+            87,
+            171,
+            96
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2517,
+          "bbox": [
+            112,
+            139,
+            136,
+            151
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2478,
+          "bbox": [
+            47,
+            65,
+            81,
+            74
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.244,
+          "bbox": [
+            155,
+            89,
+            171,
+            98
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2425,
+          "bbox": [
+            171,
+            115,
+            196,
+            130
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2403,
+          "bbox": [
+            93,
+            29,
+            116,
+            42
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2372,
+          "bbox": [
+            112,
+            138,
+            137,
+            148
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2172,
+          "bbox": [
+            154,
+            86,
+            170,
+            94
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.217,
+          "bbox": [
+            189,
+            24,
+            208,
+            36
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2104,
+          "bbox": [
+            208,
+            154,
+            225,
+            168
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2099,
+          "bbox": [
+            48,
+            66,
+            81,
+            75
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2095,
+          "bbox": [
+            4,
+            156,
+            25,
+            169
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2067,
+          "bbox": [
+            0,
+            49,
+            14,
+            58
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1833,
+          "bbox": [
+            65,
+            155,
+            89,
+            169
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1704,
+          "bbox": [
+            133,
+            51,
+            142,
+            59
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1598,
+          "bbox": [
+            132,
+            53,
+            142,
+            60
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1505,
+          "bbox": [
+            86,
+            89,
+            100,
+            98
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.148,
+          "bbox": [
+            86,
+            87,
+            100,
+            96
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1439,
+          "bbox": [
+            1,
+            160,
+            26,
+            174
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1275,
+          "bbox": [
+            180,
+            165,
+            194,
+            173
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1223,
+          "bbox": [
+            86,
+            86,
+            100,
+            94
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1223,
+          "bbox": [
+            45,
+            63,
+            82,
+            72
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1153,
+          "bbox": [
+            38,
+            105,
+            64,
+            121
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1151,
+          "bbox": [
+            180,
+            164,
+            194,
+            172
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.112,
+          "bbox": [
+            47,
+            67,
+            82,
+            78
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1102,
+          "bbox": [
+            112,
+            142,
+            136,
+            153
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1078,
+          "bbox": [
+            190,
+            22,
+            209,
+            34
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1074,
+          "bbox": [
+            180,
+            162,
+            194,
+            170
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1022,
+          "bbox": [
+            191,
+            28,
+            208,
+            40
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.099,
+          "bbox": [
+            131,
+            50,
+            142,
+            58
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.0866,
+          "bbox": [
+            147,
+            25,
+            173,
+            39
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.0853,
+          "bbox": [
+            0,
+            49,
+            38,
+            58
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.0834,
+          "bbox": [
+            112,
+            137,
+            137,
+            146
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.0813,
+          "bbox": [
+            15,
+            65,
+            82,
+            75
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.0614,
+          "bbox": [
+            0,
+            52,
+            39,
+            60
+          ]
+        }
+      ],
+      "annotated_image": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\benchmarks\\results\\pcb_5655_investigation\\pcb_5655_conf_05.jpg"
+    },
+    "0.1": {
+      "detections_count": 42,
+      "detections": [
+        {
+          "cls_id": 1,
+          "class_name": "short_circuit",
+          "conf": 0.7065,
+          "bbox": [
+            84,
+            103,
+            118,
+            131
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5692,
+          "bbox": [
+            35,
+            102,
+            66,
+            118
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5159,
+          "bbox": [
+            147,
+            27,
+            172,
+            41
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5047,
+          "bbox": [
+            170,
+            117,
+            198,
+            134
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.4669,
+          "bbox": [
+            63,
+            156,
+            91,
+            172
+          ]
+        },
+        {
+          "cls_id": 1,
+          "class_name": "short_circuit",
+          "conf": 0.4461,
+          "bbox": [
+            207,
+            103,
+            226,
+            132
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3963,
+          "bbox": [
+            207,
+            157,
+            225,
+            171
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3889,
+          "bbox": [
+            92,
+            26,
+            116,
+            39
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3332,
+          "bbox": [
+            3,
+            158,
+            25,
+            172
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3253,
+          "bbox": [
+            206,
+            103,
+            225,
+            133
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.288,
+          "bbox": [
+            0,
+            50,
+            14,
+            60
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2834,
+          "bbox": [
+            190,
+            26,
+            208,
+            38
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2616,
+          "bbox": [
+            0,
+            52,
+            14,
+            61
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2575,
+          "bbox": [
+            155,
+            87,
+            171,
+            96
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2517,
+          "bbox": [
+            112,
+            139,
+            136,
+            151
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2478,
+          "bbox": [
+            47,
+            65,
+            81,
+            74
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.244,
+          "bbox": [
+            155,
+            89,
+            171,
+            98
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2425,
+          "bbox": [
+            171,
+            115,
+            196,
+            130
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2403,
+          "bbox": [
+            93,
+            29,
+            116,
+            42
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2372,
+          "bbox": [
+            112,
+            138,
+            137,
+            148
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2172,
+          "bbox": [
+            154,
+            86,
+            170,
+            94
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.217,
+          "bbox": [
+            189,
+            24,
+            208,
+            36
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2104,
+          "bbox": [
+            208,
+            154,
+            225,
+            168
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2099,
+          "bbox": [
+            48,
+            66,
+            81,
+            75
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2095,
+          "bbox": [
+            4,
+            156,
+            25,
+            169
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2067,
+          "bbox": [
+            0,
+            49,
+            14,
+            58
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1833,
+          "bbox": [
+            65,
+            155,
+            89,
+            169
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1704,
+          "bbox": [
+            133,
+            51,
+            142,
+            59
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1598,
+          "bbox": [
+            132,
+            53,
+            142,
+            60
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1505,
+          "bbox": [
+            86,
+            89,
+            100,
+            98
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.148,
+          "bbox": [
+            86,
+            87,
+            100,
+            96
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1439,
+          "bbox": [
+            1,
+            160,
+            26,
+            174
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1275,
+          "bbox": [
+            180,
+            165,
+            194,
+            173
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1223,
+          "bbox": [
+            86,
+            86,
+            100,
+            94
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1223,
+          "bbox": [
+            45,
+            63,
+            82,
+            72
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1153,
+          "bbox": [
+            38,
+            105,
+            64,
+            121
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1151,
+          "bbox": [
+            180,
+            164,
+            194,
+            172
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.112,
+          "bbox": [
+            47,
+            67,
+            82,
+            78
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1102,
+          "bbox": [
+            112,
+            142,
+            136,
+            153
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1078,
+          "bbox": [
+            190,
+            22,
+            209,
+            34
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1074,
+          "bbox": [
+            180,
+            162,
+            194,
+            170
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1022,
+          "bbox": [
+            191,
+            28,
+            208,
+            40
+          ]
+        }
+      ],
+      "annotated_image": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\benchmarks\\results\\pcb_5655_investigation\\pcb_5655_conf_10.jpg"
+    },
+    "0.15": {
+      "detections_count": 30,
+      "detections": [
+        {
+          "cls_id": 1,
+          "class_name": "short_circuit",
+          "conf": 0.7065,
+          "bbox": [
+            84,
+            103,
+            118,
+            131
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5692,
+          "bbox": [
+            35,
+            102,
+            66,
+            118
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5159,
+          "bbox": [
+            147,
+            27,
+            172,
+            41
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5047,
+          "bbox": [
+            170,
+            117,
+            198,
+            134
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.4669,
+          "bbox": [
+            63,
+            156,
+            91,
+            172
+          ]
+        },
+        {
+          "cls_id": 1,
+          "class_name": "short_circuit",
+          "conf": 0.4461,
+          "bbox": [
+            207,
+            103,
+            226,
+            132
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3963,
+          "bbox": [
+            207,
+            157,
+            225,
+            171
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3889,
+          "bbox": [
+            92,
+            26,
+            116,
+            39
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3332,
+          "bbox": [
+            3,
+            158,
+            25,
+            172
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3253,
+          "bbox": [
+            206,
+            103,
+            225,
+            133
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.288,
+          "bbox": [
+            0,
+            50,
+            14,
+            60
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2834,
+          "bbox": [
+            190,
+            26,
+            208,
+            38
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2616,
+          "bbox": [
+            0,
+            52,
+            14,
+            61
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2575,
+          "bbox": [
+            155,
+            87,
+            171,
+            96
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2517,
+          "bbox": [
+            112,
+            139,
+            136,
+            151
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2478,
+          "bbox": [
+            47,
+            65,
+            81,
+            74
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.244,
+          "bbox": [
+            155,
+            89,
+            171,
+            98
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2425,
+          "bbox": [
+            171,
+            115,
+            196,
+            130
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2403,
+          "bbox": [
+            93,
+            29,
+            116,
+            42
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2372,
+          "bbox": [
+            112,
+            138,
+            137,
+            148
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2172,
+          "bbox": [
+            154,
+            86,
+            170,
+            94
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.217,
+          "bbox": [
+            189,
+            24,
+            208,
+            36
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2104,
+          "bbox": [
+            208,
+            154,
+            225,
+            168
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2099,
+          "bbox": [
+            48,
+            66,
+            81,
+            75
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2095,
+          "bbox": [
+            4,
+            156,
+            25,
+            169
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2067,
+          "bbox": [
+            0,
+            49,
+            14,
+            58
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1833,
+          "bbox": [
+            65,
+            155,
+            89,
+            169
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1704,
+          "bbox": [
+            133,
+            51,
+            142,
+            59
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1598,
+          "bbox": [
+            132,
+            53,
+            142,
+            60
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.1505,
+          "bbox": [
+            86,
+            89,
+            100,
+            98
+          ]
+        }
+      ],
+      "annotated_image": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\benchmarks\\results\\pcb_5655_investigation\\pcb_5655_conf_15.jpg"
+    },
+    "0.25": {
+      "detections_count": 15,
+      "detections": [
+        {
+          "cls_id": 1,
+          "class_name": "short_circuit",
+          "conf": 0.7065,
+          "bbox": [
+            84,
+            103,
+            118,
+            131
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5692,
+          "bbox": [
+            35,
+            102,
+            66,
+            118
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5159,
+          "bbox": [
+            147,
+            27,
+            172,
+            41
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5047,
+          "bbox": [
+            170,
+            117,
+            198,
+            134
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.4669,
+          "bbox": [
+            63,
+            156,
+            91,
+            172
+          ]
+        },
+        {
+          "cls_id": 1,
+          "class_name": "short_circuit",
+          "conf": 0.4461,
+          "bbox": [
+            207,
+            103,
+            226,
+            132
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3963,
+          "bbox": [
+            207,
+            157,
+            225,
+            171
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3889,
+          "bbox": [
+            92,
+            26,
+            116,
+            39
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3332,
+          "bbox": [
+            3,
+            158,
+            25,
+            172
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.3253,
+          "bbox": [
+            206,
+            103,
+            225,
+            133
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.288,
+          "bbox": [
+            0,
+            50,
+            14,
+            60
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2834,
+          "bbox": [
+            190,
+            26,
+            208,
+            38
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2616,
+          "bbox": [
+            0,
+            52,
+            14,
+            61
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2575,
+          "bbox": [
+            155,
+            87,
+            171,
+            96
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.2517,
+          "bbox": [
+            112,
+            139,
+            136,
+            151
+          ]
+        }
+      ],
+      "annotated_image": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\benchmarks\\results\\pcb_5655_investigation\\pcb_5655_conf_25.jpg"
+    },
+    "0.4": {
+      "detections_count": 6,
+      "detections": [
+        {
+          "cls_id": 1,
+          "class_name": "short_circuit",
+          "conf": 0.7065,
+          "bbox": [
+            84,
+            103,
+            118,
+            131
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5692,
+          "bbox": [
+            35,
+            102,
+            66,
+            118
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5159,
+          "bbox": [
+            147,
+            27,
+            172,
+            41
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.5047,
+          "bbox": [
+            170,
+            117,
+            198,
+            134
+          ]
+        },
+        {
+          "cls_id": 3,
+          "class_name": "spur",
+          "conf": 0.4669,
+          "bbox": [
+            63,
+            156,
+            91,
+            172
+          ]
+        },
+        {
+          "cls_id": 1,
+          "class_name": "short_circuit",
+          "conf": 0.4461,
+          "bbox": [
+            207,
+            103,
+            226,
+            132
+          ]
+        }
+      ],
+      "annotated_image": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\benchmarks\\results\\pcb_5655_investigation\\pcb_5655_conf_40.jpg"
+    }
+  },
+  "root_cause_analysis": {
+    "why_zero_detections_at_0_25": "At standard threshold 0.25, the model localized 0 defects. Trace edge variations on this board are sub-threshold irregularities (or etching roughness) that only trigger candidate activations below conf 0.15. However, the image has 2 frame-edge clipping warnings and coverage is only 93%, meaning uninspected regions could conceal critical defects.",
+    "decision_engine_vulnerability": "RULE_008_ZERO_CRITICAL_DEFECTS_PASS allowed a PASS verdict simply because zero defects were localized, despite incomplete coverage (93%) and two edge clipping warnings.",
+    "safety_correction_required": "Zero detections must NEVER unconditionally yield PASS. When clipping warnings exist, coverage < 95%, or domain is unfamiliar, the decision engine MUST route to INSPECT."
+  }
+}

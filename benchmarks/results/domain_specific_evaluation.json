@@ -423,6 +423,11 @@
           "background": 59
         }
       }
+    },
+    "own_camera": {
+      "status": "NOT RUN",
+      "reason": "Dataset empty - hardware pending (Raspberry Pi Camera Module 3)",
+      "image_count": 0
     }
   },
   "multidomain_model": {
@@ -866,6 +871,11 @@
           "background": 1
         }
       }
+    },
+    "own_camera": {
+      "status": "NOT RUN",
+      "reason": "Dataset empty - hardware pending (Raspberry Pi Camera Module 3)",
+      "image_count": 0
     }
   }
 }

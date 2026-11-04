@@ -39,7 +39,11 @@ class InspectionRecord(Base):
     rule_description = Column(Text, nullable=False)
     preset_applied = Column(String(32), default="consumer")
     requires_electrical_test = Column(Boolean, default=False)
+    requires_electrical_test_for_suspected_defect = Column(Boolean, default=False)
+    electrical_functionality_verified = Column(Boolean, default=False)
+    electrical_test_required_for_final_signoff = Column(Boolean, default=True)
     coverage = Column(Float, default=1.0)
+    clipping_warnings = Column(Integer, default=0)
     
     # Domain & Quality audit fields
     domain_status = Column(String(32), default="within_domain", nullable=False)
@@ -98,7 +102,11 @@ class DatabaseManager:
                     ("domain_status", "VARCHAR(32) DEFAULT 'within_domain'"),
                     ("image_quality_status", "VARCHAR(32) DEFAULT 'acceptable'"),
                     ("review_required", "BOOLEAN DEFAULT 0"),
-                    ("reason_for_inspect", "TEXT DEFAULT NULL")
+                    ("reason_for_inspect", "TEXT DEFAULT NULL"),
+                    ("clipping_warnings", "INTEGER DEFAULT 0"),
+                    ("requires_electrical_test_for_suspected_defect", "BOOLEAN DEFAULT 0"),
+                    ("electrical_functionality_verified", "BOOLEAN DEFAULT 0"),
+                    ("electrical_test_required_for_final_signoff", "BOOLEAN DEFAULT 1")
                 ]
                 for col_name, col_type in columns_to_add:
                     if col_name not in existing_cols:
@@ -188,7 +196,11 @@ class DatabaseManager:
             rule_description=decision_record.get("rule_description", ""),
             preset_applied=decision_record.get("preset_applied", "consumer"),
             requires_electrical_test=decision_record.get("requires_electrical_test", False),
+            requires_electrical_test_for_suspected_defect=decision_record.get("requires_electrical_test_for_suspected_defect", decision_record.get("requires_electrical_test", False)),
+            electrical_functionality_verified=False,
+            electrical_test_required_for_final_signoff=True,
             coverage=decision_record.get("coverage", 1.0),
+            clipping_warnings=decision_record.get("clipping_warnings", 0),
             domain_status=decision_record.get("domain_status", "within_domain"),
             image_quality_status=decision_record.get("image_quality_status", "acceptable"),
             review_required=decision_record.get("review_required", decision == "INSPECT"),
@@ -295,7 +307,11 @@ class DatabaseManager:
             "rule_description": record.rule_description,
             "preset_applied": record.preset_applied,
             "requires_electrical_test": record.requires_electrical_test,
+            "requires_electrical_test_for_suspected_defect": record.requires_electrical_test,
+            "electrical_functionality_verified": False,
+            "electrical_test_required_for_final_signoff": True,
             "coverage": record.coverage,
+            "clipping_warnings": getattr(record, "clipping_warnings", 0),
             "domain_status": getattr(record, "domain_status", "within_domain"),
             "image_quality_status": getattr(record, "image_quality_status", "acceptable"),
             "review_required": getattr(record, "review_required", False),

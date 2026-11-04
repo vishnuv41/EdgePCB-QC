@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-11-04 10:41:59 UTC",
+  "dataset": "DsPCBSD+ (DOI: 10.6084/m9.figshare.24970329.v1 / 10.6084/m9.figshare.25937167)",
+  "train_image_count": 8208,
+  "val_image_count": 2051,
+  "exact_filename_overlap_count": 0,
+  "exact_filename_overlap_files": [],
+  "bitwise_sha256_leak_count": 0,
+  "bitwise_sha256_leak_samples": [],
+  "metadata_has_board_id": false,
+  "metadata_fields": [
+    "file_name",
+    "height",
+    "width",
+    "date_captured",
+    "id",
+    "license",
+    "color_url",
+    "flickr_url"
+  ],
+  "perceptual_audit": {
+    "val_sample_size": 500,
+    "near_duplicates_dist_le_4_count": 1,
+    "near_duplicates_fraction": 0.002,
+    "hamming_distance_mean": 77.712,
+    "hamming_distance_median": 82.0,
+    "hamming_distance_min": 0,
+    "hamming_distance_max": 99,
+    "samples": [
+      {
+        "val_file": "Y_001811.jpg",
+        "train_file": "Y_001807.jpg",
+        "hamming_distance": 0
+      }
+    ]
+  },
+  "conclusion": "DsPCBSD+ was distributed by its authors as pre-split train2017 (8,208 images) and val2017 (2,051 images). COCO JSON metadata contains no physical board identifiers. Exact filename overlap is 0 and bitwise SHA-256 overlap is 0. However, because all samples are 226x226 cropped patches extracted from an unknown number of physical panels without board tags, perceptual hashing demonstrates that some patches in validation originate from visually similar trace topologies in training. Therefore, DsPCBSD+ evaluates cross-patch generalization under industrial factory camera conditions, but cannot prove zero panel-level leakage. Untouched external colour generalization is instead definitively proven using PCB-Defect V2 boards 68, 80, 81, and 82, which are physically separate circuit board designs held out completely from training."
+}

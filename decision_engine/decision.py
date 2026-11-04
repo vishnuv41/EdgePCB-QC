@@ -55,14 +55,16 @@ class DecisionEngine:
         # Extract or perform quality and domain assessment
         quality_assessment = payload.get("quality_assessment")
         if quality_assessment is None:
-            if "domain_status" in payload or "image_quality_status" in payload:
+            if "domain_status" in payload or "image_quality_status" in payload or "clipping_warnings" in payload:
                 quality_assessment = {
                     "domain_status": payload.get("domain_status", "within_domain"),
                     "image_quality_status": payload.get("image_quality_status", "acceptable"),
                     "is_quality_acceptable": payload.get("image_quality_status", "acceptable") == "acceptable",
                     "is_domain_validated": payload.get("domain_status", "within_domain") == "within_domain",
                     "review_required": payload.get("review_required", False),
-                    "reason_for_inspect": payload.get("reason_for_inspect")
+                    "reason_for_inspect": payload.get("reason_for_inspect"),
+                    "clipping_warnings": payload.get("clipping_warnings", 0),
+                    "clipped_edges": payload.get("clipped_edges", 0)
                 }
             elif "image" in payload and payload["image"] is not None:
                 try:
@@ -125,11 +127,15 @@ class DecisionEngine:
             "rule_id": rule_result.rule_id,
             "rule_description": rule_result.description,
             "requires_electrical_test": rule_result.requires_electrical_test,
+            "requires_electrical_test_for_suspected_defect": rule_result.requires_electrical_test,
+            "electrical_functionality_verified": False,
+            "electrical_test_required_for_final_signoff": True,
             "preset_applied": preset,
             "coverage": coverage,
             "domain_status": domain_status,
             "image_quality_status": image_quality_status,
             "inspection_coverage": coverage,
+            "clipping_warnings": quality_assessment.get("clipping_warnings", 0) if quality_assessment else payload.get("clipping_warnings", 0),
             "review_required": review_required,
             "reason_for_inspect": reason_for_inspect,
             "defects": defects,

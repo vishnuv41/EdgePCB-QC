@@ -313,23 +313,26 @@ with tab_inspect:
         with col_res_data:
             verdict = decision_record["decision"]
             if verdict == "PASS":
-                st.success(f"### FINAL DECISION: {verdict}")
+                st.success("### FINAL DECISION: PASS (Qualified Visual Clearance)")
             elif verdict == "INSPECT":
-                st.warning(f"### FINAL DECISION: {verdict}")
+                inspect_reason = decision_record.get("reason_for_inspect") or decision_record.get("rule_description")
+                st.warning(f"### FINAL DECISION: INSPECT\n**Reason:** {inspect_reason}")
             else:
-                st.error(f"### FINAL DECISION: {verdict}")
+                st.error(f"### FINAL DECISION: REJECT\n**Reason:** {decision_record.get('rule_description')}")
 
             st.markdown(f"**Triggered Rule:** `{decision_record['rule_id']}`")
             st.markdown(f"*{decision_record['rule_description']}*")
             
-            if decision_record["requires_electrical_test"]:
+            # Electrical Verification Status Container (Optical AOI vs Contact Testing)
+            st.markdown("##### ⚡ Electrical Integrity & Test Verification")
+            if decision_record.get("requires_electrical_test_for_suspected_defect", decision_record.get("requires_electrical_test", False)):
                 st.error("⚡ **ELECTRICAL VERIFICATION MANDATORY**: Visually suspected open or short circuit detected. Electrical continuity/isolation test (DMM / Flying-Probe) is required prior to final disposition.")
                 st.caption("⚠️ *Optical defect detection evaluates surface geometry only; electrical integrity must be verified with contact test equipment before final panel sign-off.*")
             else:
-                st.info("⚡ **ELECTRICAL STATUS: UNVERIFIED BY OPTICAL AOI**: No open or short circuits localized above threshold. Surface visual geometry conforms; downstream in-circuit testing (ICT / flying-probe) is required for functional verification.")
+                st.info("ℹ️ **ELECTRICAL STATUS: UNVERIFIED BY OPTICAL AOI**: Optical AOI evaluates surface geometry only (`electrical_functionality_verified: False`). Downstream electrical contact testing (flying-probe / ICT) is required for final product sign-off (`electrical_test_required_for_final_signoff: True`).")
 
-            # Quality and Domain Assessment Badges (Conservative Policy)
-            q_col1, q_col2, q_col3 = st.columns(3)
+            # Quality, Domain, Coverage, and Clipping Badges
+            q_col1, q_col2, q_col3, q_col4 = st.columns(4)
             with q_col1:
                 dom_status = decision_record.get("domain_status", "within_domain")
                 if dom_status == "within_domain":
@@ -343,15 +346,18 @@ with tab_inspect:
                 else:
                     st.warning(f"📷 Quality: {iq_status.title()}")
             with q_col3:
-                if decision_record.get("review_required"):
-                    st.warning("⚠️ Review: Required")
+                st.info(f"📐 Coverage: {coverage_val*100:.1f}%")
+            with q_col4:
+                clip_count = decision_record.get("clipping_warnings", 0)
+                if clip_count > 0:
+                    st.error(f"✂️ Clipping: {clip_count} Warning(s)")
                 else:
-                    st.success("✅ Review: Cleared")
+                    st.success("✂️ Framing: Full")
 
-            if decision_record.get("reason_for_inspect"):
-                st.info(f"📋 **Reason for Review:** {decision_record['reason_for_inspect']}")
+            if decision_record.get("reason_for_inspect") and verdict != "INSPECT":
+                st.info(f"📋 **Notice:** {decision_record['reason_for_inspect']}")
 
-            # Quantitative Defect Audit Counts (Requirement 5: from single authoritative inspection record)
+            # Quantitative Defect Audit Counts (from single authoritative inspection record)
             audit_counts = decision_record.get("audit_counts", {})
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("Total Critical", audit_counts.get("total_critical", 0))
@@ -412,7 +418,7 @@ with tab_inspect:
                 st.markdown(f"**Recommended Operator Action:** {adv['operator_action']}")
                 st.caption(f"⚠️ *{adv['confidence_caveat']}*")
         else:
-            st.markdown("### 📋 Fast Deterministic Advisory (`deterministic_fallback`)")
+            st.markdown("### ⚡ Quality-Control Advisory: Deterministic Rules Engine (Fallback)")
             st.markdown(f"**Backend:** `deterministic_fallback` | **Rules Engine:** `{adv_model_id}` | **Status:** `{adv_status}`")
             st.caption(f"ℹ️ Engineering Guidance Engine active (<1ms deterministic latency: {adv_metrics.get('latency_ms', 0):.2f} ms). Official Llama 3.2 1B ExecuTorch `.pte` model is verified and selectable via sidebar.")
 

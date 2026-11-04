@@ -24,4 +24,7 @@ runs/
 .vscode/
 benchmarks/*.jpg
 benchmarks/*.png
+benchmarks/**/*.jpg
+benchmarks/**/*.png
 benchmarks/results/*.png
+benchmarks/results/pcb_5655_investigation/*.jpg

@@ -294,6 +294,23 @@ def run_full_evaluation():
             res = evaluate_split(model, imgs, lbl_dir, sname, conf_thresh=0.25, imgsz=640, device=device)
             all_results[model_key][split_key] = res
 
+        # Domain 5: Own Camera
+        own_cam_dir = WORKSPACE_ROOT / "datasets" / "own_camera"
+        own_cam_val = own_cam_dir / "images" / "val"
+        own_cam_imgs = [p for p in own_cam_val.glob("*.*") if p.suffix.lower() in {".jpg", ".jpeg", ".png", ".bmp"}] if own_cam_val.exists() else []
+        if len(own_cam_imgs) == 0:
+            print("\n=======================================================")
+            print("DOMAIN 5 (own_camera): NOT RUN (Dataset empty - hardware pending)")
+            print("=======================================================")
+            all_results[model_key]["own_camera"] = {
+                "status": "NOT RUN",
+                "reason": "Dataset empty - hardware pending (Raspberry Pi Camera Module 3)",
+                "image_count": 0
+            }
+        else:
+            res_cam = evaluate_split(model, own_cam_imgs, own_cam_dir / "labels" / "val", "Domain 5 (Own Camera)", conf_thresh=0.25, imgsz=640, device=device)
+            all_results[model_key]["own_camera"] = res_cam
+
     out_json = BENCHMARKS_DIR / "domain_specific_evaluation.json"
     with open(out_json, "w", encoding="utf-8") as f:
         json.dump(all_results, f, indent=2)

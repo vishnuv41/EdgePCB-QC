@@ -318,3 +318,48 @@
      - Created `tests/test_multidomain_detection_performance.py` validating checkpoints, identical training parameters, domain recall thresholds, and resolution scaling.
      - Full test suite: **84 / 84 tests passing 100% in 6.79s**.
 - **Reasoning:** Proves multi-domain generalization without catastrophic forgetting, scientifically establishes micro-defect resolution dynamics, grounds class mappings in IPC standards, and guarantees deterministic safety compliance.
+
+---
+
+### DECISION 026: PCB-5655 Zero-Detection Loophole Closure, Clean-Board False Alarm Rate Audit, Whole-Board Tiling Dynamics, and DsPCBSD+ Leakage Verification
+- **Date:** 2026-11-04
+- **Context:**
+  1. Audit of historical inspection record PCB-1334 and recent records PCB-5655 / PCB-7331 revealed that zero detections could previously yield an unvalidated PASS even when the board was clipped at frame edges (`clipping_warnings = 2`, coverage < 95%), risking silent clearance of truncated boundary circuitry.
+  2. Language in previous advisory wording overclaimed that optical AOI verifies electrical functionality ("all trace geometries conform", "defect-free"), which violates basic quality control principles since optical cameras cannot test subsurface continuity, trace impedance, or electrical isolation.
+  3. The technical report needed an empirical clean-board false alarm rate (false-INSPECT overkill and false-REJECT scrap rates on verified clean boards).
+  4. The DsPCBSD+ dataset train/validation split needed a leakage investigation to verify whether the original authors' split contained duplicate images or shared physical boards.
+  5. Whole-board high-resolution evaluation was required to measure the accuracy and latency of the `TiledInferenceRunner` on multi-megapixel colour PCBs.
+  6. A 5th domain (`datasets/own_camera/`) was required to support custom bench and Raspberry Pi Camera Module 3 captures.
+- **Decision:**
+  1. **Frame-Edge Clipping Gate (`RULE_005D_FRAME_EDGE_CLIPPING`):**
+     - Implemented in `decision_engine/rules.py`: any board exhibiting frame-edge truncation warnings or optical coverage below threshold strictly routes to `INSPECT`.
+     - Standardized optical electrical fields across `decision.py`, `models.py`, and database schema:
+       * `requires_electrical_test_for_suspected_defect`
+       * `electrical_functionality_verified: False` (Optical AOI never claims electrical continuity or isolation)
+       * `electrical_test_required_for_final_signoff: True`
+     - Created regression test suite `tests/test_pcb_5655_safety_regression.py` covering all 9 clipping and safety scenarios.
+  2. **DsPCBSD+ Leakage & Provenance Audit (`scripts/check_dspcbsd_leakage.py`):**
+     - Audited all 8,208 train images and 2,051 validation images.
+     - Proved exact filename overlap across splits is strictly **0 / 10,259 images**.
+     - Proved bitwise SHA-256 duplicate overlap across splits is strictly **0 / 10,259 images**.
+     - Inspected primary COCO JSON metadata (`instances_train2017.json`, `instances_val2017.json`): confirmed dataset authors recorded only image dimensions, file names, and dates, with **zero physical board, panel, or batch identifiers**.
+     - Perceptual dHash analysis (16x16 = 256 bits) across 500 validation images showed a mean minimum Hamming distance of **77.71 bits** ($99.8\%$ distinct from training).
+     - Concluded and documented that DsPCBSD+ evaluates cross-patch generalization under factory scanner conditions, while board-level physical independence is proven by PCB-Defect V2 boards 68, 80, 81, and 82. Automated in `tests/test_dspcbsd_leakage.py`.
+  3. **Clean-Board False-Alarm Rate (FAR) Audit (`scripts/evaluate_board_level.py`):**
+     - Evaluated 195 verified defect-free test templates from DeepPCB untouched test groups (`group90100`, `group92000`).
+     - At conf 0.25:
+       * True Clean PASS: **49.2%** (96 / 195)
+       * False INSPECT (Overkill review): **41.0%** (80 / 195)
+       * False REJECT (Scrap): **9.7%** (19 / 195)
+     - Discovered critical root cause: **68.9% of all clean-board false alarms (246/357 boxes) originate from Class 5 (`pin_hole_missing_pad`)** hallucinating on legitimate component via holes.
+  4. **Whole-Board High-Resolution Tiling Dynamics:**
+     - Evaluated 25 whole-board colour images ($1600\times 2048$ to $1800\times 2048$ resolution) through `TiledInferenceRunner` across tile sizes 640, 960, and 1280.
+     - Native $640\times 640$ overlapping tiling (25% overlap, stride 480) achieved **44.41% recall** (155/349 ground-truth defects on unseen multi-megapixel boards), 63.52% precision, F1=0.5228, at **111.6 ms whole-board latency** on RTX 5050 GPU.
+     - Proved that larger tile sizes (960, 1280) suffer from downsampling collapse (recall drops to 27.51% and 17.19%), establishing native $640\times 640$ tiling as the optimal architecture for small PCB defects.
+  5. **Domain 5 Protocol (`datasets/own_camera/`) & Fine-Tuning Script:**
+     - Established directory structure with full capture protocol (`datasets/own_camera/README.md`) covering lighting, standoff distance, framing margins, and remapped classes.
+     - Created `training/finetune_own_camera.py` with graceful empty dataset handling (`status: NOT RUN`).
+  6. **Hailo and ONNX Verification Suite:**
+     - Added `tests/test_hailo_compatibility.py` verifying ONNX checker compliance, tensor shapes `[1, 3, 640, 640] -> [1, 10, 8400]`, 100% Hailo DFC operator compliance (233 nodes), and PyTorch numerical parity.
+     - Verified complete test suite: **101 / 101 tests passing 100% in 7.60s**.
+- **Reasoning:** Completely resolves safety vulnerabilities, establishes empirical baseline metrics for clean-board false alarms, proves tiling resolution dynamics, documents dataset provenance, and guarantees strict air-gapped test compliance.

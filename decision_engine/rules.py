@@ -143,12 +143,22 @@ def evaluate_rules(
                 requires_electrical_test=has_electrical_risk
             )
 
+        # 5D. Frame-Edge Clipping Warning Gate -> INSPECT
+        clipping_warnings = quality_assessment.get("clipping_warnings", 0) or quality_assessment.get("clipped_edges", 0)
+        if clipping_warnings > 0:
+            return RuleResult(
+                decision="INSPECT",
+                rule_id="RULE_005D_FRAME_EDGE_CLIPPING",
+                description=f"Manual Inspection Required: Frame-edge clipping warning detected ({clipping_warnings} edge(s) truncated). Boundary circuitry cannot be verified.",
+                requires_electrical_test=has_electrical_risk
+            )
+
     # 5. Insufficient inspection coverage -> INSPECT
     if coverage < min_cov:
         return RuleResult(
             decision="INSPECT",
             rule_id="RULE_005_INSUFFICIENT_COVERAGE",
-            description=f"Manual Inspection Required: Inspection image coverage ({coverage*100:.1f}%) is below minimum threshold ({min_cov*100:.1f}%).",
+            description=f"Manual Inspection Required: Inspection image coverage ({coverage*100:.1f}%) is below minimum threshold ({min_cov*100:.1f}%). Field of inspection incomplete.",
             requires_electrical_test=has_electrical_risk
         )
 
@@ -170,10 +180,23 @@ def evaluate_rules(
             requires_electrical_test=has_electrical_risk
         )
 
-    # 8. All checks passed -> PASS
+    # 8. All checks passed -> Qualified Visual Clearance (PASS)
+    if len(defects) == 0:
+        desc = (
+            f"Qualified Visual Clearance: No defects were localized by the current vision model above the configured detection thresholds "
+            f"({coverage*100:.1f}% verified optical coverage, validated within-domain image quality). "
+            f"Downstream contact electrical testing is required for functional continuity/isolation verification."
+        )
+    else:
+        desc = (
+            f"Qualified Visual Clearance: Board passed visual inspection with {len(minor_defects)} acceptable minor surface variations "
+            f"within preset allowance ({coverage*100:.1f}% verified optical coverage, validated image quality). "
+            f"Downstream contact electrical testing is required for functional continuity/isolation verification."
+        )
+
     return RuleResult(
         decision="PASS",
         rule_id="RULE_008_ZERO_CRITICAL_DEFECTS_PASS",
-        description=f"Board passed inspection with {len(minor_defects)} acceptable minor variations, verified within-domain image quality, and {coverage*100:.1f}% coverage.",
+        description=desc,
         requires_electrical_test=False
     )

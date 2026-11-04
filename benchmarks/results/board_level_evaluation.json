@@ -1,0 +1,170 @@
+{
+  "timestamp": "2026-11-04 10:48:39 UTC",
+  "clean_board_evaluation": {
+    "dataset": "DeepPCB Untouched Test (group90100, group92000 clean templates)",
+    "total_clean_boards": 195,
+    "baseline_model": {
+      "0.1": {
+        "total_clean_boards": 195,
+        "true_clean_pass_count": 70,
+        "false_inspect_count": 105,
+        "false_reject_count": 20,
+        "true_pass_rate": 0.359,
+        "false_inspect_rate": 0.5385,
+        "false_reject_rate": 0.1026,
+        "total_false_positive_boxes": 606,
+        "mean_fp_per_board": 3.108,
+        "false_positive_classes": {
+          "short_circuit": 112,
+          "spur": 33,
+          "open_circuit": 116,
+          "spurious_copper": 43,
+          "mouse_bite": 52,
+          "pin_hole_missing_pad": 250
+        }
+      },
+      "0.25": {
+        "total_clean_boards": 195,
+        "true_clean_pass_count": 91,
+        "false_inspect_count": 84,
+        "false_reject_count": 20,
+        "true_pass_rate": 0.4667,
+        "false_inspect_rate": 0.4308,
+        "false_reject_rate": 0.1026,
+        "total_false_positive_boxes": 340,
+        "mean_fp_per_board": 1.744,
+        "false_positive_classes": {
+          "short_circuit": 38,
+          "spurious_copper": 21,
+          "open_circuit": 28,
+          "mouse_bite": 14,
+          "spur": 5,
+          "pin_hole_missing_pad": 234
+        }
+      },
+      "0.4": {
+        "total_clean_boards": 195,
+        "true_clean_pass_count": 107,
+        "false_inspect_count": 68,
+        "false_reject_count": 20,
+        "true_pass_rate": 0.5487,
+        "false_inspect_rate": 0.3487,
+        "false_reject_rate": 0.1026,
+        "total_false_positive_boxes": 266,
+        "mean_fp_per_board": 1.364,
+        "false_positive_classes": {
+          "short_circuit": 20,
+          "mouse_bite": 7,
+          "spurious_copper": 12,
+          "open_circuit": 10,
+          "spur": 2,
+          "pin_hole_missing_pad": 215
+        }
+      }
+    },
+    "multidomain_model": {
+      "0.1": {
+        "total_clean_boards": 195,
+        "true_clean_pass_count": 80,
+        "false_inspect_count": 96,
+        "false_reject_count": 19,
+        "true_pass_rate": 0.4103,
+        "false_inspect_rate": 0.4923,
+        "false_reject_rate": 0.0974,
+        "total_false_positive_boxes": 548,
+        "mean_fp_per_board": 2.81,
+        "false_positive_classes": {
+          "spurious_copper": 38,
+          "spur": 19,
+          "short_circuit": 86,
+          "open_circuit": 92,
+          "pin_hole_missing_pad": 258,
+          "mouse_bite": 55
+        }
+      },
+      "0.25": {
+        "total_clean_boards": 195,
+        "true_clean_pass_count": 96,
+        "false_inspect_count": 80,
+        "false_reject_count": 19,
+        "true_pass_rate": 0.4923,
+        "false_inspect_rate": 0.4103,
+        "false_reject_rate": 0.0974,
+        "total_false_positive_boxes": 357,
+        "mean_fp_per_board": 1.831,
+        "false_positive_classes": {
+          "spurious_copper": 22,
+          "spur": 8,
+          "short_circuit": 29,
+          "open_circuit": 34,
+          "pin_hole_missing_pad": 246,
+          "mouse_bite": 18
+        }
+      },
+      "0.4": {
+        "total_clean_boards": 195,
+        "true_clean_pass_count": 108,
+        "false_inspect_count": 68,
+        "false_reject_count": 19,
+        "true_pass_rate": 0.5538,
+        "false_inspect_rate": 0.3487,
+        "false_reject_rate": 0.0974,
+        "total_false_positive_boxes": 279,
+        "mean_fp_per_board": 1.431,
+        "false_positive_classes": {
+          "spur": 3,
+          "short_circuit": 12,
+          "spurious_copper": 10,
+          "open_circuit": 14,
+          "mouse_bite": 6,
+          "pin_hole_missing_pad": 234
+        }
+      }
+    }
+  },
+  "whole_board_tiling_evaluation": {
+    "dataset": "PCB-Defect V2 External Colour Boards (68, 80, 81, 82)",
+    "board_count": 25,
+    "tiling_comparison": {
+      "640": {
+        "tile_size": 640,
+        "overlap": 0.25,
+        "mean_tiles_per_board": 14.2,
+        "ground_truth": 349,
+        "true_positives": 155,
+        "false_positives": 89,
+        "false_negatives": 194,
+        "recall": 0.4441,
+        "precision": 0.6352,
+        "f1": 0.5228,
+        "mean_latency_ms": 111.62
+      },
+      "960": {
+        "tile_size": 960,
+        "overlap": 0.25,
+        "mean_tiles_per_board": 7.1,
+        "ground_truth": 349,
+        "true_positives": 96,
+        "false_positives": 84,
+        "false_negatives": 253,
+        "recall": 0.2751,
+        "precision": 0.5333,
+        "f1": 0.3629,
+        "mean_latency_ms": 70.06
+      },
+      "1280": {
+        "tile_size": 1280,
+        "overlap": 0.25,
+        "mean_tiles_per_board": 3.8,
+        "ground_truth": 349,
+        "true_positives": 60,
+        "false_positives": 135,
+        "false_negatives": 289,
+        "recall": 0.1719,
+        "precision": 0.3077,
+        "f1": 0.2206,
+        "mean_latency_ms": 38.98
+      }
+    }
+  }
+}

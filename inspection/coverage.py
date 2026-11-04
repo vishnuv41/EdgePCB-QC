@@ -124,6 +124,8 @@ def calculate_inspection_coverage(
 
     return {
         "coverage": round(cov, 4),
+        "clipping_warnings": clipped_edges,
+        "clipped_edges": clipped_edges,
         "numerator_pixels": numerator_pixels,
         "denominator_pixels": denominator_pixels,
         "method": "single_view_fov_completeness",
