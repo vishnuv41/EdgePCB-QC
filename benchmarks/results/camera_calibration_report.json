@@ -1,0 +1,27 @@
+{
+  "sample_count": 200,
+  "blur": {
+    "p5": 51.139809413815826,
+    "median": 2265.612500670165,
+    "recommended_threshold": 35.8
+  },
+  "brightness": {
+    "p5": 53.47476916503907,
+    "p95": 193.43071118164056,
+    "recommended_underexposure": 37.4,
+    "recommended_overexposure": 203.1
+  },
+  "contrast": {
+    "p5": 44.11872810459626,
+    "median": 114.84859689844603,
+    "recommended_min_contrast": 30.9
+  },
+  "glare": {
+    "p95": 0.7538422851562498,
+    "recommended_max_glare": 1.131
+  },
+  "saturation": {
+    "median": 0.0,
+    "p95": 57.992762745712184
+  }
+}

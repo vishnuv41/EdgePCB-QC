@@ -4,14 +4,15 @@ Bharat AI-SoC Challenge 2026-27 | PS5
 
 Integrates:
 1. DeepPCB (1,120 train, 186 val, 194 untouched test) - Monochrome scans
-2. DsPCBSD+ (Curated balanced color patches from industrial AOI lines)
-3. PCB-Defect V2 (High-res color board crops partitioned by board ID)
+2. DsPCBSD+ (All 5,811 train + 1,444 val compatible images from industrial AOI lines)
+3. PCB-Defect V2 (Native resolution 640x640 tiled crops, board-level partitioned)
 
 Guarantees:
-- Board-level zero leakage across all datasets
+- Zero board-level leakage across all datasets
 - The 194-image DeepPCB test set remains 100% untouched
-- A dedicated external real color PCB test set is generated for generalization testing
+- Boards 68, 80, 81, 82 of PCB-Defect V2 strictly reserved for untouched external color testing
 - Strict annotation validation (0 invalid lines, 0 out-of-bound coords)
+- Source tracking tags on every file (deeppcb_, dspcbsd_, pcbdefect_)
 """
 
 import os
@@ -52,7 +53,7 @@ def build_unified_dataset():
 
     manifest = {
         "dataset_name": "EdgePCB-QC Unified Multi-Domain Dataset",
-        "description": "Combines DeepPCB monochrome with DsPCBSD+ and PCB-Defect V2 color images",
+        "description": "Combines DeepPCB monochrome with all compatible DsPCBSD+ and tiled PCB-Defect V2 color images",
         "classes": {
             0: "open_circuit",
             1: "short_circuit",
@@ -67,7 +68,7 @@ def build_unified_dataset():
     # ---------------------------------------------------------
     # 1. DEEPPCB INTEGRATION (Keep exact splits, untouched test)
     # ---------------------------------------------------------
-    print("\n[*] 1. Integrating DeepPCB splits...")
+    print("\n[*] 1. Integrating DeepPCB splits (monochrome)...")
     for split in ["train", "val", "test"]:
         src_img_dir = DEEPPCB_PROCESSED / "images" / split
         src_lbl_dir = DEEPPCB_PROCESSED / "labels" / split
@@ -98,20 +99,19 @@ def build_unified_dataset():
             stats[split]["images"] += 1
             stats[split]["sources"]["DeepPCB"] += 1
 
-    print(f"    - DeepPCB integrated: Train={stats['train']['sources']['DeepPCB']}, Val={stats['val']['sources']['DeepPCB']}, Test={stats['test']['sources']['DeepPCB']}")
+    print(f"    - DeepPCB: Train={stats['train']['sources']['DeepPCB']}, Val={stats['val']['sources']['DeepPCB']}, Test={stats['test']['sources']['DeepPCB']}")
 
     # ---------------------------------------------------------
-    # 2. DSPCBSD+ INTEGRATION (Color industrial patches)
+    # 2. DSPCBSD+ INTEGRATION (All compatible images, train & val)
     # ---------------------------------------------------------
-    print("\n[*] 2. Integrating DsPCBSD+ color industrial patches...")
-    # DsPCBSD+ class mapping to canonical 6 classes:
+    print("\n[*] 2. Integrating all compatible DsPCBSD+ industrial color patches...")
+    # DsPCBSD+ mapping:
     # 0: SH -> short_circuit (1)
     # 1: SP -> spur (3)
     # 2: SC -> spurious_copper (4)
     # 3: OP -> open_circuit (0)
     # 4: MB -> mouse_bite (2)
-    # 5: HB -> pin_hole_missing_pad (5) (Hole breakout annular anomaly)
-    # 6: CS, 7: CFO, 8: BMFO -> Excluded from 6-class model
+    # 5: HB -> pin_hole_missing_pad (5)
     dsp_yolo_to_canonical = {
         0: 1,  # SH -> short_circuit
         1: 3,  # SP -> spur
@@ -121,20 +121,14 @@ def build_unified_dataset():
         5: 5   # HB -> pin_hole_missing_pad
     }
 
-    # Integrate DsPCBSD+ train and val subsets (sampled to maintain class balance)
     for dsp_split, target_split in [("train", "train"), ("val", "val")]:
         img_dir = DSPCBSD_RAW / "Data_YOLO" / "images" / dsp_split
         lbl_dir = DSPCBSD_RAW / "Data_YOLO" / "labels" / dsp_split
 
         lbl_files = sorted(list(lbl_dir.glob("*.txt")))
-        # Select balanced subset covering critical defect classes (especially OP, SH)
-        added_count = 0
-        target_limit = 1200 if dsp_split == "train" else 250
+        print(f"    - Processing DsPCBSD+ {dsp_split} split ({len(lbl_files)} label files)...")
 
         for lf in lbl_files:
-            if added_count >= target_limit:
-                break
-
             with open(lf, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
@@ -147,7 +141,6 @@ def build_unified_dataset():
                     if raw_cid in dsp_yolo_to_canonical:
                         canon_cid = dsp_yolo_to_canonical[raw_cid]
                         xc, yc, w, h = map(float, parts[1:5])
-                        # Verify box validity
                         if 0.0 <= xc <= 1.0 and 0.0 <= yc <= 1.0 and 0.0 < w <= 1.0 and 0.0 < h <= 1.0:
                             valid_lines.append(f"{canon_cid} {xc:.6f} {yc:.6f} {w:.6f} {h:.6f}")
                             stats[target_split]["classes"][canon_cid] += 1
@@ -169,27 +162,26 @@ def build_unified_dataset():
 
                     stats[target_split]["images"] += 1
                     stats[target_split]["sources"]["DsPCBSD+"] += 1
-                    added_count += 1
 
-    print(f"    - DsPCBSD+ integrated: Train={stats['train']['sources']['DsPCBSD+']}, Val={stats['val']['sources']['DsPCBSD+']}")
+    print(f"    - DsPCBSD+: Train={stats['train']['sources']['DsPCBSD+']}, Val={stats['val']['sources']['DsPCBSD+']}")
 
     # ---------------------------------------------------------
-    # 3. PCB-DEFECT V2 INTEGRATION (Real high-res color boards)
+    # 3. PCB-DEFECT V2 INTEGRATION (Tiled 640x640 at native resolution)
     # ---------------------------------------------------------
-    print("\n[*] 3. Integrating PCB-Defect V2 high-resolution color boards...")
+    print("\n[*] 3. Integrating PCB-Defect V2 high-res color boards with 640x640 native tiling...")
+    # Clean up any legacy pcbdefect files first
+    for split in ["train", "val", "test", "external_color_test"]:
+        for old_f in (TARGET_DIR / "images" / split).glob("pcbdefect_*.jpg"):
+            old_f.unlink()
+        for old_f in (TARGET_DIR / "labels" / split).glob("pcbdefect_*.txt"):
+            old_f.unlink()
+
     v1_coco_path = PCB_DEFECT_RAW / "extracted_v1" / "PCB_Defect" / "annotation" / "_annotations.coco.json"
     v1_img_dir = PCB_DEFECT_RAW / "extracted_v1" / "PCB_Defect" / "images"
 
     with open(v1_coco_path, "r", encoding="utf-8") as f:
         coco = json.load(f)
 
-    # Categories in PCB-Defect v1:
-    # 1: missing_pad -> 5 (pin_hole_missing_pad)
-    # 2: mouse_bite -> 2 (mouse_bite)
-    # 3: open_circuit -> 0 (open_circuit)
-    # 4: short -> 1 (short_circuit)
-    # 5: spur -> 3 (spur)
-    # 6: spurious_copper -> 4 (spurious_copper)
     pcb_defect_to_canonical = {
         1: 5,  # missing_pad -> pin_hole_missing_pad
         2: 2,  # mouse_bite -> mouse_bite
@@ -199,93 +191,135 @@ def build_unified_dataset():
         6: 4   # spurious_copper -> spurious_copper
     }
 
-    # Group images by board prefix to prevent leakage
+    # Group images by physical board prefix
     board_groups = defaultdict(list)
-    img_id_to_meta = {}
     for img_meta in coco["images"]:
-        iid = img_meta["id"]
         fname = img_meta["file_name"]
         extra_name = img_meta.get("extra", {}).get("name", fname)
         board_prefix = extra_name.split("-")[0] if "-" in extra_name else fname.split("_")[0]
         board_groups[board_prefix].append(img_meta)
-        img_id_to_meta[iid] = img_meta
 
-    sorted_prefixes = sorted(list(board_groups.keys()))
-    print(f"    - Identified {len(sorted_prefixes)} distinct board layouts in PCB-Defect V2: {sorted_prefixes}")
+    # Board layout split:
+    # External Color Test (Untouched): 68, 80, 81, 82
+    # Val: 65, 66, 67
+    # Train: 50 through 64 (15 layouts)
+    test_prefixes = {"68", "80", "81", "82"}
+    val_prefixes = {"65", "66", "67"}
+    train_prefixes = {str(i) for i in range(50, 65)}
 
-    # Partition board groups: 70% Train, 15% Val, 15% External Color Test
-    # Group deterministic assignment:
-    n_groups = len(sorted_prefixes)
-    n_train = int(n_groups * 0.70)
-    n_val = int(n_groups * 0.15)
-    train_prefixes = set(sorted_prefixes[:n_train])
-    val_prefixes = set(sorted_prefixes[n_train:n_train + n_val])
-    test_prefixes = set(sorted_prefixes[n_train + n_val:])
+    print(f"    - Board Partitioning: Train={sorted(list(train_prefixes))}, Val={sorted(list(val_prefixes))}, External Test={sorted(list(test_prefixes))}")
 
-    print(f"    - Train board groups ({len(train_prefixes)}): {sorted(list(train_prefixes))}")
-    print(f"    - Val board groups   ({len(val_prefixes)}): {sorted(list(val_prefixes))}")
-    print(f"    - External Color Test groups ({len(test_prefixes)}): {sorted(list(test_prefixes))}")
-
-    # Map annotations to image_id
     annos_by_img = defaultdict(list)
     for anno in coco["annotations"]:
         annos_by_img[anno["image_id"]].append(anno)
 
-    for prefix in sorted_prefixes:
-        if prefix in train_prefixes:
-            target_split = "train"
+    crop_size = 640
+    stride = 480  # 160 px overlap (25%)
+
+    for prefix, img_list in sorted(board_groups.items()):
+        if prefix in test_prefixes:
+            target_split = "external_color_test"
         elif prefix in val_prefixes:
             target_split = "val"
+        elif prefix in train_prefixes:
+            target_split = "train"
         else:
-            target_split = "external_color_test"
+            target_split = "train"  # Fallback for any other boards
 
-        for img_meta in board_groups[prefix]:
+        for img_meta in img_list:
             iid = img_meta["id"]
             fname = img_meta["file_name"]
-            img_w = float(img_meta["width"])
-            img_h = float(img_meta["height"])
+            stem = Path(fname).stem
             src_img_path = v1_img_dir / fname
 
             if not src_img_path.exists():
                 continue
 
+            img = cv2.imread(str(src_img_path))
+            if img is None:
+                continue
+            H, W = img.shape[:2]
             annos = annos_by_img.get(iid, [])
-            valid_lines = []
 
-            for a in annos:
-                cat_id = a["category_id"]
-                if cat_id in pcb_defect_to_canonical:
-                    canon_cid = pcb_defect_to_canonical[cat_id]
-                    # COCO bbox: [x_min, y_min, width, height]
-                    bx, by, bw, bh = a["bbox"]
-                    xc = (bx + bw / 2.0) / img_w
-                    yc = (by + bh / 2.0) / img_h
-                    norm_w = bw / img_w
-                    norm_h = bh / img_h
+            # Compute tile grid
+            x_coords = list(range(0, max(1, W - crop_size + 1), stride))
+            if not x_coords or x_coords[-1] + crop_size < W:
+                x_coords.append(max(0, W - crop_size))
+            x_coords = sorted(list(set(x_coords)))
 
-                    # Clamp
-                    xc = max(0.0, min(1.0, xc))
-                    yc = max(0.0, min(1.0, yc))
-                    norm_w = max(0.0001, min(1.0, norm_w))
-                    norm_h = max(0.0001, min(1.0, norm_h))
+            y_coords = list(range(0, max(1, H - crop_size + 1), stride))
+            if not y_coords or y_coords[-1] + crop_size < H:
+                y_coords.append(max(0, H - crop_size))
+            y_coords = sorted(list(set(y_coords)))
 
-                    valid_lines.append(f"{canon_cid} {xc:.6f} {yc:.6f} {norm_w:.6f} {norm_h:.6f}")
-                    stats[target_split]["classes"][canon_cid] += 1
-                    stats[target_split]["boxes"] += 1
+            background_crops_saved = 0
+            max_background_per_image = 1 if target_split != "external_color_test" else 2
 
-            dst_img = TARGET_DIR / "images" / target_split / f"pcbdefect_{fname}"
-            dst_lbl = TARGET_DIR / "labels" / target_split / f"pcbdefect_{Path(fname).stem}.txt"
+            crop_idx = 0
+            for y in y_coords:
+                for x in x_coords:
+                    crop_annos = []
+                    for a in annos:
+                        cat_id = a["category_id"]
+                        if cat_id not in pcb_defect_to_canonical:
+                            continue
+                        canon_cid = pcb_defect_to_canonical[cat_id]
 
-            if not dst_img.exists():
-                shutil.copy2(src_img_path, dst_img)
+                        bx, by, bw, bh = a["bbox"]
+                        x1, y1, x2, y2 = bx, by, bx + bw, by + bh
 
-            with open(dst_lbl, "w", encoding="utf-8") as f:
-                f.write("\n".join(valid_lines) + ("\n" if valid_lines else ""))
+                        ix1, iy1 = max(x1, x), max(y1, y)
+                        ix2, iy2 = min(x2, x + crop_size), min(y2, y + crop_size)
 
-            stats[target_split]["images"] += 1
-            stats[target_split]["sources"]["PCB-Defect V2"] += 1
+                        if ix2 > ix1 and iy2 > iy1:
+                            inter_area = (ix2 - ix1) * (iy2 - iy1)
+                            orig_area = max(1.0, bw * bh)
+                            if (inter_area / orig_area) >= 0.30 and (ix2 - ix1) >= 4 and (iy2 - iy1) >= 4:
+                                rx1, ry1 = ix1 - x, iy1 - y
+                                rx2, ry2 = ix2 - x, iy2 - y
+                                xc = (rx1 + rx2) / (2.0 * crop_size)
+                                yc = (ry1 + ry2) / (2.0 * crop_size)
+                                norm_w = (rx2 - rx1) / float(crop_size)
+                                norm_h = (ry2 - ry1) / float(crop_size)
 
-    print(f"    - PCB-Defect V2 integrated: Train={stats['train']['sources']['PCB-Defect V2']}, Val={stats['val']['sources']['PCB-Defect V2']}, External Test={stats['external_color_test']['sources']['PCB-Defect V2']}")
+                                xc = max(0.0001, min(0.9999, xc))
+                                yc = max(0.0001, min(0.9999, yc))
+                                norm_w = max(0.0001, min(0.9999, norm_w))
+                                norm_h = max(0.0001, min(0.9999, norm_h))
+
+                                crop_annos.append(f"{canon_cid} {xc:.6f} {yc:.6f} {norm_w:.6f} {norm_h:.6f}")
+                                stats[target_split]["classes"][canon_cid] += 1
+                                stats[target_split]["boxes"] += 1
+
+                    has_defects = len(crop_annos) > 0
+                    save_this_crop = False
+
+                    if has_defects:
+                        save_this_crop = True
+                    elif background_crops_saved < max_background_per_image:
+                        save_this_crop = True
+                        background_crops_saved += 1
+
+                    if save_this_crop:
+                        crop_img = img[y:y + crop_size, x:x + crop_size]
+                        crop_fname = f"pcbdefect_b{prefix}_{stem}_crop{crop_idx:03d}_x{x}_y{y}.jpg"
+                        crop_lbl_name = f"pcbdefect_b{prefix}_{stem}_crop{crop_idx:03d}_x{x}_y{y}.txt"
+
+                        dst_crop_path = TARGET_DIR / "images" / target_split / crop_fname
+                        dst_crop_lbl = TARGET_DIR / "labels" / target_split / crop_lbl_name
+
+                        if not dst_crop_path.exists():
+                            cv2.imwrite(str(dst_crop_path), crop_img, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
+
+                        with open(dst_crop_lbl, "w", encoding="utf-8") as f:
+                            f.write("\n".join(crop_annos) + ("\n" if crop_annos else ""))
+
+                        stats[target_split]["images"] += 1
+                        stats[target_split]["sources"]["PCB-Defect V2"] += 1
+
+                    crop_idx += 1
+
+    print(f"    - PCB-Defect V2 tiled: Train={stats['train']['sources']['PCB-Defect V2']}, Val={stats['val']['sources']['PCB-Defect V2']}, External Test={stats['external_color_test']['sources']['PCB-Defect V2']}")
 
     # ---------------------------------------------------------
     # 4. WRITE DATA.YAML & AUDIT SUMMARY
@@ -294,7 +328,7 @@ def build_unified_dataset():
         "path": str(TARGET_DIR.resolve()),
         "train": "images/train",
         "val": "images/val",
-        "test": "images/test",  # Exactly matches untouched DeepPCB test split!
+        "test": "images/test",  # DeepPCB untouched test split
         "external_color_test": "images/external_color_test",
         "nc": 6,
         "names": {
@@ -325,7 +359,7 @@ def build_unified_dataset():
         json.dump(manifest, f, indent=2)
 
     print("\n" + "=" * 70)
-    print("UNIFIED MULTI-DOMAIN DATASET SUMMARY")
+    print("REBUILT UNIFIED MULTI-DOMAIN DATASET SUMMARY")
     print("=" * 70)
     for split in ["train", "val", "test", "external_color_test"]:
         s = stats[split]

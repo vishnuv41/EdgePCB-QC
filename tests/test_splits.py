@@ -83,3 +83,61 @@ def test_yolo_labels_validity():
                     assert 0.0 <= yc <= 1.0, f"yc out of bounds: {yc} in {lf}"
                     assert 0.0 <= w <= 1.0, f"w out of bounds: {w} in {lf}"
                     assert 0.0 <= h <= 1.0, f"h out of bounds: {h} in {lf}"
+
+
+def test_unified_splits_zero_leakage():
+    """Verify zero image leakage across train, val, test, and external_color_test in unified dataset."""
+    unified_dir = PROCESSED_DIR / "unified_yolo" / "images"
+    assert unified_dir.exists(), f"Unified images directory missing at {unified_dir}"
+
+    splits = ["train", "val", "test", "external_color_test"]
+    split_files = {s: set(p.name for p in (unified_dir / s).glob("*.jpg")) for s in splits}
+
+    for s1 in splits:
+        assert len(split_files[s1]) > 0, f"Split {s1} is empty!"
+        for s2 in splits:
+            if s1 != s2:
+                overlap = split_files[s1] & split_files[s2]
+                assert not overlap, f"Image leakage detected between {s1} and {s2}: {len(overlap)} images overlap!"
+
+
+def test_unified_pcb_defect_board_isolation():
+    """Verify physical board isolation: boards 68, 80, 81, 82 must be exclusively in external_color_test."""
+    unified_dir = PROCESSED_DIR / "unified_yolo" / "images"
+    test_boards = {"68", "80", "81", "82"}
+    val_boards = {"65", "66", "67"}
+    train_boards = {str(i) for i in range(50, 65)}
+
+    for fname in (unified_dir / "external_color_test").glob("pcbdefect_*.jpg"):
+        board_match = any(b in fname.name for b in test_boards)
+        assert board_match, f"Unexpected image in external_color_test: {fname.name}"
+
+    for split in ["train", "val"]:
+        for fname in (unified_dir / split).glob("pcbdefect_*.jpg"):
+            for tb in test_boards:
+                assert f"_{tb}-" not in fname.name and f"_{tb}_" not in fname.name, (
+                    f"Leakage detected! Untouched test board {tb} found in {split}: {fname.name}"
+                )
+
+
+def test_unified_labels_validity():
+    """Check bounding box normalization and class ranges in unified dataset."""
+    unified_lbl_dir = PROCESSED_DIR / "unified_yolo" / "labels"
+    for split in ["train", "val", "test", "external_color_test"]:
+        labels = list((unified_lbl_dir / split).glob("*.txt"))
+        assert len(labels) > 0, f"No labels found in {unified_lbl_dir / split}"
+        for lf in labels[:100]:
+            with open(lf, "r", encoding="utf-8") as f:
+                for line in f:
+                    parts = line.strip().split()
+                    if not parts:
+                        continue
+                    assert len(parts) == 5, f"Malformed line in {lf}: {line}"
+                    cls_id = int(parts[0])
+                    xc, yc, w, h = map(float, parts[1:])
+                    assert 0 <= cls_id <= 5, f"Invalid class {cls_id} in {lf}"
+                    assert 0.0 <= xc <= 1.0, f"xc out of bounds: {xc} in {lf}"
+                    assert 0.0 <= yc <= 1.0, f"yc out of bounds: {yc} in {lf}"
+                    assert 0.0 <= w <= 1.0, f"w out of bounds: {w} in {lf}"
+                    assert 0.0 <= h <= 1.0, f"h out of bounds: {h} in {lf}"
+

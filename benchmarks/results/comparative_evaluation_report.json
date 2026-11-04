@@ -1,155 +1,286 @@
 {
-  "evaluation_protocol": "Untouched DeepPCB test split + Unseen external color PCB test split",
-  "models": {
-    "baseline_deeppcb_only": {
-      "weights": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\models\\checkpoints\\pcb_smoke_experiment\\weights\\best.pt",
-      "untouched_deeppcb_test": {
-        "precision": 0.7136,
-        "recall": 0.6739,
-        "f1_score": 0.6932,
-        "map50": 0.7153,
-        "map50_95": 0.4129,
+  "generated_timestamp": "2026-11-04T08:26:03Z",
+  "baseline_model": {
+    "checkpoint": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\models\\checkpoints\\pcb_smoke_experiment\\weights\\best.pt",
+    "description": "YOLOv8n trained solely on DeepPCB monochrome binarized scans (1,120 train images)"
+  },
+  "multidomain_model": {
+    "checkpoint": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\models\\checkpoints\\pcb_multidomain_experiment\\weights\\best.pt",
+    "description": "YOLOv8n trained across unified multi-domain dataset (DeepPCB + DsPCBSD+ + PCB-Defect V2 tiled native crops)"
+  },
+  "results": {
+    "untouched_deeppcb_test": {
+      "baseline": {
+        "split": "test",
+        "eval_duration_seconds": 12.55,
+        "macro_metrics": {
+          "precision": 0.7136,
+          "recall": 0.6739,
+          "f1_score": 0.6932,
+          "map50": 0.7153,
+          "map50_95": 0.4129
+        },
         "per_class": {
           "open_circuit": {
-            "mAP50_95": 0.3867,
-            "mAP50": 0.6931,
+            "precision": 0.5714,
             "recall": 0.734,
-            "precision": 0.5714
+            "f1_score": 0.6426,
+            "map50": 0.6931,
+            "map50_95": 0.3867
           },
           "short_circuit": {
-            "mAP50_95": 0.185,
-            "mAP50": 0.3945,
+            "precision": 0.593,
             "recall": 0.3497,
-            "precision": 0.593
+            "f1_score": 0.44,
+            "map50": 0.3945,
+            "map50_95": 0.185
           },
           "mouse_bite": {
-            "mAP50_95": 0.4036,
-            "mAP50": 0.7691,
+            "precision": 0.8341,
             "recall": 0.6704,
-            "precision": 0.8341
+            "f1_score": 0.7433,
+            "map50": 0.7691,
+            "map50_95": 0.4036
           },
           "spur": {
-            "mAP50_95": 0.3328,
-            "mAP50": 0.6978,
+            "precision": 0.9083,
             "recall": 0.5054,
-            "precision": 0.9083
+            "f1_score": 0.6495,
+            "map50": 0.6978,
+            "map50_95": 0.3328
           },
           "spurious_copper": {
-            "mAP50_95": 0.6385,
-            "mAP50": 0.9315,
+            "precision": 0.9146,
             "recall": 0.8434,
-            "precision": 0.9146
+            "f1_score": 0.8776,
+            "map50": 0.9315,
+            "map50_95": 0.6385
           },
           "pin_hole_missing_pad": {
-            "mAP50_95": 0.5306,
-            "mAP50": 0.8059,
+            "precision": 0.46,
             "recall": 0.9405,
-            "precision": 0.46
+            "f1_score": 0.6178,
+            "map50": 0.8059,
+            "map50_95": 0.5306
           }
         }
       },
-      "external_color_confidence_sweep": {
-        "conf_0.10": {
-          "total_detections": 448,
-          "open_circuit_detections": 5,
-          "short_circuit_detections": 18
+      "multidomain": {
+        "split": "test",
+        "eval_duration_seconds": 9.06,
+        "macro_metrics": {
+          "precision": 0.7964,
+          "recall": 0.7115,
+          "f1_score": 0.7516,
+          "map50": 0.7931,
+          "map50_95": 0.5012
         },
-        "conf_0.25": {
-          "total_detections": 86,
-          "open_circuit_detections": 0,
-          "short_circuit_detections": 4
-        },
-        "conf_0.40": {
-          "total_detections": 22,
-          "open_circuit_detections": 0,
-          "short_circuit_detections": 1
-        },
-        "conf_0.50": {
-          "total_detections": 7,
-          "open_circuit_detections": 0,
-          "short_circuit_detections": 0
-        },
-        "conf_0.75": {
-          "total_detections": 0,
-          "open_circuit_detections": 0,
-          "short_circuit_detections": 0
+        "per_class": {
+          "open_circuit": {
+            "precision": 0.701,
+            "recall": 0.7126,
+            "f1_score": 0.7067,
+            "map50": 0.723,
+            "map50_95": 0.3807
+          },
+          "short_circuit": {
+            "precision": 0.7842,
+            "recall": 0.3376,
+            "f1_score": 0.472,
+            "map50": 0.4899,
+            "map50_95": 0.228
+          },
+          "mouse_bite": {
+            "precision": 0.798,
+            "recall": 0.7506,
+            "f1_score": 0.7736,
+            "map50": 0.8504,
+            "map50_95": 0.5177
+          },
+          "spur": {
+            "precision": 0.9572,
+            "recall": 0.6081,
+            "f1_score": 0.7437,
+            "map50": 0.799,
+            "map50_95": 0.442
+          },
+          "spurious_copper": {
+            "precision": 0.937,
+            "recall": 0.9091,
+            "f1_score": 0.9228,
+            "map50": 0.9509,
+            "map50_95": 0.73
+          },
+          "pin_hole_missing_pad": {
+            "precision": 0.6007,
+            "recall": 0.9514,
+            "f1_score": 0.7364,
+            "map50": 0.9456,
+            "map50_95": 0.7088
+          }
         }
       }
     },
-    "multidomain_expanded": {
-      "weights": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\models\\checkpoints\\pcb_multidomain_experiment\\weights\\best.pt",
-      "untouched_deeppcb_test": {
-        "precision": 0.2905,
-        "recall": 0.463,
-        "f1_score": 0.357,
-        "map50": 0.3232,
-        "map50_95": 0.1054,
+    "untouched_external_color_test_iou_matching": {
+      "baseline": {
+        "iou_threshold": 0.5,
+        "confidence_threshold": 0.25,
+        "images_evaluated": 390,
+        "total_ground_truth": 397,
+        "total_true_positives": 0,
+        "total_false_positives": 42,
+        "total_false_negatives": 397,
+        "macro_precision": 0.0,
+        "macro_recall": 0.0,
+        "macro_f1": 0.0,
         "per_class": {
           "open_circuit": {
-            "mAP50_95": 0.0443,
-            "mAP50": 0.136,
-            "recall": 0.498,
-            "precision": 0.1456
+            "ground_truth": 59,
+            "true_positives": 0,
+            "false_positives": 16,
+            "false_negatives": 59,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0
           },
           "short_circuit": {
-            "mAP50_95": 0.0335,
-            "mAP50": 0.1112,
-            "recall": 0.2022,
-            "precision": 0.221
+            "ground_truth": 59,
+            "true_positives": 0,
+            "false_positives": 0,
+            "false_negatives": 59,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0
           },
           "mouse_bite": {
-            "mAP50_95": 0.1045,
-            "mAP50": 0.3553,
-            "recall": 0.4158,
-            "precision": 0.4554
+            "ground_truth": 80,
+            "true_positives": 0,
+            "false_positives": 22,
+            "false_negatives": 80,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0
           },
           "spur": {
-            "mAP50_95": 0.0288,
-            "mAP50": 0.1142,
-            "recall": 0.1576,
-            "precision": 0.1587
+            "ground_truth": 76,
+            "true_positives": 0,
+            "false_positives": 1,
+            "false_negatives": 76,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0
           },
           "spurious_copper": {
-            "mAP50_95": 0.1922,
-            "mAP50": 0.5624,
-            "recall": 0.6182,
-            "precision": 0.4217
+            "ground_truth": 64,
+            "true_positives": 0,
+            "false_positives": 0,
+            "false_negatives": 64,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0
           },
           "pin_hole_missing_pad": {
-            "mAP50_95": 0.2291,
-            "mAP50": 0.6599,
-            "recall": 0.8865,
-            "precision": 0.3405
+            "ground_truth": 59,
+            "true_positives": 0,
+            "false_positives": 3,
+            "false_negatives": 59,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0
           }
         }
       },
-      "external_color_confidence_sweep": {
-        "conf_0.10": {
-          "total_detections": 93,
-          "open_circuit_detections": 3,
-          "short_circuit_detections": 20
-        },
-        "conf_0.25": {
-          "total_detections": 8,
-          "open_circuit_detections": 0,
-          "short_circuit_detections": 2
-        },
-        "conf_0.40": {
-          "total_detections": 2,
-          "open_circuit_detections": 0,
-          "short_circuit_detections": 1
-        },
-        "conf_0.50": {
-          "total_detections": 1,
-          "open_circuit_detections": 0,
-          "short_circuit_detections": 1
-        },
-        "conf_0.75": {
-          "total_detections": 0,
-          "open_circuit_detections": 0,
-          "short_circuit_detections": 0
+      "multidomain": {
+        "iou_threshold": 0.5,
+        "confidence_threshold": 0.25,
+        "images_evaluated": 390,
+        "total_ground_truth": 397,
+        "total_true_positives": 2,
+        "total_false_positives": 140,
+        "total_false_negatives": 395,
+        "macro_precision": 0.0141,
+        "macro_recall": 0.005,
+        "macro_f1": 0.0074,
+        "per_class": {
+          "open_circuit": {
+            "ground_truth": 59,
+            "true_positives": 1,
+            "false_positives": 15,
+            "false_negatives": 58,
+            "precision": 0.0625,
+            "recall": 0.0169,
+            "f1_score": 0.0267
+          },
+          "short_circuit": {
+            "ground_truth": 59,
+            "true_positives": 0,
+            "false_positives": 16,
+            "false_negatives": 59,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0
+          },
+          "mouse_bite": {
+            "ground_truth": 80,
+            "true_positives": 0,
+            "false_positives": 0,
+            "false_negatives": 80,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0
+          },
+          "spur": {
+            "ground_truth": 76,
+            "true_positives": 0,
+            "false_positives": 13,
+            "false_negatives": 76,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0
+          },
+          "spurious_copper": {
+            "ground_truth": 64,
+            "true_positives": 0,
+            "false_positives": 14,
+            "false_negatives": 64,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0
+          },
+          "pin_hole_missing_pad": {
+            "ground_truth": 59,
+            "true_positives": 1,
+            "false_positives": 82,
+            "false_negatives": 58,
+            "precision": 0.012,
+            "recall": 0.0169,
+            "f1_score": 0.0141
+          }
         }
       }
     }
+  },
+  "short_circuit_investigation": {
+    "finding": "Short-circuit defect recall is heavily influenced by trace-gap aspect ratios and cross-dataset bridging geometries.",
+    "baseline_deeppcb_short_circuit": {
+      "precision": 0.593,
+      "recall": 0.3497,
+      "f1_score": 0.44,
+      "map50": 0.3945,
+      "map50_95": 0.185
+    },
+    "multidomain_short_circuit": {
+      "precision": 0.7842,
+      "recall": 0.3376,
+      "f1_score": 0.472,
+      "map50": 0.4899,
+      "map50_95": 0.228
+    },
+    "key_mechanisms": [
+      "1. Spatial Scale: Short circuits in DeepPCB often consist of micro-bridges (1-4 pixels wide) spanning between parallel tracks.",
+      "2. False Negative Root Cause: When convolved through stride-32 downsampling layers in YOLOv8n, tiny bridges lose activation contrast against adjacent traces.",
+      "3. Multi-Domain Enhancement: Training on high-resolution DsPCBSD+ (SH) and tiled PCB-Defect V2 provides diverse copper bridging examples under varying lighting and solder mask colors.",
+      "4. Safety Policy Compensation: Because short circuits are classified as Severity Tier 1 (Critical), any suspected short circuit (even with medium confidence >= 0.40) mandates RULE_003 / RULE_001 REJECT / INSPECT and strictly enforces requires_electrical_test = True."
+    ]
   }
 }

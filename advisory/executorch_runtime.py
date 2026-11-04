@@ -14,6 +14,7 @@ import os
 import json
 import time
 import psutil
+import concurrent.futures
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -53,6 +54,7 @@ class ExecuTorchLlamaRunner:
         self.module = None
         self.tokenizer = None
         self.is_loaded = False
+        self._executor = concurrent.futures.ThreadPoolExecutor(max_workers=2, thread_name_prefix="llama_async")
         self._load_runtime()
 
     def _load_runtime(self):
@@ -324,3 +326,22 @@ class ExecuTorchLlamaRunner:
                     "peak_ram_mb": round(max(ram_before, ram_after), 1)
                 }
             }
+
+    def generate_advisory_async(
+        self,
+        payload: Dict[str, Any],
+        mode: str = "auto",
+        max_new_tokens: int = 40,
+        **kwargs
+    ) -> concurrent.futures.Future:
+        """
+        Submits an advisory generation task asynchronously to a worker thread.
+        Allows instant deterministic dashboard verdict display while Llama advisory runs concurrently.
+        """
+        return self._executor.submit(
+            self.generate_advisory,
+            payload=payload,
+            mode=mode,
+            max_new_tokens=max_new_tokens,
+            **kwargs
+        )

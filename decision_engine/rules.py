@@ -131,6 +131,18 @@ def evaluate_rules(
                 requires_electrical_test=has_electrical_risk
             )
 
+        # 5C. Reference Alignment / Missing Reference Gate -> INSPECT
+        has_valid_ref = quality_assessment.get("has_valid_reference", True)
+        align_score = quality_assessment.get("reference_alignment_score")
+        if not has_valid_ref or (align_score is not None and align_score < 0.60):
+            reason = quality_assessment.get("reason_for_inspect") or "Reference template missing or alignment uncertain"
+            return RuleResult(
+                decision="INSPECT",
+                rule_id="RULE_005C_ALIGNMENT_UNCERTAIN",
+                description=f"Manual Inspection Required: Reference template missing or alignment uncertain ({reason}).",
+                requires_electrical_test=has_electrical_risk
+            )
+
     # 5. Insufficient inspection coverage -> INSPECT
     if coverage < min_cov:
         return RuleResult(

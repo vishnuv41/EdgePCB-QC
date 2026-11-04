@@ -1,0 +1,65 @@
+{
+  "target_hardware": {
+    "sbc": "Raspberry Pi 5 (8GB LPDDR4X)",
+    "npu": "Raspberry Pi AI HAT+ (Hailo-8 / Hailo-8L)",
+    "camera": "Raspberry Pi Camera Module 3 (IMX708)"
+  },
+  "onnx_model": {
+    "path": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\models\\onnx\\pcb_multidomain_experiment.onnx",
+    "size_mb": 12.19,
+    "opset": 17
+  },
+  "numerical_parity": {
+    "pytorch_shape": [
+      1,
+      10,
+      8400
+    ],
+    "onnx_shape": [
+      1,
+      10,
+      8400
+    ],
+    "max_absolute_difference": 0.00074005126953125,
+    "mean_absolute_error": 8.671828254591674e-06,
+    "parity_passed": true
+  },
+  "onnx_operator_audit": {
+    "total_nodes": 233,
+    "op_distribution": {
+      "Conv": 64,
+      "Sigmoid": 58,
+      "Mul": 58,
+      "Split": 8,
+      "Add": 8,
+      "Concat": 17,
+      "MaxPool": 3,
+      "Resize": 2,
+      "Reshape": 8,
+      "Transpose": 1,
+      "Softmax": 1,
+      "Slice": 2,
+      "Sub": 2,
+      "Div": 1
+    },
+    "unsupported_operators": [],
+    "hailo_dfc_compatible": true
+  },
+  "quantization_calibration": {
+    "calibration_sample_count": 1024,
+    "sources": {
+      "DeepPCB": 410,
+      "DsPCBSD+": 410,
+      "PCB-Defect-V2": 204
+    },
+    "tensor_shape": [
+      1024,
+      3,
+      640,
+      640
+    ],
+    "archive_path": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\datasets\\calibration_images\\calib_set_1024x640x640.npy",
+    "archive_size_mb": 4800.0
+  },
+  "zero_fabrication_statement": "EdgePCB-QC reports zero fabricated performance. Hailo deployment metrics are documented as PROJECTED until physical Raspberry Pi 5 + AI HAT+ hardware is procured and measured in Phase 2."
+}

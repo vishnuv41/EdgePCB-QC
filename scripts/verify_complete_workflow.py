@@ -51,6 +51,9 @@ def run_complete_workflow_verification():
     p_test_deep = WORKSPACE_ROOT / "datasets" / "processed" / "deeppcb_yolo" / "images" / "test" / "group90100_90100000.jpg"
     img_deep = cv2.imread(str(p_test_deep))
 
+    p_clean_deep = WORKSPACE_ROOT / "datasets" / "raw" / "DeepPCB" / "PCBData" / "group90100" / "90100" / "90100000_temp.jpg"
+    img_deep_clean = cv2.imread(str(p_clean_deep))
+
     p_color_defect = WORKSPACE_ROOT / "datasets" / "raw" / "pcb_defect_v2" / "extracted_v1" / "PCB_Defect" / "images" / "pcb_defect_001.jpg"
     img_color_defect = cv2.imread(str(p_color_defect))
 
@@ -167,16 +170,17 @@ def run_complete_workflow_verification():
         "expect_electrical_test": True
     })
 
-    # Scenario 10: Image with no valid reference board
+    # Scenario 10: Clean/unfamiliar board with missing or unaligned golden reference template
     scenarios.append({
         "scenario_num": 10,
         "name": "Inspection Image With No Valid Reference Board",
-        "image": img_deep.copy(),
+        "image": img_deep_clean.copy(),
         "has_defect": False,
         "is_color": False,
         "ref_valid": False,
         "alignment_score": 0.42,  # Failed alignment
-        "expected_no_pass": True
+        "expected_no_pass": True,
+        "expected_verdict": "INSPECT"
     })
 
     results = []

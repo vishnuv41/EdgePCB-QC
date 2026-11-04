@@ -44,16 +44,16 @@ As required by scientific integrity guidelines, we do **not** claim that a pin-h
 
 1. **DeepPCB `pin-hole`:**
    - **Physical Mechanism:** Micro-void formed during copper plating or photoresist pinholing. The annular ring is present, but contains a localized hole or void through the copper foil.
-   - **IPC Standard:** IPC-A-600 Section 2.5 (Voids in Conductive Pattern).
+   - **IPC Domain Context:** IPC-A-600 Conductor Pattern Criteria (Voids in copper foil / plating; informational reference, prototype rule).
 2. **PCB-Defect V2 `missing_pad`:**
    - **Physical Mechanism:** Severe photolithographic over-etching or mechanical delamination resulting in the complete absence of the copper solder pad / via land.
-   - **IPC Standard:** IPC-A-600 Section 3.1 (Unsupported Holes & Annular Rings).
+   - **IPC Domain Context:** IPC-A-600 Unsupported Holes and Lands Criteria (Absent lands; informational reference, prototype rule).
 3. **DsPCBSD+ `HB` (Hole Breakout):**
    - **Physical Mechanism:** Drill misregistration where the via hole center shifts significantly relative to the copper landing pad, causing the drilled circumference to break out past the external boundary of the annular ring ($90^\circ$ or $180^\circ$ breakout).
-   - **IPC Standard:** IPC-A-600 Section 3.3 (Annular Ring Breakout).
+   - **IPC Domain Context:** IPC-A-600 Annular Ring Criteria (Hole breakout and registration; informational reference, prototype rule).
 
 **Engineering Unification Justification:**
-In a 6-class industrial edge detector, all three defects represent **annular ring and pad structural integrity failures**. All three defects directly compromise solder joint reliability and via interconnection, justifying their classification as **Critical (Severity Tier 1)** requiring operator inspection or rejection.
+In a 6-class industrial edge detector, all three defects represent **annular ring and pad structural integrity failures**. While physically distinct (void vs absent land vs drill misregistration), all three defects directly compromise solder joint reliability and via interconnection, justifying their classification as **Critical (Severity Tier 1)** requiring operator inspection or rejection.
 
 ---
 
@@ -63,7 +63,7 @@ The DsPCBSD+ dataset contains three additional classes that are deliberately exc
 
 | DsPCBSD+ Code | Defect Name | Annotation Count | Justification for Exclusion |
 |---|---|---|---|
-| `CS` | Conductor Scratch | 2,490 | Superficial surface scratch on copper surface. In bare PCB inspection, shallow scratches that do not penetrate base laminate or violate minimum conductor thickness (IPC-A-600 2.2.1) do not warrant board rejection. Conflating scratches with circuit breaks would elevate false-reject rates. |
+| `CS` | Conductor Scratch | 2,490 | Superficial surface scratch on copper surface. In bare PCB inspection, shallow scratches that do not penetrate base laminate or violate minimum conductor thickness do not warrant board rejection. Conflating scratches with circuit breaks would elevate false-reject rates. |
 | `CFO` | Conductor Foreign Object | 1,832 | Particulate or fibrous contamination resting on conductive traces. These are removable surface contaminants rather than permanent copper etching defects; they are handled via ionized air cleaning. |
 | `BMFO` | Base Material Foreign Object | 1,680 | Debris, particulate, or discoloration resting on bare FR-4 substrate. Non-conductive laminate discoloration that does not bridge traces does not violate circuit connectivity. |
 

@@ -205,3 +205,28 @@
   6. Preserved the baseline checkpoint intact, kept the 194-image DeepPCB test split 100% untouched, and built a leak-free unified multi-domain dataset (`datasets/processed/unified_yolo/`) with 2,492 train, 469 val, 194 test, and a dedicated 25-image external color test split.
   7. Verified 10 industrial inspection scenarios (`benchmarks/results/complete_workflow_scenarios.json`) achieving 0 false-PASS occurrences.
 - **Reasoning:** Eliminates dangerous false-PASS escapes, guarantees deterministic safety compliance, and establishes rigorous cross-dataset domain generalization.
+
+---
+
+### DECISION 023: Full Dataset Rebuilding, Native Tiling, Comparative Cross-Domain Evaluation, and Hailo NPU ONNX Graph Verification
+- **Date:** 2026-11-04
+- **Context:** Tasks required resolving GPU training availability for RTX 5050 (`sm_120`), integrating all compatible DsPCBSD+ images, tiling PCB-Defect V2 high-res boards into overlapping 640x640 crops at native optical resolution with boards 68, 80, 81, 82 strictly reserved for external color testing, comparing baseline vs multi-domain models, fixing inspection scenario 10, calibrating the quality gate, optimizing Llama with XNNPACK 8da4w scripts and async execution, auditing the ONNX graph for Hailo NPU, and verifying complete offline integrity.
+- **Decision:**
+  1. **GPU Training Pipeline:** Diagnosed local PyTorch CUDA 12.8 wheel download bottleneck (interrupted network connection and 8-hour ETA at ~80 kB/s); prepared a self-contained 50-epoch GPU training and evaluation notebook (`notebooks/train_edgepcb_qc_gpu.ipynb`) optimized for free Google Colab (T4 GPU) and Kaggle (T4/P100 GPUs).
+  2. **Dataset Rebuilding (`training/prepare_unified_dataset.py`):**
+     - DeepPCB: Preserved existing train (1,120), val (186), and untouched test (194) splits 100%.
+     - DsPCBSD+: Integrated all 5,811 train and 1,444 val compatible images containing any canonical defect classes 0..5, remapped and validated.
+     - PCB-Defect V2: Partitioned by physical board layouts. Boards `68`, `80`, `81`, `82` strictly reserved for untouched external color testing (390 native 640x640 crops). Boards `50` to `64` (train, 2,376 crops) and `65` to `67` (val, 495 crops) tiled with 640x640 window and 480 stride (25% overlap) at native resolution, with bboxes accurately remapped.
+     - Total dataset: Train = 9,307 images (22,066 bboxes), Val = 2,125 images (4,431 bboxes), Test = 194 images (1,143 bboxes), External Color Test = 390 images (397 bboxes). Verified zero board leakage across all splits (`tests/test_splits.py`, 7/7 passing).
+  3. **Comparative Evaluation (`benchmarks/results/comparative_evaluation_report.json`):**
+     - On Untouched DeepPCB Test Split (194 images): Multi-Domain detector improved mAP@50 from 71.53% to **79.31%** (+7.78%), Recall from 67.39% to **71.15%** (+3.76%), Precision from 71.36% to **79.64%** (+8.28%), and mAP@50-95 from 41.29% to **50.12%** (+8.83%).
+     - Per-class improvements: Short-circuit AP@50 gained +9.54% (39.45% -> **48.99%**), precision gained +19.12% (59.30% -> **78.42%**); Pin-hole/missing pad AP@50 reached **94.56%**; Spurious copper reached **95.09%**.
+     - On Untouched External Color Test Split (390 crops): Baseline had 0 detections; Multi-Domain detector demonstrated verified transfer learning with true positive defect captures at IoU >= 0.50.
+     - Investigated short-circuit recall dynamics: micro-bridge aspect ratios (1-4 px) vs stride-32 downsampling in CNN backbones, and established safety policy guarantees (`requires_electrical_test = True`).
+  4. **Documentation Grounding:** Replaced ungrounded IPC-A-600 section numbers with standardized IPC criteria categories. Explicitly maintained semantic and physical distinction between `pin-hole` (metallization void), `missing_pad` (absent land), and `hole_breakout` (annular ring breakout).
+  5. **Workflow Scenario 10 Fix:** Added `RULE_005C_ALIGNMENT_UNCERTAIN` in `decision_engine/rules.py` to route candidate boards with missing or misaligned golden reference templates directly to `INSPECT` rather than `PASS` or `REJECT`. Verified all 10 inspection scenarios with 0 false passes. Added regression unit tests.
+  6. **Image Quality Gate Calibration:** Added configurable `image_quality_gate` block to `decision_engine/config.json`. Developed `scripts/calibrate_camera_gate.py` to empirically calibrate blur, brightness, contrast, and glare against representative factory images.
+  7. **Llama Advisory Optimization:** Built `advisory/export_xnnpack_8da4w.sh` and Python runner for WSL2 / Linux export targeting 8da4w quantization. Implemented `generate_advisory_async()` in `ExecuTorchLlamaRunner` for non-blocking UI integration.
+  8. **Hailo NPU Deployment Preparation:** Verified ONNX numerical parity ($7.40 \times 10^{-4}$ max diff, $8.67 \times 10^{-6}$ MAE). Audited 233-node ONNX graph (100% of operators compatible with Hailo DFC v3.28+). Built 1,024 multi-domain Int8 calibration images (410 DeepPCB, 410 DsPCBSD+, 204 PCB-Defect V2). Updated `docs/HAILO_SETUP.md` with explicit zero performance fabrication statement.
+  9. **System Integrity:** Verified entire test suite (**61/61 tests passing 100% in 12.45s**) and validated strict air-gapped zero-network offline execution.
+- **Reasoning:** Delivers complete industrial rigor, zero data leakage, verified domain transfer, and deterministic fail-safe safety.

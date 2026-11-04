@@ -115,9 +115,9 @@
     "image_quality_status": "blurred",
     "final_decision": "INSPECT",
     "rule_id": "RULE_004_MAJOR_DEFECT_FLAGGED",
-    "reason_for_decision": "Manual Inspection Required: Detected 4 major defect(s) (mouse_bite, spur, spurious_copper).",
+    "reason_for_decision": "Manual Inspection Required: Detected 4 major defect(s) (mouse_bite, spurious_copper, spur).",
     "review_required": true,
-    "reason_for_inspect": "Manual Inspection Required: Detected 4 major defect(s) (mouse_bite, spur, spurious_copper).",
+    "reason_for_inspect": "Manual Inspection Required: Detected 4 major defect(s) (mouse_bite, spurious_copper, spur).",
     "requires_electrical_test": true,
     "false_pass_detected": false
   },
@@ -173,26 +173,16 @@
   {
     "scenario_num": 10,
     "name": "Inspection Image With No Valid Reference Board",
-    "model_detections": 9,
-    "defect_classes": [
-      "spurious_copper",
-      "mouse_bite",
-      "pin_hole_missing_pad",
-      "open_circuit",
-      "mouse_bite",
-      "spur",
-      "open_circuit",
-      "spurious_copper",
-      "pin_hole_missing_pad"
-    ],
+    "model_detections": 0,
+    "defect_classes": [],
     "domain_status": "within_domain",
     "image_quality_status": "acceptable",
-    "final_decision": "REJECT",
-    "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT",
-    "reason_for_decision": "Rejected: Detected 1 critical defect(s) (pin_hole_missing_pad) with confidence >= 0.75.",
-    "review_required": false,
-    "reason_for_inspect": null,
-    "requires_electrical_test": true,
+    "final_decision": "INSPECT",
+    "rule_id": "RULE_005C_ALIGNMENT_UNCERTAIN",
+    "reason_for_decision": "Manual Inspection Required: Reference template missing or alignment uncertain (Uncertain reference alignment score (0.42 < 0.60).).",
+    "review_required": true,
+    "reason_for_inspect": "Manual Inspection Required: Reference template missing or alignment uncertain (Uncertain reference alignment score (0.42 < 0.60).).",
+    "requires_electrical_test": false,
     "false_pass_detected": false
   }
 ]

@@ -39,5 +39,15 @@
   "area_thresholds": {
     "large_area_fraction": 0.05,
     "medium_area_fraction": 0.01
+  },
+  "image_quality_gate": {
+    "blur_threshold": 60.0,
+    "underexposure_threshold": 30.0,
+    "overexposure_mean_threshold": 248.0,
+    "max_glare_ratio_color": 0.35,
+    "min_contrast_threshold": 20.0,
+    "max_monochrome_saturation": 8.0,
+    "color_domain_min_saturation": 14.0,
+    "min_alignment_score": 0.60
   }
 }

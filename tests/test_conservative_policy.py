@@ -139,3 +139,71 @@ def test_quality_assessment_color_detection():
     res_color = assess_inspection_image(color_img, supported_domains=["monochrome_high_contrast"])
     assert res_color["domain_status"] == "unfamiliar_domain"
     assert res_color["review_required"] is True
+
+
+def test_missing_reference_routes_to_inspect(decision_engine):
+    """Scenario 10 regression test: Board with no defects and missing reference must route to INSPECT."""
+    qa = {
+        "image_quality_status": "acceptable",
+        "domain_status": "within_domain",
+        "has_valid_reference": False,
+        "reference_alignment_score": None,
+        "reason_for_inspect": "Missing or unverified golden reference template for inspection verification."
+    }
+    payload = {
+        "board_id": "BOARD_NO_REF",
+        "defects": [],
+        "coverage": 1.0,
+        "quality_assessment": qa
+    }
+    rec = decision_engine.evaluate(payload)
+    assert rec["decision"] == "INSPECT"
+    assert rec["rule_id"] == "RULE_005C_ALIGNMENT_UNCERTAIN"
+    assert rec["review_required"] is True
+    assert rec["decision"] != "PASS"
+    assert rec["decision"] != "REJECT"
+
+
+def test_misaligned_reference_routes_to_inspect(decision_engine):
+    """Scenario 10 regression test: Board with poor alignment score (< 0.60) must route to INSPECT."""
+    qa = {
+        "image_quality_status": "acceptable",
+        "domain_status": "within_domain",
+        "has_valid_reference": True,
+        "reference_alignment_score": 0.42,
+        "reason_for_inspect": "Uncertain reference alignment score (0.42 < 0.60)."
+    }
+    payload = {
+        "board_id": "BOARD_POOR_ALIGN",
+        "defects": [],
+        "coverage": 1.0,
+        "quality_assessment": qa
+    }
+    rec = decision_engine.evaluate(payload)
+    assert rec["decision"] == "INSPECT"
+    assert rec["rule_id"] == "RULE_005C_ALIGNMENT_UNCERTAIN"
+    assert rec["review_required"] is True
+    assert rec["decision"] != "PASS"
+
+
+def test_missing_reference_with_critical_defect_rejects(decision_engine):
+    """When a high-confidence critical defect is found, REJECT still takes precedence even if reference is missing."""
+    qa = {
+        "image_quality_status": "acceptable",
+        "domain_status": "within_domain",
+        "has_valid_reference": False,
+        "reference_alignment_score": 0.42
+    }
+    payload = {
+        "board_id": "BOARD_DEFECTIVE_NO_REF",
+        "defects": [
+            {"class": "short_circuit", "confidence": 0.88, "severity": "critical"}
+        ],
+        "coverage": 1.0,
+        "quality_assessment": qa
+    }
+    rec = decision_engine.evaluate(payload)
+    assert rec["decision"] == "REJECT"
+    assert rec["rule_id"] == "RULE_001_HIGH_CONF_CRITICAL_DEFECT"
+    assert rec["requires_electrical_test"] is True
+

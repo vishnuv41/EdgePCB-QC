@@ -16,6 +16,8 @@ Distinguishes:
 """
 
 from typing import Dict, Any, Optional, List
+from pathlib import Path
+import json
 import cv2
 import numpy as np
 
@@ -35,6 +37,52 @@ class QualityAssessmentConfig:
     # Color Saturation thresholds
     MAX_MONOCHROME_SATURATION: float = 8.0     # Mean HSV saturation for monochrome domain
     COLOR_DOMAIN_MIN_SATURATION: float = 14.0   # Solder-mask or copper color presence
+    MIN_ALIGNMENT_SCORE: float = 0.60
+
+    def __init__(
+        self,
+        blur_threshold: float = 80.0,
+        underexposure_threshold: float = 30.0,
+        overexposure_mean_threshold: float = 248.0,
+        max_glare_ratio_color: float = 0.35,
+        min_contrast_threshold: float = 20.0,
+        max_monochrome_saturation: float = 8.0,
+        color_domain_min_saturation: float = 14.0,
+        min_alignment_score: float = 0.60
+    ):
+        self.BLUR_THRESHOLD = blur_threshold
+        self.UNDEREXPOSURE_THRESHOLD = underexposure_threshold
+        self.OVEREXPOSURE_MEAN_THRESHOLD = overexposure_mean_threshold
+        self.MAX_GLARE_RATIO_COLOR = max_glare_ratio_color
+        self.MIN_CONTRAST_THRESHOLD = min_contrast_threshold
+        self.MAX_MONOCHROME_SATURATION = max_monochrome_saturation
+        self.COLOR_DOMAIN_MIN_SATURATION = color_domain_min_saturation
+        self.MIN_ALIGNMENT_SCORE = min_alignment_score
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "QualityAssessmentConfig":
+        return cls(
+            blur_threshold=float(data.get("blur_threshold", cls.BLUR_THRESHOLD)),
+            underexposure_threshold=float(data.get("underexposure_threshold", cls.UNDEREXPOSURE_THRESHOLD)),
+            overexposure_mean_threshold=float(data.get("overexposure_mean_threshold", cls.OVEREXPOSURE_MEAN_THRESHOLD)),
+            max_glare_ratio_color=float(data.get("max_glare_ratio_color", cls.MAX_GLARE_RATIO_COLOR)),
+            min_contrast_threshold=float(data.get("min_contrast_threshold", cls.MIN_CONTRAST_THRESHOLD)),
+            max_monochrome_saturation=float(data.get("max_monochrome_saturation", cls.MAX_MONOCHROME_SATURATION)),
+            color_domain_min_saturation=float(data.get("color_domain_min_saturation", cls.COLOR_DOMAIN_MIN_SATURATION)),
+            min_alignment_score=float(data.get("min_alignment_score", cls.MIN_ALIGNMENT_SCORE))
+        )
+
+    @classmethod
+    def load_from_config_file(cls, config_path: Optional[str] = None) -> "QualityAssessmentConfig":
+        if config_path is None:
+            config_path = str(Path(__file__).resolve().parent.parent / "decision_engine" / "config.json")
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+            gate_cfg = cfg.get("image_quality_gate", {})
+            return cls.from_dict(gate_cfg)
+        except Exception:
+            return cls()
 
 
 def assess_inspection_image(
@@ -43,7 +91,8 @@ def assess_inspection_image(
     min_coverage_required: float = 0.90,
     has_valid_reference: bool = True,
     reference_alignment_score: Optional[float] = None,
-    supported_domains: Optional[List[str]] = None
+    supported_domains: Optional[List[str]] = None,
+    config: Optional[QualityAssessmentConfig] = None
 ) -> Dict[str, Any]:
     """
     Evaluates raw inspection image quality and domain familiarity before decision commitment.
@@ -55,6 +104,9 @@ def assess_inspection_image(
     - review_required: bool
     - reason_for_inspect: explanation string or None
     """
+    if config is None:
+        config = QualityAssessmentConfig.load_from_config_file()
+
     if supported_domains is None:
         # Default baseline model domain: DeepPCB monochrome high-contrast
         supported_domains = ["monochrome_high_contrast"]
@@ -64,6 +116,8 @@ def assess_inspection_image(
             "image_quality_status": "corrupt_empty",
             "domain_status": "out_of_domain",
             "inspection_coverage": 0.0,
+            "has_valid_reference": False,
+            "reference_alignment_score": None,
             "is_quality_acceptable": False,
             "is_domain_validated": False,
             "review_required": True,
@@ -88,37 +142,37 @@ def assess_inspection_image(
 
     # 1. Blur / Sharpness check
     laplacian_var = float(cv2.Laplacian(gray, cv2.CV_64F).var())
-    is_blurred = laplacian_var < QualityAssessmentConfig.BLUR_THRESHOLD
+    is_blurred = laplacian_var < config.BLUR_THRESHOLD
 
     # 2. Illumination checks
     mean_brightness = float(np.mean(gray))
     glare_ratio = float(np.sum(gray >= 252)) / float(gray.size)
-    is_underexposed = mean_brightness < QualityAssessmentConfig.UNDEREXPOSURE_THRESHOLD
+    is_underexposed = mean_brightness < config.UNDEREXPOSURE_THRESHOLD
     
-    # In monochrome high-contrast datasets (like DeepPCB), the white substrate is ~255 with large contrast
-    # Genuine specular glare washes out the whole image or saturates color PCBs
-    if mean_saturation < QualityAssessmentConfig.MAX_MONOCHROME_SATURATION:
-        is_overexposed = mean_brightness > QualityAssessmentConfig.OVEREXPOSURE_MEAN_THRESHOLD and contrast_std < 30.0
-    else:
-        is_overexposed = (mean_brightness > QualityAssessmentConfig.OVEREXPOSURE_MEAN_THRESHOLD) or (glare_ratio > QualityAssessmentConfig.MAX_GLARE_RATIO_COLOR)
-
     # 3. Dynamic range / Contrast check
     contrast_std = float(np.std(gray))
-    is_low_contrast = contrast_std < QualityAssessmentConfig.MIN_CONTRAST_THRESHOLD
+    is_low_contrast = contrast_std < config.MIN_CONTRAST_THRESHOLD
+
+    # In monochrome high-contrast datasets (like DeepPCB), the white substrate is ~255 with large contrast
+    # Genuine specular glare washes out the whole image or saturates color PCBs
+    if mean_saturation < config.MAX_MONOCHROME_SATURATION:
+        is_overexposed = mean_brightness > config.OVEREXPOSURE_MEAN_THRESHOLD and contrast_std < 30.0
+    else:
+        is_overexposed = (mean_brightness > config.OVEREXPOSURE_MEAN_THRESHOLD) or (glare_ratio > config.MAX_GLARE_RATIO_COLOR)
 
     # Determine image_quality_status
     quality_issues = []
     if is_blurred:
-        quality_issues.append(f"Optical blur detected (Laplacian variance {laplacian_var:.1f} < {QualityAssessmentConfig.BLUR_THRESHOLD})")
+        quality_issues.append(f"Optical blur detected (Laplacian variance {laplacian_var:.1f} < {config.BLUR_THRESHOLD})")
         image_quality_status = "blurred"
     elif is_underexposed:
-        quality_issues.append(f"Severe underexposure (Mean brightness {mean_brightness:.1f} < {QualityAssessmentConfig.UNDEREXPOSURE_THRESHOLD})")
+        quality_issues.append(f"Severe underexposure (Mean brightness {mean_brightness:.1f} < {config.UNDEREXPOSURE_THRESHOLD})")
         image_quality_status = "underexposed"
     elif is_overexposed:
         quality_issues.append(f"Severe overexposure / glare (Brightness {mean_brightness:.1f}, glare ratio {glare_ratio*100:.1f}%)")
         image_quality_status = "overexposed"
     elif is_low_contrast:
-        quality_issues.append(f"Low dynamic contrast (StdDev {contrast_std:.1f} < {QualityAssessmentConfig.MIN_CONTRAST_THRESHOLD})")
+        quality_issues.append(f"Low dynamic contrast (StdDev {contrast_std:.1f} < {config.MIN_CONTRAST_THRESHOLD})")
         image_quality_status = "low_contrast"
     else:
         image_quality_status = "acceptable"
@@ -127,9 +181,9 @@ def assess_inspection_image(
 
     # 4. Domain Shift Analysis
     # Classify observed image domain profile
-    if mean_saturation < QualityAssessmentConfig.MAX_MONOCHROME_SATURATION and max_saturation < 30.0:
+    if mean_saturation < config.MAX_MONOCHROME_SATURATION and max_saturation < 30.0:
         detected_domain = "monochrome_high_contrast"
-    elif mean_saturation >= QualityAssessmentConfig.COLOR_DOMAIN_MIN_SATURATION or max_saturation >= 50.0:
+    elif mean_saturation >= config.COLOR_DOMAIN_MIN_SATURATION or max_saturation >= 50.0:
         detected_domain = "color_pcb"
     else:
         detected_domain = "transitional_mixed"
@@ -152,10 +206,10 @@ def assess_inspection_image(
         coverage_issue = f"Insufficient inspection field coverage ({coverage*100:.1f}% < {min_coverage_required*100:.1f}%)."
 
     alignment_issue = None
-    if reference_alignment_score is not None and reference_alignment_score < 0.60:
-        alignment_issue = f"Uncertain reference alignment score ({reference_alignment_score:.2f} < 0.60)."
-    elif not has_valid_reference and "reference_comparison_required" in supported_domains:
-        alignment_issue = "Missing golden reference template for dual-view comparison."
+    if reference_alignment_score is not None and reference_alignment_score < config.MIN_ALIGNMENT_SCORE:
+        alignment_issue = f"Uncertain reference alignment score ({reference_alignment_score:.2f} < {config.MIN_ALIGNMENT_SCORE:.2f})."
+    elif not has_valid_reference:
+        alignment_issue = "Missing or unverified golden reference template for inspection verification."
 
     # Synthesize reasons for operator review
     reasons = []
@@ -176,6 +230,8 @@ def assess_inspection_image(
         "domain_status": domain_status,
         "detected_domain": detected_domain,
         "inspection_coverage": float(coverage),
+        "has_valid_reference": bool(has_valid_reference),
+        "reference_alignment_score": float(reference_alignment_score) if reference_alignment_score is not None else None,
         "is_quality_acceptable": is_quality_acceptable,
         "is_domain_validated": is_domain_validated,
         "review_required": review_required,

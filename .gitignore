@@ -5,6 +5,7 @@ __pycache__/
 datasets/raw/*
 datasets/processed/*
 datasets/inspected_captures/*
+datasets/calibration_images/*
 *.tmp
 !datasets/raw/.gitkeep
 !datasets/processed/.gitkeep

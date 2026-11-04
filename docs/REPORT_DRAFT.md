@@ -121,9 +121,10 @@ Canonical defect semantics are documented in `docs/ml_report/CLASS_MAPPING_EVIDE
   5. `spurious_copper` (ID 4, Major): Isolated residual copper fleck on dielectric laminate.
 - **Physical Distinction in Hole & Pad Anomalies:**
   - `pin_hole_missing_pad` (ID 5, Critical): Agglomerates annular pad structural integrity defects with explicit physical subtype tracking:
-    - DeepPCB `pin-hole`: localized void in copper metallization (IPC-A-600 2.5).
-    - PCB-Defect V2 `missing_pad`: complete absence of solder pad land (IPC-A-600 3.1).
-    - DsPCBSD+ `HB` (Hole Breakout): drill misregistration breaking annular ring boundary (IPC-A-600 3.3).
+    - DeepPCB `pin-hole`: localized micro-void in copper metallization.
+    - PCB-Defect V2 `missing_pad`: complete absence of solder pad land.
+    - DsPCBSD+ `HB` (Hole Breakout): drill misregistration breaking annular ring boundary.
+  - While grouped under canonical ID 5 for detector learning, these three anomalies are maintained as physically distinct sub-mechanisms (void vs absent land vs breakout), all critically compromising via/pad electrical integrity. Rules are labeled prototype criteria informed by IPC concepts, not certified compliance standards.
 - **Excluded Classes:**
   - `conductor_scratch` (`CS`), `conductor_foreign_object` (`CFO`), and `base_material_foreign_object` (`BMFO`) from DsPCBSD+ are excluded from the 6-class circuit detector to focus strictly on photolithographic trace geometry and prevent false rejection on superficial dust/scratches.
 
