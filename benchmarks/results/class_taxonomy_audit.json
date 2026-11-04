@@ -1,0 +1,11 @@
+{
+  "deeppcb_pin_hole_count": 1501,
+  "dspcbsd_hb_count": 2883,
+  "v2_missing_pad_count": 329,
+  "deeppcb_has_missing_pad": false,
+  "deeppcb_has_hole_breakout": false,
+  "dspcbsd_has_pin_hole": false,
+  "dspcbsd_has_missing_pad": false,
+  "v2_has_pin_hole": false,
+  "v2_has_hole_breakout": false
+}

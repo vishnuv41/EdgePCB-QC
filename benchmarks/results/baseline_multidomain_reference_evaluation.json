@@ -1,0 +1,98 @@
+{
+  "experiment_name": "baseline_multidomain_reference",
+  "checkpoint_path": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\models\\checkpoints\\pcb_multidomain_experiment\\weights\\best.pt",
+  "timestamp": "2026-11-04T18:04:57",
+  "parameters": {
+    "conf_thresh": 0.25,
+    "iou_thresh": 0.5,
+    "num_classes": 6
+  },
+  "validation_crop_metrics": {
+    "precision": 0.2693,
+    "recall": 0.3117,
+    "f1": 0.2889,
+    "small_defect_recall": 0.1273,
+    "small_defect_tp": 41,
+    "small_defect_total": 322,
+    "medium_defect_recall": 0.3261,
+    "medium_defect_tp": 1340,
+    "medium_defect_total": 4109,
+    "per_class": {
+      "open_circuit": {
+        "tp": 229,
+        "fp": 865,
+        "fn": 355,
+        "precision": 0.2093,
+        "recall": 0.3921,
+        "f1": 0.2729
+      },
+      "short_circuit": {
+        "tp": 191,
+        "fp": 263,
+        "fn": 212,
+        "precision": 0.4207,
+        "recall": 0.4739,
+        "f1": 0.4457
+      },
+      "mouse_bite": {
+        "tp": 249,
+        "fp": 776,
+        "fn": 590,
+        "precision": 0.2429,
+        "recall": 0.2968,
+        "f1": 0.2672
+      },
+      "spur": {
+        "tp": 214,
+        "fp": 742,
+        "fn": 964,
+        "precision": 0.2238,
+        "recall": 0.1817,
+        "f1": 0.2006
+      },
+      "spurious_copper": {
+        "tp": 224,
+        "fp": 362,
+        "fn": 297,
+        "precision": 0.3823,
+        "recall": 0.4299,
+        "f1": 0.4047
+      },
+      "pin_hole_missing_pad": {
+        "tp": 274,
+        "fp": 739,
+        "fn": 632,
+        "precision": 0.2705,
+        "recall": 0.3024,
+        "f1": 0.2856
+      }
+    }
+  },
+  "clean_board_metrics": {
+    "total_evaluated_boards": 195,
+    "total_false_positive_boxes": 357,
+    "false_positive_rate_per_board": 1.8308,
+    "clean_pass_rate": 0.4923,
+    "false_scrap_rate": 0.4051,
+    "false_inspect_rate": 0.1026,
+    "false_positive_class_distribution": {
+      "spurious_copper": 22,
+      "spur": 8,
+      "short_circuit": 29,
+      "open_circuit": 34,
+      "pin_hole_missing_pad": 246,
+      "mouse_bite": 18
+    }
+  },
+  "whole_board_metrics": {
+    "boards_evaluated": 25,
+    "ground_truth_defects": 349,
+    "true_positives": 150,
+    "false_positives": 72,
+    "false_negatives": 199,
+    "precision": 0.6757,
+    "recall": 0.4298,
+    "f1": 0.5254,
+    "mean_latency_ms": 183.5
+  }
+}

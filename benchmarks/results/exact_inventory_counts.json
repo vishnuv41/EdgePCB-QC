@@ -1,0 +1,132 @@
+{
+  "deeppcb": {
+    "total_test_imgs": 1500,
+    "total_temp_imgs": 1501,
+    "total_pairs": 1500,
+    "trainval_txt_count": 1000,
+    "test_txt_count": 500,
+    "raw_bboxes": {
+      "mousebite": 1965,
+      "short": 1506,
+      "spur": 1625,
+      "copper": 1474,
+      "pin-hole": 1501,
+      "open": 1942
+    },
+    "train_used": 1120,
+    "val_used": 186,
+    "test_used": 194,
+    "ext_used": 0
+  },
+  "dspcbsd": {
+    "raw_train_imgs": 8208,
+    "raw_val_imgs": 2051,
+    "total_raw_imgs": 10259,
+    "raw_train_bboxes": {
+      "CS": 2042,
+      "BMFO": 1334,
+      "HB": 2275,
+      "OP": 1432,
+      "CFO": 1409,
+      "MB": 1983,
+      "SH": 746,
+      "SP": 3655,
+      "SC": 1308
+    },
+    "raw_val_bboxes": {
+      "HB": 608,
+      "MB": 546,
+      "SP": 929,
+      "SC": 285,
+      "CS": 448,
+      "SH": 169,
+      "CFO": 423,
+      "BMFO": 346,
+      "OP": 338
+    },
+    "train_used": 5811,
+    "val_used": 1444,
+    "test_used": 0,
+    "ext_used": 0
+  },
+  "pcb_defect_v2": {
+    "raw_whole_boards": 230,
+    "raw_board_ids": [
+      "50",
+      "51",
+      "52",
+      "53",
+      "54",
+      "55",
+      "56",
+      "57",
+      "58",
+      "59",
+      "60",
+      "61",
+      "62",
+      "63",
+      "64",
+      "65",
+      "66",
+      "67",
+      "68",
+      "80",
+      "81",
+      "82"
+    ],
+    "raw_bboxes": {
+      "spur": 490,
+      "open_circuit": 304,
+      "spurious_copper": 264,
+      "short": 289,
+      "mouse_bite": 830,
+      "missing_pad": 329
+    },
+    "train_used_crops": 2376,
+    "val_used_crops": 495,
+    "test_used_crops": 0,
+    "ext_used_crops": 390
+  },
+  "unified_splits_total": {
+    "train": 9307,
+    "val": 2125,
+    "test": 194,
+    "external_color_test": 390,
+    "total_images": 12016,
+    "bboxes_per_split": {
+      "train": {
+        "mouse_bite": 4161,
+        "short_circuit": 2297,
+        "spur": 5406,
+        "spurious_copper": 2939,
+        "pin_hole_missing_pad": 3882,
+        "open_circuit": 3381
+      },
+      "val": {
+        "short_circuit": 403,
+        "mouse_bite": 839,
+        "spurious_copper": 521,
+        "pin_hole_missing_pad": 906,
+        "spur": 1178,
+        "open_circuit": 584
+      },
+      "test": {
+        "open_circuit": 247,
+        "mouse_bite": 179,
+        "pin_hole_missing_pad": 185,
+        "spurious_copper": 165,
+        "spur": 184,
+        "short_circuit": 183
+      },
+      "external_color_test": {
+        "open_circuit": 59,
+        "mouse_bite": 80,
+        "spurious_copper": 64,
+        "pin_hole_missing_pad": 59,
+        "spur": 76,
+        "short_circuit": 59
+      }
+    }
+  }
+}
