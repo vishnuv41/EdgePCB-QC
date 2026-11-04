@@ -1,0 +1,805 @@
+[
+  {
+    "test_id": "TC01_deeppcb_grayscale",
+    "description": "DeepPCB original monochrome test image with known defects",
+    "image_shape": [
+      640,
+      640,
+      3
+    ],
+    "is_grayscale_replicated": true,
+    "preprocessing": "Standard BGR load from disk (monochrome pixel values)",
+    "detection_count": 9,
+    "detections": [
+      {
+        "class": "spurious_copper",
+        "confidence": 0.9005,
+        "box": [
+          177.96,
+          147.86,
+          213.57,
+          183.86
+        ],
+        "is_confirmed": true,
+        "review_required": false,
+        "verification_status": "Visually Confirmed Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "mouse_bite",
+        "confidence": 0.8403,
+        "box": [
+          229.64,
+          325.25,
+          271.62,
+          359.08
+        ],
+        "is_confirmed": true,
+        "review_required": false,
+        "verification_status": "Visually Confirmed Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "pin_hole_missing_pad",
+        "confidence": 0.7886,
+        "box": [
+          349.84,
+          327.92,
+          378.69,
+          367.08
+        ],
+        "is_confirmed": true,
+        "review_required": false,
+        "verification_status": "Visually Confirmed Pad Anomaly",
+        "severity": "critical"
+      },
+      {
+        "class": "open_circuit",
+        "confidence": 0.7327,
+        "box": [
+          480.35,
+          474.54,
+          554.88,
+          553.09
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Visually Suspected (Electrical Continuity/Isolation Test Required)",
+        "severity": "critical"
+      },
+      {
+        "class": "mouse_bite",
+        "confidence": 0.3457,
+        "box": [
+          66.11,
+          0.0,
+          104.68,
+          39.38
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      },
+      {
+        "class": "spur",
+        "confidence": 0.322,
+        "box": [
+          305.22,
+          574.8,
+          348.43,
+          618.92
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      },
+      {
+        "class": "open_circuit",
+        "confidence": 0.2957,
+        "box": [
+          65.88,
+          0.0,
+          105.69,
+          40.22
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      },
+      {
+        "class": "spurious_copper",
+        "confidence": 0.2916,
+        "box": [
+          305.02,
+          575.85,
+          348.26,
+          619.31
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      },
+      {
+        "class": "pin_hole_missing_pad",
+        "confidence": 0.2749,
+        "box": [
+          65.66,
+          0.0,
+          104.76,
+          37.44
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      }
+    ],
+    "decision": "REJECT",
+    "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT",
+    "rule_description": "Rejected: Detected 1 critical defect(s) (pin_hole_missing_pad) with confidence >= 0.75.",
+    "requires_electrical_test": true,
+    "is_false_pass": false
+  },
+  {
+    "test_id": "TC02_deeppcb_exact_rgb",
+    "description": "DeepPCB exact 3-channel RGB (identical channel values)",
+    "image_shape": [
+      640,
+      640,
+      3
+    ],
+    "is_grayscale_replicated": true,
+    "preprocessing": "3 identical channels (R=G=B), no spectral shift",
+    "detection_count": 9,
+    "detections": [
+      {
+        "class": "spurious_copper",
+        "confidence": 0.9005,
+        "box": [
+          177.96,
+          147.86,
+          213.57,
+          183.86
+        ],
+        "is_confirmed": true,
+        "review_required": false,
+        "verification_status": "Visually Confirmed Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "mouse_bite",
+        "confidence": 0.8403,
+        "box": [
+          229.64,
+          325.25,
+          271.62,
+          359.08
+        ],
+        "is_confirmed": true,
+        "review_required": false,
+        "verification_status": "Visually Confirmed Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "pin_hole_missing_pad",
+        "confidence": 0.7886,
+        "box": [
+          349.84,
+          327.92,
+          378.69,
+          367.08
+        ],
+        "is_confirmed": true,
+        "review_required": false,
+        "verification_status": "Visually Confirmed Pad Anomaly",
+        "severity": "critical"
+      },
+      {
+        "class": "open_circuit",
+        "confidence": 0.7327,
+        "box": [
+          480.35,
+          474.54,
+          554.88,
+          553.09
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Visually Suspected (Electrical Continuity/Isolation Test Required)",
+        "severity": "critical"
+      },
+      {
+        "class": "mouse_bite",
+        "confidence": 0.3457,
+        "box": [
+          66.11,
+          0.0,
+          104.68,
+          39.38
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      },
+      {
+        "class": "spur",
+        "confidence": 0.322,
+        "box": [
+          305.22,
+          574.8,
+          348.43,
+          618.92
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      },
+      {
+        "class": "open_circuit",
+        "confidence": 0.2957,
+        "box": [
+          65.88,
+          0.0,
+          105.69,
+          40.22
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      },
+      {
+        "class": "spurious_copper",
+        "confidence": 0.2916,
+        "box": [
+          305.02,
+          575.85,
+          348.26,
+          619.31
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      },
+      {
+        "class": "pin_hole_missing_pad",
+        "confidence": 0.2749,
+        "box": [
+          65.66,
+          0.0,
+          104.76,
+          37.44
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      }
+    ],
+    "decision": "REJECT",
+    "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT",
+    "rule_description": "Rejected: Detected 1 critical defect(s) (pin_hole_missing_pad) with confidence >= 0.75.",
+    "requires_electrical_test": true,
+    "is_false_pass": false
+  },
+  {
+    "test_id": "TC03_deeppcb_green_solder_mask_shift",
+    "description": "DeepPCB with green solder mask spectral shift (simulated color domain)",
+    "image_shape": [
+      640,
+      640,
+      3
+    ],
+    "is_grayscale_replicated": false,
+    "preprocessing": "Spectral attenuation (B*0.25, G*0.95, R*0.15) simulating green solder mask",
+    "detection_count": 0,
+    "detections": [],
+    "decision": "PASS",
+    "rule_id": "RULE_008_ZERO_CRITICAL_DEFECTS_PASS",
+    "rule_description": "Board passed inspection with 0 acceptable minor variations and 100.0% coverage.",
+    "requires_electrical_test": false,
+    "is_false_pass": true
+  },
+  {
+    "test_id": "TC04_deeppcb_inverted_contrast",
+    "description": "DeepPCB with inverted contrast (white traces on dark substrate)",
+    "image_shape": [
+      640,
+      640,
+      3
+    ],
+    "is_grayscale_replicated": true,
+    "preprocessing": "Inverted pixel luminance (255 - I)",
+    "detection_count": 5,
+    "detections": [
+      {
+        "class": "pin_hole_missing_pad",
+        "confidence": 0.8487,
+        "box": [
+          177.07,
+          147.8,
+          213.85,
+          183.94
+        ],
+        "is_confirmed": true,
+        "review_required": false,
+        "verification_status": "Visually Confirmed Pad Anomaly",
+        "severity": "critical"
+      },
+      {
+        "class": "spurious_copper",
+        "confidence": 0.8228,
+        "box": [
+          351.31,
+          330.86,
+          376.37,
+          365.39
+        ],
+        "is_confirmed": true,
+        "review_required": false,
+        "verification_status": "Visually Confirmed Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "spur",
+        "confidence": 0.6757,
+        "box": [
+          232.8,
+          327.88,
+          269.27,
+          356.94
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Suspected Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "mouse_bite",
+        "confidence": 0.5794,
+        "box": [
+          304.89,
+          574.96,
+          348.85,
+          619.14
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Suspected Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "short_circuit",
+        "confidence": 0.3262,
+        "box": [
+          476.48,
+          469.02,
+          556.0,
+          555.44
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      }
+    ],
+    "decision": "REJECT",
+    "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT",
+    "rule_description": "Rejected: Detected 1 critical defect(s) (pin_hole_missing_pad) with confidence >= 0.75.",
+    "requires_electrical_test": true,
+    "is_false_pass": false
+  },
+  {
+    "test_id": "TC05_real_color_pcb_defect_001",
+    "description": "Real high-resolution color PCB with known defects (PCB-Defect V2 pcb_defect_001.jpg)",
+    "image_shape": [
+      3368,
+      2335,
+      3
+    ],
+    "is_grayscale_replicated": false,
+    "preprocessing": "Loaded native high-res color image, direct YOLO downsampling to 640x640",
+    "detection_count": 3,
+    "detections": [
+      {
+        "class": "mouse_bite",
+        "confidence": 0.5538,
+        "box": [
+          1710.04,
+          316.79,
+          1852.16,
+          473.96
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Suspected Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "short_circuit",
+        "confidence": 0.3078,
+        "box": [
+          751.74,
+          1936.38,
+          1124.03,
+          2369.85
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      },
+      {
+        "class": "short_circuit",
+        "confidence": 0.2953,
+        "box": [
+          1549.41,
+          1372.59,
+          2039.37,
+          2133.06
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      }
+    ],
+    "decision": "INSPECT",
+    "rule_id": "RULE_004_MAJOR_DEFECT_FLAGGED",
+    "rule_description": "Manual Inspection Required: Detected 1 major defect(s) (mouse_bite).",
+    "requires_electrical_test": true,
+    "is_false_pass": false
+  },
+  {
+    "test_id": "TC06_real_color_pcb_defect_002",
+    "description": "Real high-resolution color PCB with known defects (PCB-Defect V2 pcb_defect_002.jpg)",
+    "image_shape": [
+      3387,
+      2283,
+      3
+    ],
+    "is_grayscale_replicated": false,
+    "preprocessing": "Loaded native high-res color image, direct YOLO downsampling to 640x640",
+    "detection_count": 2,
+    "detections": [
+      {
+        "class": "mouse_bite",
+        "confidence": 0.4285,
+        "box": [
+          1364.83,
+          1622.23,
+          1542.81,
+          1801.54
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Suspected Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "mouse_bite",
+        "confidence": 0.2799,
+        "box": [
+          150.09,
+          2985.76,
+          314.68,
+          3161.27
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      }
+    ],
+    "decision": "INSPECT",
+    "rule_id": "RULE_004_MAJOR_DEFECT_FLAGGED",
+    "rule_description": "Manual Inspection Required: Detected 1 major defect(s) (mouse_bite).",
+    "requires_electrical_test": false,
+    "is_false_pass": false
+  },
+  {
+    "test_id": "TC07_defective_board_blurred",
+    "description": "Defective DeepPCB with heavy optical defocus / Gaussian blur",
+    "image_shape": [
+      640,
+      640,
+      3
+    ],
+    "is_grayscale_replicated": true,
+    "preprocessing": "Gaussian blur (kernel 51x51, sigma=25.0) simulating severe camera defocus",
+    "detection_count": 0,
+    "detections": [],
+    "decision": "PASS",
+    "rule_id": "RULE_008_ZERO_CRITICAL_DEFECTS_PASS",
+    "rule_description": "Board passed inspection with 0 acceptable minor variations and 100.0% coverage.",
+    "requires_electrical_test": false,
+    "is_false_pass": true
+  },
+  {
+    "test_id": "TC08_defective_board_underexposed",
+    "description": "Defective DeepPCB with severe underexposure / low lighting",
+    "image_shape": [
+      640,
+      640,
+      3
+    ],
+    "is_grayscale_replicated": true,
+    "preprocessing": "Intensity scaling by 0.15 simulating dark/failing camera lighting",
+    "detection_count": 7,
+    "detections": [
+      {
+        "class": "mouse_bite",
+        "confidence": 0.5953,
+        "box": [
+          227.19,
+          323.77,
+          272.33,
+          360.64
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Suspected Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "spurious_copper",
+        "confidence": 0.5749,
+        "box": [
+          174.06,
+          144.57,
+          215.54,
+          186.54
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Suspected Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "mouse_bite",
+        "confidence": 0.5663,
+        "box": [
+          66.24,
+          0.0,
+          104.44,
+          39.55
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Suspected Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "open_circuit",
+        "confidence": 0.5338,
+        "box": [
+          475.36,
+          473.39,
+          555.01,
+          555.01
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Visually Suspected (Electrical Continuity/Isolation Test Required)",
+        "severity": "critical"
+      },
+      {
+        "class": "spur",
+        "confidence": 0.4716,
+        "box": [
+          303.66,
+          573.19,
+          348.94,
+          620.06
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Suspected Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "pin_hole_missing_pad",
+        "confidence": 0.4562,
+        "box": [
+          348.29,
+          326.74,
+          380.63,
+          369.04
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Visually Confirmed Pad Anomaly",
+        "severity": "critical"
+      },
+      {
+        "class": "open_circuit",
+        "confidence": 0.3596,
+        "box": [
+          64.17,
+          0.0,
+          105.24,
+          40.44
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      }
+    ],
+    "decision": "INSPECT",
+    "rule_id": "RULE_003_SUSPECTED_CRITICAL_DEFECT",
+    "rule_description": "Manual Inspection Required: Visually suspected critical defect(s) (pin_hole_missing_pad, open_circuit) detected with confidence < 0.75.",
+    "requires_electrical_test": true,
+    "is_false_pass": false
+  },
+  {
+    "test_id": "TC09_defective_board_overexposed",
+    "description": "Defective DeepPCB with extreme glare / sensor overexposure",
+    "image_shape": [
+      640,
+      640,
+      3
+    ],
+    "is_grayscale_replicated": true,
+    "preprocessing": "Gain 1.5x + 80 offset simulating specular reflection/glare",
+    "detection_count": 9,
+    "detections": [
+      {
+        "class": "spurious_copper",
+        "confidence": 0.8555,
+        "box": [
+          178.5,
+          148.86,
+          213.49,
+          183.85
+        ],
+        "is_confirmed": true,
+        "review_required": false,
+        "verification_status": "Visually Confirmed Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "open_circuit",
+        "confidence": 0.7815,
+        "box": [
+          480.59,
+          473.71,
+          554.52,
+          553.7
+        ],
+        "is_confirmed": true,
+        "review_required": false,
+        "verification_status": "Visually Suspected (Electrical Continuity/Isolation Test Required)",
+        "severity": "critical"
+      },
+      {
+        "class": "pin_hole_missing_pad",
+        "confidence": 0.5835,
+        "box": [
+          348.46,
+          325.69,
+          380.92,
+          368.47
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Visually Confirmed Pad Anomaly",
+        "severity": "critical"
+      },
+      {
+        "class": "mouse_bite",
+        "confidence": 0.5413,
+        "box": [
+          230.25,
+          325.3,
+          272.52,
+          358.27
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Suspected Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "spur",
+        "confidence": 0.4282,
+        "box": [
+          305.25,
+          575.26,
+          347.13,
+          619.37
+        ],
+        "is_confirmed": false,
+        "review_required": true,
+        "verification_status": "Suspected Surface Anomaly",
+        "severity": "major"
+      },
+      {
+        "class": "mouse_bite",
+        "confidence": 0.3569,
+        "box": [
+          66.22,
+          0.0,
+          104.86,
+          39.32
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      },
+      {
+        "class": "open_circuit",
+        "confidence": 0.312,
+        "box": [
+          229.47,
+          325.49,
+          273.21,
+          359.71
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      },
+      {
+        "class": "open_circuit",
+        "confidence": 0.2913,
+        "box": [
+          66.27,
+          0.0,
+          105.77,
+          40.15
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      },
+      {
+        "class": "pin_hole_missing_pad",
+        "confidence": 0.2547,
+        "box": [
+          65.52,
+          0.0,
+          104.36,
+          37.2
+        ],
+        "review_required": true,
+        "is_confirmed": false,
+        "verification_status": "Uncertain Anomaly (Low-Confidence Review Required)",
+        "severity": "minor"
+      }
+    ],
+    "decision": "REJECT",
+    "rule_id": "RULE_001_HIGH_CONF_CRITICAL_DEFECT",
+    "rule_description": "Rejected: Detected 1 critical defect(s) (open_circuit) with confidence >= 0.75.",
+    "requires_electrical_test": true,
+    "is_false_pass": false
+  },
+  {
+    "test_id": "TC10_clean_color_pcb_crop",
+    "description": "Clean 640x640 crop of green solder-mask PCB without defects",
+    "image_shape": [
+      640,
+      640,
+      3
+    ],
+    "is_grayscale_replicated": false,
+    "preprocessing": "Cropped 640x640 defect-free region of real green PCB",
+    "detection_count": 0,
+    "detections": [],
+    "decision": "PASS",
+    "rule_id": "RULE_008_ZERO_CRITICAL_DEFECTS_PASS",
+    "rule_description": "Board passed inspection with 0 acceptable minor variations and 100.0% coverage.",
+    "requires_electrical_test": false,
+    "is_false_pass": false
+  }
+]

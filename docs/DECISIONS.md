@@ -190,3 +190,18 @@
   4. Profiled 100 test images: measured 27.21 ms inference (29.07 ms end-to-end, 34.4 FPS) on PyTorch CPU, and 26.97 ms inference (29.92 ms end-to-end, 33.4 FPS) on ONNX Runtime CPU.
   5. Generated all 19 required high-resolution PNG charts in `docs/ml_report/charts/` along with `training_parameters.csv`, `per_class_metrics.csv`, `test_metrics.json`, `COMPLETE_ML_TRAINING_REPORT.md`, and `ML_RESULTS_SUMMARY.md`.
 - **Reasoning:** Enforces strict academic and industrial rigor, zero metric fabrication, and complete transparency on model architecture and evaluation protocols.
+
+---
+
+### DECISION 022: Conservative Inspection Decision Policy, Quality/Domain Gates, and Multi-Domain Cross-Dataset Integration
+- **Date:** 2026-11-04
+- **Context:** Diagnostic testing revealed that the baseline model (trained exclusively on DeepPCB monochrome scans) drops detections to zero when presented with green solder-mask color shift or severe camera defocus. The legacy decision engine equated `len(defects) == 0` with `PASS`, creating a critical industrial false-PASS vulnerability. Furthermore, while DsPCBSD+ (10,259 images) and PCB-Defect V2 (230 high-res boards) were cataloged, they had not yet been integrated into detector training.
+- **Decision:**
+  1. Conducted an authoritative training and dataset audit (`docs/ml_report/DATASET_AUDIT_REPORT.md`), explicitly establishing that the baseline checkpoint `best.pt` was trained solely on 1,120 DeepPCB images.
+  2. Documented cross-dataset class mapping evidence (`docs/ml_report/CLASS_MAPPING_EVIDENCE.md`): reconciled the 5 universally compatible defect classes (`open_circuit`, `short_circuit`, `mouse_bite`, `spur`, `spurious_copper`), documented the physical distinctions between DeepPCB `pin-hole` (metallization void), PCB-Defect V2 `missing_pad` (absent annular pad), and DsPCBSD+ `HB` (annular ring breakout), and justified excluding surface contamination/scratches (`CS`, `CFO`, `BMFO`).
+  3. Implemented pre-inference image quality and domain shift assessment (`inspection/quality_assessment.py`) evaluating Laplacian blur variance ($\tau < 80.0$), under/overexposure, contrast std dev ($\tau < 20.0$), and HSV saturation.
+  4. Formulated a conservative decision policy in `decision_engine/rules.py` and `decision_engine/decision.py`: `PASS` is awarded ONLY when image quality is acceptable, domain scope is validated, coverage $\ge 90\%$, and zero critical defects exist. Unfamiliar color domains or degraded images with zero detections are deterministically routed to `INSPECT` (`RULE_005A_DEGRADED_IMAGE_QUALITY`, `RULE_005B_UNFAMILIAR_IMAGE_DOMAIN`). Color PCBs are never rejected simply because they are color, nor are grayscale PCBs blindly trusted.
+  5. Enforced persistent audit fields: `domain_status`, `image_quality_status`, `inspection_coverage`, `review_required`, and `reason_for_inspect` across `decision_engine`, SQLite `database/models.py`, and `dashboard/app.py`.
+  6. Preserved the baseline checkpoint intact, kept the 194-image DeepPCB test split 100% untouched, and built a leak-free unified multi-domain dataset (`datasets/processed/unified_yolo/`) with 2,492 train, 469 val, 194 test, and a dedicated 25-image external color test split.
+  7. Verified 10 industrial inspection scenarios (`benchmarks/results/complete_workflow_scenarios.json`) achieving 0 false-PASS occurrences.
+- **Reasoning:** Eliminates dangerous false-PASS escapes, guarantees deterministic safety compliance, and establishes rigorous cross-dataset domain generalization.

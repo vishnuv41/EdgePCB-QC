@@ -21,3 +21,5 @@ models/llama/*
 *.sqlite3
 runs/
 .vscode/
+benchmarks/*.jpg
+benchmarks/*.png

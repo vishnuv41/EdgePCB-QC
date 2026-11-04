@@ -198,11 +198,21 @@ with tab_inspect:
         t_vision_end = time.perf_counter()
         vision_latency = (t_vision_end - t_vision_start) * 1000.0
 
+        # Assess Image Quality and Domain Status (Conservative Policy Gates)
+        from inspection.quality_assessment import assess_inspection_image
+        quality_assessment = assess_inspection_image(
+            img_to_inspect,
+            coverage=0.98,
+            min_coverage_required=0.90,
+            supported_domains=["monochrome_high_contrast", "color_pcb"]
+        )
+
         # Run Deterministic Decision Engine
         payload = {
             "board_id": board_id,
             "defects": defects,
-            "coverage": 0.98
+            "coverage": 0.98,
+            "quality_assessment": quality_assessment
         }
         decision_record = decision_engine.evaluate(payload, preset=quality_preset)
 
@@ -260,6 +270,29 @@ with tab_inspect:
             if decision_record["requires_electrical_test"]:
                 st.error("⚡ **ELECTRICAL VERIFICATION MANDATORY**: Visually suspected open or short circuit detected. Electrical continuity/isolation test (DMM / Flying-Probe) is required prior to final disposition.")
                 st.caption("⚠️ *Optical defect detection evaluates surface geometry only; electrical integrity must be verified with contact test equipment before final panel sign-off.*")
+
+            # Quality and Domain Assessment Badges (Conservative Policy)
+            q_col1, q_col2, q_col3 = st.columns(3)
+            with q_col1:
+                dom_status = decision_record.get("domain_status", "within_domain")
+                if dom_status == "within_domain":
+                    st.success("🌐 Scope: Validated")
+                else:
+                    st.warning(f"🌐 Scope: {dom_status.replace('_', ' ').title()}")
+            with q_col2:
+                iq_status = decision_record.get("image_quality_status", "acceptable")
+                if iq_status == "acceptable":
+                    st.success("📷 Quality: Clear")
+                else:
+                    st.warning(f"📷 Quality: {iq_status.title()}")
+            with q_col3:
+                if decision_record.get("review_required"):
+                    st.warning("⚠️ Review: Required")
+                else:
+                    st.success("✅ Review: Cleared")
+
+            if decision_record.get("reason_for_inspect"):
+                st.info(f"📋 **Reason for Review:** {decision_record['reason_for_inspect']}")
 
             # Quantitative Defect Audit Counts (Requirement 5: from single authoritative inspection record)
             audit_counts = decision_record.get("audit_counts", {})

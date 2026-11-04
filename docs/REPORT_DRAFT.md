@@ -89,47 +89,66 @@ The target production deployment is engineered for embedded industrial edge fixt
 ---
 
 ## 7. Dataset Details & Integrity Verification
-Three primary open-access datasets were cataloged, verified, and integrated under strict academic/commercial reuse licenses:
+Three primary open-access datasets are cataloged and verified in the repository:
 
-| Dataset | Primary Source | Licence | Scale & Annotations | Role in EdgePCB-QC |
-|---|---|---|---|---|
-| **DsPCBSD+** | Figshare DOI: `10.6084/m9.figshare.24970329.v1` (*Nature Sci. Data* 2024) | CC BY 4.0 | 10,259 images, 20,276 bboxes across 9 classes (`SP`, `HB`, `MB`, `CS`, `CFO`, `OP`, `BMFO`, `SC`, `SH`) | Primary training dataset for fine-grained surface macro defects |
-| **DeepPCB** | GitHub: `tangsanli5201/DeepPCB` | MIT License | 1,500 aligned template-test pairs (640x640) across 11 board groups (10,013 annotations) | Golden reference subtraction & multi-board generalization evaluation |
-| **PCB-Defect V2** | Mendeley Data DOI: `10.17632/vdj74sngvn.2` (*Data in Brief* 2025) | CC BY 4.0 | 230 whole-board high-resolution images (1,704 bboxes) | Secondary evaluation dataset |
+### Authoritative Dataset Usage Table
+| Dataset Name | Total Images Available | Annotated Instances | Annotation Format | Defect Classes & Semantics | Images Used in Baseline (`best.pt`) | Images Used in Unified Multi-Domain | Licence & Attribution Source |
+|---|---|---|---|---|---|---|---|
+| **DeepPCB** | **1,500 pairs** (3,000 files) | **10,013** | Coordinate text files normalized to YOLO | 6 classes: `open` (1,942), `short` (1,506), `mousebite` (1,965), `spur` (1,625), `copper` (1,474), `pin-hole` (1,501) | **1,120 train / 186 val / 194 test** | **1,120 train / 186 val / 194 test** | **MIT License**, Tang et al. (GitHub `tangsanli5201/DeepPCB`) |
+| **DsPCBSD+** | **10,259 images** | **20,276** | COCO JSON & YOLO `.txt` | 9 industrial classes: `SH` (915), `SP` (4,584), `SC` (1,593), `OP` (1,770), `MB` (2,529), `HB` (2,883), `CS` (2,490), `CFO` (1,832), `BMFO` (1,680) | **0 (NOT USED in `best.pt`)** | **1,200 train / 250 val** | **CC BY 4.0**, Lv et al., *Nature Scientific Data* 11, 794 (2024), DOI: `10.1038/s41597-024-03656-8` |
+| **PCB-Defect V2** | **230 high-res boards** | **1,704** (COCO) / **2,506** (OBB) | COCO JSON & YOLO OBB polygon | 6 classes: `missing_pad` (329), `mouse_bite` (830), `open_circuit` (304), `short` (289), `spur` (490), `spurious_copper` (264) | **0 (NOT USED in `best.pt`)** | **172 train / 33 val / 25 external color test** | **CC BY 4.0**, Rashid et al., *Data in Brief* 64 (2026) 112296, DOI: `10.1016/j.dib.2025.112296` |
 
-### Zero-Leakage Group Splitting
-To eliminate data leakage, DeepPCB's 11 distinct board groups were partitioned at the board-layout level:
-- **Train (7 groups):** `group00041`, `group12000`, `group12100`, `group12300`, `group13000`, `group20085`, `group44000` (1,120 images, 7,880 bboxes)
-- **Validation (2 groups):** `group50600`, `group77000` (186 images, 990 bboxes)
-- **Unseen Test (2 groups):** `group90100`, `group92000` (194 images, 1,143 bboxes)
-
-Automated mathematical verification in `tests/test_splits.py` passed with 100% disjoint sets ($Train \cap Val \cap Test = \emptyset$).
-
----
-
-## 8. Model Methodology & Class Mapping
-Canonical defect semantics are unified in `training/class_map.yaml`:
-1. `open_circuit` (ID 0, Critical): Complete electrical trace break.
-2. `short_circuit` (ID 1, Critical): Unintended copper bridging between traces.
-3. `mouse_bite` (ID 2, Major): Edge void reducing trace cross-sectional ampacity.
-4. `spur` (ID 3, Major): Sharp copper protrusion degrading dielectric clearance.
-5. `spurious_copper` (ID 4, Major): Isolated residual copper fleck on dielectric substrate.
-6. `pin_hole_missing_pad` (ID 5, Critical): Defective or missing annular ring/solder pad.
-7. Extended classes: `conductor_scratch`, `conductor_foreign_object`, `base_material_foreign_object`.
+### Zero-Leakage Partitioning Strategy
+1. **DeepPCB:** 11 board groups partitioned deterministically by board topology:
+   - Train (7 groups, 1,120 images): `group00041`, `group12000`, `group12100`, `group12300`, `group13000`, `group20085`, `group44000`.
+   - Validation (2 groups, 186 images): `group50600`, `group77000`.
+   - Untouched Test (2 groups, 194 images): `group90100`, `group92000`.
+2. **PCB-Defect V2:** 230 whole-board images partitioned across 22 distinct board layouts (e.g. `50`, `51`, `61`, `67`, `80`...):
+   - Train: 15 board layouts (172 images).
+   - Validation: 3 board layouts (33 images).
+   - External Color Test: 4 board layouts (25 images from layouts `68`, `80`, `81`, `82`).
+3. Mathematical verification in `tests/test_splits.py` guarantees $Train \cap Val \cap Test = \emptyset$.
 
 ---
 
-## 9. Training and Evaluation Workflow
-1. **Dataset Normalization:** DeepPCB pixel coordinates normalized to YOLO format ($[x_c, y_c, w, h] \in [0.0, 1.0]$).
-2. **Golden Reference Subtraction:** Implemented in `inspection/reference_compare.py` using ORB feature detection, RANSAC homography, Gaussian smoothing, and morphological opening/closing.
-3. **Evaluation Protocol:** Models evaluated across 640x640 resolution strictly on unseen board layouts (`group90100`, `group92000`) with zero data leakage.
-4. **Smoke Training Experiment:**
-   - Architecture: YOLOv8n (Ultralytics 8.4.201, 130 fused layers, 3,139,218 parameters, 8.8 GFLOPs at 640x640, pretrained on `yolov8n.pt`).
-   - Hyperparameters: SGD optimizer, batch size 16, imgsz 640, lr0=0.01, lrf=0.01, momentum=0.937, weight_decay=0.0005, warmup 3.0 epochs.
-   - Trained for 3 epochs on host AMD Ryzen 9 8940HX CPU (total duration 754.94s, 251.65s/epoch).
-   - Saved checkpoint: `models/checkpoints/pcb_smoke_experiment/weights/best.pt` (6.20 MB).
-   - Exported edge ONNX model: `models/onnx/pcb_smoke_experiment.onnx` (12.19 MB, opset 17).
-   - Comprehensive documentation: 9-section report in `docs/ml_report/COMPLETE_ML_TRAINING_REPORT.md` and 19 charts in `docs/ml_report/charts/`.
+## 8. Model Methodology & Class Mapping Evidence
+Canonical defect semantics are documented in `docs/ml_report/CLASS_MAPPING_EVIDENCE.md` and unified in `training/class_map.yaml`:
+- **Universal Shared Classes (100% physically identical):**
+  1. `open_circuit` (ID 0, Critical): Complete conductive trace break.
+  2. `short_circuit` (ID 1, Critical): Unintended conductive copper bridge.
+  3. `mouse_bite` (ID 2, Major): Edge void / notch reducing trace cross-section.
+  4. `spur` (ID 3, Major): Sharp copper projection into dielectric spacing.
+  5. `spurious_copper` (ID 4, Major): Isolated residual copper fleck on dielectric laminate.
+- **Physical Distinction in Hole & Pad Anomalies:**
+  - `pin_hole_missing_pad` (ID 5, Critical): Agglomerates annular pad structural integrity defects with explicit physical subtype tracking:
+    - DeepPCB `pin-hole`: localized void in copper metallization (IPC-A-600 2.5).
+    - PCB-Defect V2 `missing_pad`: complete absence of solder pad land (IPC-A-600 3.1).
+    - DsPCBSD+ `HB` (Hole Breakout): drill misregistration breaking annular ring boundary (IPC-A-600 3.3).
+- **Excluded Classes:**
+  - `conductor_scratch` (`CS`), `conductor_foreign_object` (`CFO`), and `base_material_foreign_object` (`BMFO`) from DsPCBSD+ are excluded from the 6-class circuit detector to focus strictly on photolithographic trace geometry and prevent false rejection on superficial dust/scratches.
+
+---
+
+## 9. Conservative Inspection Decision Policy & False-PASS Prevention
+When a baseline detector trained solely on monochrome scans encounters color solder masks (green, blue, copper) or severe camera defocus, convolutional activations collapse and detections drop to zero. The legacy engine previously equated `len(defects) == 0` with `PASS`, creating a critical industrial false-PASS vulnerability.
+
+EdgePCB-QC replaces this with a **Conservative Industrial Quality Policy**:
+
+1. **Pre-Inference Quality & Domain Assessment (`inspection/quality_assessment.py`):**
+   - **Blur / Defocus Gate:** Laplacian variance $\sigma^2_{\Delta} < 80.0 \rightarrow$ flags `image_quality_status = "blurred"`.
+   - **Illumination & Glare Gates:** Mean luminance $\mu < 30.0 \rightarrow$ `underexposed`; luminance $\mu > 248.0$ or glare ratio $> 35\% \rightarrow$ `overexposed`.
+   - **Dynamic Contrast Gate:** Luminance std dev $\sigma < 20.0 \rightarrow$ `low_contrast`.
+   - **Domain Shift Gate:** Evaluates HSV saturation $\mu_S$. If color presence exceeds monochrome thresholds and active model scope is unvalidated, flags `domain_status = "unfamiliar_domain"`.
+2. **Prioritized Deterministic Decision Rules (`decision_engine/rules.py`):**
+   - `REJECT`: High-confidence critical defect (`RULE_001`) or excess major defects (`RULE_002`).
+   - `INSPECT`: Suspected critical defect (`RULE_003`), flagged major defect (`RULE_004`), degraded image quality (`RULE_005A_DEGRADED_IMAGE_QUALITY`), unfamiliar image domain (`RULE_005B_UNFAMILIAR_IMAGE_DOMAIN`), insufficient coverage (`RULE_005`), excess minor defects (`RULE_006`), or low-confidence anomaly (`RULE_007`).
+   - `PASS`: Awarded **ONLY** when image quality is acceptable, domain scope is verified, coverage $\ge 90\%$, and zero critical defects exist (`RULE_008_ZERO_CRITICAL_DEFECTS_PASS`).
+   - **Invariants Enforced:**
+     - Zero detections does NOT mean PASS.
+     - A color PCB is never rejected simply because it is color.
+     - A grayscale PCB is never blindly trusted if blurred or poorly illuminated.
+     - Electrical verification (`requires_electrical_test = True`) is mandatory for open and short circuits.
+   - Verified across 10 industrial scenarios (`benchmarks/results/complete_workflow_scenarios.json`): **0 false passes occurred**.
 
 ---
 

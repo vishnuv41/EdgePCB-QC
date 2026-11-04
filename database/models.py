@@ -41,6 +41,12 @@ class InspectionRecord(Base):
     requires_electrical_test = Column(Boolean, default=False)
     coverage = Column(Float, default=1.0)
     
+    # Domain & Quality audit fields
+    domain_status = Column(String(32), default="within_domain", nullable=False)
+    image_quality_status = Column(String(32), default="acceptable", nullable=False)
+    review_required = Column(Boolean, default=False, nullable=False)
+    reason_for_inspect = Column(Text, nullable=True)
+    
     # Detailed JSON payloads
     defects_json = Column(Text, nullable=False)  # List of defect records
     defect_count = Column(Integer, default=0)
@@ -88,7 +94,11 @@ class DatabaseManager:
                     ("advisory_backend", "VARCHAR(64) DEFAULT 'deterministic_fallback'"),
                     ("advisory_model_id", "VARCHAR(64) DEFAULT 'ipc_expert_rules_engine'"),
                     ("advisory_status", "VARCHAR(32) DEFAULT 'active'"),
-                    ("advisory_fallback_reason", "VARCHAR(256) DEFAULT NULL")
+                    ("advisory_fallback_reason", "VARCHAR(256) DEFAULT NULL"),
+                    ("domain_status", "VARCHAR(32) DEFAULT 'within_domain'"),
+                    ("image_quality_status", "VARCHAR(32) DEFAULT 'acceptable'"),
+                    ("review_required", "BOOLEAN DEFAULT 0"),
+                    ("reason_for_inspect", "TEXT DEFAULT NULL")
                 ]
                 for col_name, col_type in columns_to_add:
                     if col_name not in existing_cols:
@@ -179,6 +189,10 @@ class DatabaseManager:
             preset_applied=decision_record.get("preset_applied", "consumer"),
             requires_electrical_test=decision_record.get("requires_electrical_test", False),
             coverage=decision_record.get("coverage", 1.0),
+            domain_status=decision_record.get("domain_status", "within_domain"),
+            image_quality_status=decision_record.get("image_quality_status", "acceptable"),
+            review_required=decision_record.get("review_required", decision == "INSPECT"),
+            reason_for_inspect=decision_record.get("reason_for_inspect"),
             defects_json=json.dumps(defects),
             defect_count=len(defects),
             summary_counts_json=json.dumps(summary_counts),
@@ -282,6 +296,10 @@ class DatabaseManager:
             "preset_applied": record.preset_applied,
             "requires_electrical_test": record.requires_electrical_test,
             "coverage": record.coverage,
+            "domain_status": getattr(record, "domain_status", "within_domain"),
+            "image_quality_status": getattr(record, "image_quality_status", "acceptable"),
+            "review_required": getattr(record, "review_required", False),
+            "reason_for_inspect": getattr(record, "reason_for_inspect", None),
             "defects": json.loads(record.defects_json) if record.defects_json else [],
             "defect_count": record.defect_count,
             "summary_counts": json.loads(record.summary_counts_json) if record.summary_counts_json else {},

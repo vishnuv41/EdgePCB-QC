@@ -6,7 +6,7 @@ Enforces prioritized rules without probabilistic or LLM dependence.
 Outcomes: PASS, INSPECT, REJECT
 """
 
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 
 
 class RuleResult:
@@ -21,18 +21,23 @@ def evaluate_rules(
     defects: List[Dict[str, Any]],
     severities: List[str],
     coverage: float,
-    preset_config: Dict[str, Any]
+    preset_config: Dict[str, Any],
+    quality_assessment: Optional[Dict[str, Any]] = None
 ) -> RuleResult:
     """
     Evaluates defects against prioritized deterministic quality rules.
-    Priority order:
+    Conservative Policy Priority Order:
     1. Critical defects at or above reject confidence -> REJECT
     2. Any defect count exceeding allowed tolerances -> REJECT
     3. Critical defects with moderate confidence (uncertain) -> INSPECT
     4. Major defects needing manual verification -> INSPECT
+    5A. Degraded image quality (blur, underexposed, overexposed, low contrast) -> INSPECT
+    5B. Unfamiliar image domain (domain shift outside validated detector scope) -> INSPECT
+    5C. Alignment or reference uncertainty -> INSPECT
     5. Insufficient camera coverage -> INSPECT
     6. Minor defects exceeding limit -> INSPECT
-    7. No defects & sufficient coverage -> PASS
+    7. Unclassified or low-confidence surface anomalies -> INSPECT
+    8. All checks passed (acceptable quality, within domain, valid coverage, zero critical) -> PASS
     """
     reject_conf = preset_config.get("reject_conf", 0.75)
     inspect_conf = preset_config.get("inspect_conf", 0.40)
@@ -103,6 +108,29 @@ def evaluate_rules(
             requires_electrical_test=has_electrical_risk
         )
 
+    # 5A. Degraded Image Quality Gate -> INSPECT
+    if quality_assessment:
+        iq_status = quality_assessment.get("image_quality_status", "acceptable")
+        if iq_status != "acceptable":
+            reason = quality_assessment.get("reason_for_inspect") or f"Degraded image quality ({iq_status})"
+            return RuleResult(
+                decision="INSPECT",
+                rule_id="RULE_005A_DEGRADED_IMAGE_QUALITY",
+                description=f"Manual Inspection Required: Image quality degraded ({iq_status}). {reason}.",
+                requires_electrical_test=has_electrical_risk
+            )
+
+        # 5B. Domain Familiarity Gate -> INSPECT
+        dom_status = quality_assessment.get("domain_status", "within_domain")
+        if dom_status in ["unfamiliar_domain", "out_of_domain"]:
+            reason = quality_assessment.get("reason_for_inspect") or f"Domain shift detected ({dom_status})"
+            return RuleResult(
+                decision="INSPECT",
+                rule_id="RULE_005B_UNFAMILIAR_IMAGE_DOMAIN",
+                description=f"Manual Inspection Required: Image domain unfamiliar ({dom_status}). {reason}.",
+                requires_electrical_test=has_electrical_risk
+            )
+
     # 5. Insufficient inspection coverage -> INSPECT
     if coverage < min_cov:
         return RuleResult(
@@ -134,6 +162,6 @@ def evaluate_rules(
     return RuleResult(
         decision="PASS",
         rule_id="RULE_008_ZERO_CRITICAL_DEFECTS_PASS",
-        description=f"Board passed inspection with {len(minor_defects)} acceptable minor variations and {coverage*100:.1f}% coverage.",
+        description=f"Board passed inspection with {len(minor_defects)} acceptable minor variations, verified within-domain image quality, and {coverage*100:.1f}% coverage.",
         requires_electrical_test=False
     )
