@@ -1,0 +1,355 @@
+{
+  "audit_timestamp": "2026-11-04 11:53:15 UTC",
+  "summary": {
+    "total_training_images": 9307,
+    "total_validation_images": 2125,
+    "total_test_images": 194,
+    "total_external_color_test_images": 390,
+    "grand_total_images": 12016
+  },
+  "unified_processed_splits": {
+    "train": {
+      "split": "train",
+      "image_count": 9307,
+      "label_file_count": 9307,
+      "total_bounding_boxes": 22066,
+      "empty_label_images": 172,
+      "missing_label_files": 0,
+      "sources": {
+        "DeepPCB": 1120,
+        "DsPCBSD+": 5811,
+        "PCB-Defect V2": 2376
+      },
+      "class_distribution": {
+        "mouse_bite": 4161,
+        "short_circuit": 2297,
+        "spur": 5406,
+        "spurious_copper": 2939,
+        "pin_hole_missing_pad": 3882,
+        "open_circuit": 3381
+      },
+      "sampled_resolutions": {
+        "640x640": 75,
+        "226x226": 123,
+        "108x108": 2
+      },
+      "sampled_monochrome_ratio": 0.12,
+      "sampled_rgb_ratio": 0.88
+    },
+    "val": {
+      "split": "val",
+      "image_count": 2125,
+      "label_file_count": 2125,
+      "total_bounding_boxes": 4431,
+      "empty_label_images": 33,
+      "missing_label_files": 0,
+      "sources": {
+        "DeepPCB": 186,
+        "DsPCBSD+": 1444,
+        "PCB-Defect V2": 495
+      },
+      "class_distribution": {
+        "short_circuit": 403,
+        "mouse_bite": 839,
+        "spurious_copper": 521,
+        "pin_hole_missing_pad": 906,
+        "spur": 1178,
+        "open_circuit": 584
+      },
+      "sampled_resolutions": {
+        "640x640": 65,
+        "226x226": 133,
+        "108x108": 2
+      },
+      "sampled_monochrome_ratio": 0.09,
+      "sampled_rgb_ratio": 0.91
+    },
+    "test": {
+      "split": "test",
+      "image_count": 194,
+      "label_file_count": 194,
+      "total_bounding_boxes": 1143,
+      "empty_label_images": 0,
+      "missing_label_files": 0,
+      "sources": {
+        "DeepPCB": 194
+      },
+      "class_distribution": {
+        "open_circuit": 247,
+        "mouse_bite": 179,
+        "pin_hole_missing_pad": 185,
+        "spurious_copper": 165,
+        "spur": 184,
+        "short_circuit": 183
+      },
+      "sampled_resolutions": {
+        "640x640": 194
+      },
+      "sampled_monochrome_ratio": 1.0,
+      "sampled_rgb_ratio": 0.0
+    },
+    "external_color_test": {
+      "split": "external_color_test",
+      "image_count": 390,
+      "label_file_count": 390,
+      "total_bounding_boxes": 397,
+      "empty_label_images": 49,
+      "missing_label_files": 0,
+      "sources": {
+        "PCB-Defect V2": 390
+      },
+      "class_distribution": {
+        "open_circuit": 59,
+        "mouse_bite": 80,
+        "spurious_copper": 64,
+        "pin_hole_missing_pad": 59,
+        "spur": 76,
+        "short_circuit": 59
+      },
+      "sampled_resolutions": {
+        "640x640": 200
+      },
+      "sampled_monochrome_ratio": 0.0,
+      "sampled_rgb_ratio": 1.0
+    }
+  },
+  "class_sufficiency_analysis": {
+    "open_circuit": {
+      "train_boxes": 3381,
+      "val_boxes": 584,
+      "test_boxes": 247,
+      "external_color_test_boxes": 59,
+      "total_boxes": 4271,
+      "is_training_sufficient": true,
+      "severity": "critical"
+    },
+    "short_circuit": {
+      "train_boxes": 2297,
+      "val_boxes": 403,
+      "test_boxes": 183,
+      "external_color_test_boxes": 59,
+      "total_boxes": 2942,
+      "is_training_sufficient": true,
+      "severity": "critical"
+    },
+    "mouse_bite": {
+      "train_boxes": 4161,
+      "val_boxes": 839,
+      "test_boxes": 179,
+      "external_color_test_boxes": 80,
+      "total_boxes": 5259,
+      "is_training_sufficient": true,
+      "severity": "major"
+    },
+    "spur": {
+      "train_boxes": 5406,
+      "val_boxes": 1178,
+      "test_boxes": 184,
+      "external_color_test_boxes": 76,
+      "total_boxes": 6844,
+      "is_training_sufficient": true,
+      "severity": "major"
+    },
+    "spurious_copper": {
+      "train_boxes": 2939,
+      "val_boxes": 521,
+      "test_boxes": 165,
+      "external_color_test_boxes": 64,
+      "total_boxes": 3689,
+      "is_training_sufficient": true,
+      "severity": "major"
+    },
+    "pin_hole_missing_pad": {
+      "train_boxes": 3882,
+      "val_boxes": 906,
+      "test_boxes": 185,
+      "external_color_test_boxes": 59,
+      "total_boxes": 5032,
+      "is_training_sufficient": true,
+      "severity": "critical"
+    }
+  },
+  "raw_datasets": {
+    "DeepPCB": {
+      "total_test_images": 1500,
+      "total_template_images": 1501,
+      "board_groups_count": 11,
+      "board_groups": {
+        "group00041": {
+          "test_images": 221,
+          "temp_images": 221
+        },
+        "group12000": {
+          "test_images": 14,
+          "temp_images": 14
+        },
+        "group12100": {
+          "test_images": 146,
+          "temp_images": 146
+        },
+        "group12300": {
+          "test_images": 98,
+          "temp_images": 98
+        },
+        "group13000": {
+          "test_images": 216,
+          "temp_images": 216
+        },
+        "group20085": {
+          "test_images": 325,
+          "temp_images": 325
+        },
+        "group44000": {
+          "test_images": 100,
+          "temp_images": 100
+        },
+        "group50600": {
+          "test_images": 79,
+          "temp_images": 79
+        },
+        "group77000": {
+          "test_images": 107,
+          "temp_images": 107
+        },
+        "group90100": {
+          "test_images": 74,
+          "temp_images": 75
+        },
+        "group92000": {
+          "test_images": 120,
+          "temp_images": 120
+        }
+      },
+      "raw_annotation_counts": {
+        "spur": 1965,
+        "mousebite": 1506,
+        "copper": 1625,
+        "pin-hole": 1474,
+        "class_6": 1501,
+        "short": 1942
+      },
+      "image_resolution": "640x640",
+      "colour_format": "Monochrome Grayscale (Scanned Film)"
+    },
+    "DsPCBSD+": {
+      "raw_train_images": 8208,
+      "raw_val_images": 2051,
+      "total_raw_images": 10259,
+      "categories_id_map": {
+        "1": "SH",
+        "2": "SP",
+        "3": "SC",
+        "4": "OP",
+        "5": "MB",
+        "6": "HB",
+        "7": "CS",
+        "8": "CFO",
+        "9": "BMFO"
+      },
+      "train_annotations_by_class": {
+        "CS": 2042,
+        "BMFO": 1334,
+        "HB": 2275,
+        "OP": 1432,
+        "CFO": 1409,
+        "MB": 1983,
+        "SH": 746,
+        "SP": 3655,
+        "SC": 1308
+      },
+      "val_annotations_by_class": {
+        "HB": 608,
+        "MB": 546,
+        "SP": 929,
+        "SC": 285,
+        "CS": 448,
+        "SH": 169,
+        "CFO": 423,
+        "BMFO": 346,
+        "OP": 338
+      },
+      "native_patch_resolution": "226x226",
+      "colour_format": "3-channel RGB (Industrial Camera Line Scans)"
+    },
+    "PCB-Defect V2": {
+      "v1_whole_board_images": 230,
+      "v1_raw_classes": {
+        "short": 254,
+        "spur": 296,
+        "spurious_copper": 246,
+        "mouse_bite": 356,
+        "open_circuit": 276,
+        "missing_pad": 276
+      },
+      "v2_whole_board_images": 230,
+      "v2_distinct_physical_boards": [
+        "50",
+        "51",
+        "52",
+        "53",
+        "54",
+        "55",
+        "56",
+        "57",
+        "58",
+        "59",
+        "60",
+        "61",
+        "62",
+        "63",
+        "64",
+        "65",
+        "66",
+        "67",
+        "68",
+        "80",
+        "81",
+        "82"
+      ],
+      "v2_board_count": 22,
+      "native_resolutions": "1168x2048 to 1792x2048 (2.4MP - 3.7MP)",
+      "colour_format": "3-channel RGB (Digital Camera, Green Solder Mask)"
+    }
+  },
+  "excluded_classes_and_samples": {
+    "extended_industrial_classes_excluded_from_6class_yolo": {
+      "CS (conductor_scratch)": 2490,
+      "CFO (conductor_foreign_object)": 1832,
+      "BMFO (base_material_foreign_object)": 1680
+    },
+    "total_excluded_annotations": 6002,
+    "engineering_justification": "Classes CS (surface scratch), CFO (conductive debris), and BMFO (laminate particulate) represent non-geometric surface anomalies. In accordance with IPC-A-600 Section 3, scratches do not violate functional integrity unless reducing conductor thickness by >10% or bridging spacing. To prevent detector confusion on conductive copper boundaries, the 6 core functional defect modes (open, short, mouse bite, spur, copper splash, missing pad) are prioritized for edge detection, while foreign objects are flagged via the Reference Comparison diff-pipeline."
+  },
+  "class_mapping_matrix": {
+    "canonical_0_open_circuit": {
+      "DeepPCB": "open",
+      "DsPCBSD+": "OP",
+      "PCB-Defect V2": "open_circuit (v1 cat 3 / v2 cat 2)"
+    },
+    "canonical_1_short_circuit": {
+      "DeepPCB": "short",
+      "DsPCBSD+": "SH",
+      "PCB-Defect V2": "short (v1 cat 4 / v2 cat 3)"
+    },
+    "canonical_2_mouse_bite": {
+      "DeepPCB": "mousebite",
+      "DsPCBSD+": "MB",
+      "PCB-Defect V2": "mouse_bite (v1 cat 2 / v2 cat 1)"
+    },
+    "canonical_3_spur": {
+      "DeepPCB": "spur",
+      "DsPCBSD+": "SP",
+      "PCB-Defect V2": "spur (v1 cat 5 / v2 cat 4)"
+    },
+    "canonical_4_spurious_copper": {
+      "DeepPCB": "copper",
+      "DsPCBSD+": "SC",
+      "PCB-Defect V2": "spurious_copper (v1 cat 6 / v2 cat 5)"
+    },
+    "canonical_5_pin_hole_missing_pad": {
+      "DeepPCB": "pin-hole",
+      "DsPCBSD+": "HB (Hole Breakout)",
+      "PCB-Defect V2": "missing_pad (v1 cat 1 / v2 cat 0)"
+    }
+  }
+}

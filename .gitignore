@@ -6,9 +6,13 @@ datasets/raw/*
 datasets/processed/*
 datasets/inspected_captures/*
 datasets/calibration_images/*
+datasets/unseen_evaluation/images/*
+datasets/unseen_evaluation/results/*
 *.tmp
 !datasets/raw/.gitkeep
 !datasets/processed/.gitkeep
+!datasets/unseen_evaluation/images/.gitkeep
+!datasets/unseen_evaluation/results/.gitkeep
 models/checkpoints/*
 models/onnx/*
 models/hailo/*
