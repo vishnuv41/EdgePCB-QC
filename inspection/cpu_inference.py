@@ -82,14 +82,28 @@ class CPUInspector(VisionInspector):
     def is_hardware_available(self) -> bool:
         return True
 
-    def load_model(self):
-        """Loads ONNX or PyTorch weights if present."""
-        if not self.model_path or not Path(self.model_path).exists():
+    def load_model(self) -> bool:
+        """Loads ONNX or PyTorch weights if present. Clears stale weights on failure."""
+        if not self.model_path:
+            self.yolo_model = None
+            self.onnx_session = None
             self.is_loaded = False
-            return
+            return False
+
+        p = Path(self.model_path)
+        if not p.is_file():
+            self.yolo_model = None
+            self.onnx_session = None
+            self.is_loaded = False
+            return False
+
+        # Reset previous model instances to guarantee no stale weights
+        self.yolo_model = None
+        self.onnx_session = None
+        self.is_loaded = False
 
         try:
-            m_path = str(self.model_path)
+            m_path = str(p.resolve())
             if m_path.endswith(".onnx") or self.use_onnx:
                 import onnxruntime as ort
                 self.onnx_session = ort.InferenceSession(m_path, providers=["CPUExecutionProvider"])
@@ -98,14 +112,24 @@ class CPUInspector(VisionInspector):
                 from ultralytics import YOLO
                 self.yolo_model = YOLO(m_path)
                 self.is_loaded = True
+            else:
+                self.is_loaded = False
+                return False
+            return True
         except Exception as e:
-            print(f"[!] Model loading failed: {e}")
+            print(f"[!] Model loading failed from {self.model_path}: {e}")
+            self.yolo_model = None
+            self.onnx_session = None
             self.is_loaded = False
+            return False
 
     def inspect(self, image: Union[str, np.ndarray, Path]) -> List[Dict[str, Any]]:
         """
         Runs visual defect inspection on a PCB image using loaded model or fallback.
         """
+        if not self.is_loaded or (self.yolo_model is None and self.onnx_session is None):
+            raise RuntimeError(f"Cannot run inspection: No valid model checkpoint is loaded in CPUInspector (model_path={self.model_path}).")
+
         t0 = time.perf_counter()
 
         # Load image if file path
@@ -154,50 +178,6 @@ class CPUInspector(VisionInspector):
         self._last_timing_ms = (t1 - t0) * 1000.0
         self._last_results = defects
         return defects
-
-    def get_model_metadata(self) -> Dict[str, Any]:
-        """
-        Dynamically extracts and returns metadata from the loaded checkpoint.
-        """
-        if not self.is_loaded or not self.model_path:
-            return {
-                "model_name": "Unloaded",
-                "model_version": "None",
-                "model_path": None,
-                "architecture": "YOLOv8n",
-                "num_classes": 0,
-                "classes": [],
-                "supported_domains": ["monochrome_high_contrast"],
-                "device": self.device
-            }
-
-        p = Path(self.model_path)
-        is_multidomain = "pcb_multidomain" in str(p) or "unified" in str(p)
-        model_name = "Unified Multi-Domain YOLOv8n" if is_multidomain else "DeepPCB Baseline YOLOv8n"
-        model_version = f"{'YOLOv8n-pcb-multidomain-v1.0' if is_multidomain else 'YOLOv8n-pcb-smoke-v1.0'} ({p.parent.parent.name}/{p.name})"
-
-        supported_domains = ["monochrome_high_contrast", "color_pcb"] if is_multidomain else ["monochrome_high_contrast"]
-
-        classes = list(CANONICAL_CLASSES.values())
-        if self.yolo_model and hasattr(self.yolo_model, "names") and self.yolo_model.names:
-            classes = list(self.yolo_model.names.values())
-
-        return {
-            "model_name": model_name,
-            "model_version": model_version,
-            "model_path": str(p),
-            "architecture": "YOLOv8n",
-            "num_classes": len(classes),
-            "classes": classes,
-            "supported_domains": supported_domains,
-            "device": self.device
-        }
-
-    def load_checkpoint(self, checkpoint_path: Union[str, Path]) -> bool:
-        """Dynamically switches active checkpoint at runtime."""
-        self.model_path = str(checkpoint_path)
-        self.load_model()
-        return self.is_loaded
 
 
 
@@ -248,22 +228,24 @@ class CPUInspector(VisionInspector):
 
     def get_model_metadata(self) -> Dict[str, Any]:
         """
-        Dynamically extracts and returns metadata from the loaded checkpoint.
+        Dynamically extracts and returns metadata from the currently loaded checkpoint.
+        Guarantees that no stale metadata is returned if the model is not loaded.
         """
-        if not self.is_loaded or not self.model_path:
+        if not self.is_loaded or not self.model_path or (self.yolo_model is None and self.onnx_session is None):
             return {
                 "model_name": "Unloaded",
-                "model_version": "None",
-                "model_path": None,
-                "architecture": "YOLOv8n",
+                "model_version": "None (Model Unloaded)",
+                "model_path": self.model_path,
+                "architecture": "None",
                 "num_classes": 0,
                 "classes": [],
-                "supported_domains": ["monochrome_high_contrast"],
-                "device": self.device
+                "supported_domains": [],
+                "device": self.device,
+                "is_loaded": False
             }
 
         p = Path(self.model_path)
-        is_multidomain = "pcb_multidomain" in str(p) or "unified" in str(p)
+        is_multidomain = "pcb_multidomain" in str(p).lower() or "unified" in str(p).lower()
         model_name = "Unified Multi-Domain YOLOv8n" if is_multidomain else "DeepPCB Baseline YOLOv8n"
         model_version = f"{'YOLOv8n-pcb-multidomain-v1.0' if is_multidomain else 'YOLOv8n-pcb-smoke-v1.0'} ({p.parent.parent.name}/{p.name})"
 
@@ -281,13 +263,37 @@ class CPUInspector(VisionInspector):
             "num_classes": len(classes),
             "classes": classes,
             "supported_domains": supported_domains,
-            "device": self.device
+            "device": self.device,
+            "is_loaded": True
         }
 
     def load_checkpoint(self, checkpoint_path: Union[str, Path]) -> bool:
-        """Dynamically switches active checkpoint at runtime."""
-        self.model_path = str(checkpoint_path)
-        self.load_model()
-        return self.is_loaded
+        """
+        Dynamically switches active checkpoint at runtime.
+        Validates file existence and resets previous weights so stale models are never retained.
+        Raises FileNotFoundError if checkpoint does not exist.
+        Raises RuntimeError if model file is corrupted or incompatible.
+        """
+        if not checkpoint_path:
+            self.yolo_model = None
+            self.onnx_session = None
+            self.is_loaded = False
+            self.model_path = None
+            raise ValueError("checkpoint_path cannot be None or empty.")
+
+        p = Path(checkpoint_path)
+        if not p.exists() or not p.is_file():
+            self.yolo_model = None
+            self.onnx_session = None
+            self.is_loaded = False
+            self.model_path = str(p)
+            raise FileNotFoundError(f"Checkpoint file does not exist: {checkpoint_path}")
+
+        self.model_path = str(p.resolve())
+        success = self.load_model()
+        if not success or not self.is_loaded:
+            raise RuntimeError(f"Failed to load checkpoint weights from: {checkpoint_path}")
+
+        return True
 
 

@@ -108,10 +108,34 @@ multidomain_path = WORKSPACE_ROOT / "models" / "checkpoints" / "pcb_multidomain_
 baseline_path = WORKSPACE_ROOT / "models" / "checkpoints" / "pcb_smoke_experiment" / "weights" / "best.pt"
 chosen_path = multidomain_path if "Unified" in model_checkpoint_choice else baseline_path
 
-if str(cpu_inspector.model_path) != str(chosen_path):
-    cpu_inspector.load_checkpoint(chosen_path)
+checkpoint_error = None
+try:
+    if not hasattr(cpu_inspector, "load_checkpoint"):
+        from inspection.cpu_inference import CPUInspector
+        cpu_inspector = CPUInspector(model_path=chosen_path)
+        tiled_inspector.inspector = cpu_inspector
+    elif str(cpu_inspector.model_path) != str(chosen_path) or not cpu_inspector.is_loaded:
+        cpu_inspector.load_checkpoint(chosen_path)
+        tiled_inspector.inspector = cpu_inspector
+except Exception as e:
+    checkpoint_error = str(e)
 
-model_meta = cpu_inspector.get_model_metadata()
+model_meta = cpu_inspector.get_model_metadata() if hasattr(cpu_inspector, "get_model_metadata") else {
+    "model_name": "Error",
+    "model_version": "Error",
+    "model_path": None,
+    "architecture": "None",
+    "num_classes": 0,
+    "classes": [],
+    "supported_domains": [],
+    "device": "cpu",
+    "is_loaded": False
+}
+
+if checkpoint_error or not model_meta.get("is_loaded", False):
+    st.sidebar.error(f"❌ Checkpoint Error: {checkpoint_error or 'Model failed to load'}")
+    st.error(f"🚨 **Vision Model Checkpoint Error:** Cannot inspect boards. Failed to load checkpoint `{chosen_path}`: {checkpoint_error or 'Model is not loaded'}")
+    st.stop()
 
 quality_preset = st.sidebar.selectbox(
     "Quality Standard Preset",

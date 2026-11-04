@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-11-04 15:35:32",
+  "hardware": {
+    "device": "0",
+    "gpu_name": "NVIDIA GeForce RTX 5050 Laptop GPU",
+    "torch_version": "2.14.1+cu130",
+    "cuda_available": true
+  },
+  "hyperparameters": {
+    "base_architecture": "yolov8n.pt",
+    "epochs": 10,
+    "batch_size": 16,
+    "imgsz": 640,
+    "seed": 42,
+    "optimizer": "AdamW (auto)",
+    "patience": 10,
+    "augmentations": {
+      "hsv_h": 0.015,
+      "hsv_s": 0.7,
+      "hsv_v": 0.4,
+      "degrees": 0.0,
+      "shear": 0.0,
+      "translate": 0.1,
+      "scale": 0.5,
+      "fliplr": 0.5,
+      "flipud": 0.5,
+      "mosaic": 1.0
+    }
+  },
+  "baseline_model": {
+    "name": "pcb_smoke_experiment",
+    "elapsed_seconds": 182.18172335624695,
+    "best_weights": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\models\\checkpoints\\pcb_smoke_experiment\\weights\\best.pt",
+    "onnx_export": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\models\\onnx\\pcb_smoke_experiment.onnx",
+    "metrics": {
+      "total_epochs": 10,
+      "best_epoch": 10,
+      "best_mAP50": 0.93767,
+      "best_mAP50_95": 0.67307,
+      "precision_at_best": 0.94445,
+      "recall_at_best": 0.86211,
+      "final_train_box_loss": 1.04771,
+      "final_train_cls_loss": 0.64289,
+      "final_val_box_loss": 0.98027,
+      "final_val_cls_loss": 0.68728
+    }
+  },
+  "multidomain_model": {
+    "name": "pcb_multidomain_experiment",
+    "elapsed_seconds": 1322.5017306804657,
+    "best_weights": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\models\\checkpoints\\pcb_multidomain_experiment\\weights\\best.pt",
+    "onnx_export": "C:\\Users\\VISHNU\\Downloads\\EdgePCB-QC\\models\\onnx\\pcb_multidomain_experiment.onnx",
+    "metrics": {
+      "total_epochs": 10,
+      "best_epoch": 10,
+      "best_mAP50": 0.80015,
+      "best_mAP50_95": 0.48763,
+      "precision_at_best": 0.76002,
+      "recall_at_best": 0.75246,
+      "final_train_box_loss": 1.36554,
+      "final_train_cls_loss": 0.89174,
+      "final_val_box_loss": 1.50238,
+      "final_val_cls_loss": 1.03927
+    }
+  }
+}
