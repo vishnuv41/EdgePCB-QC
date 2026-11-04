@@ -63,9 +63,12 @@ class CPUInspector(VisionInspector):
         device: str = "cpu"
     ):
         if model_path is None:
-            default_pt = Path(__file__).resolve().parent.parent / "models" / "checkpoints" / "pcb_smoke_experiment" / "weights" / "best.pt"
-            if default_pt.exists():
-                model_path = default_pt
+            multidomain_pt = Path(__file__).resolve().parent.parent / "models" / "checkpoints" / "pcb_multidomain_experiment" / "weights" / "best.pt"
+            smoke_pt = Path(__file__).resolve().parent.parent / "models" / "checkpoints" / "pcb_smoke_experiment" / "weights" / "best.pt"
+            if multidomain_pt.exists():
+                model_path = multidomain_pt
+            elif smoke_pt.exists():
+                model_path = smoke_pt
 
         super().__init__(model_path=str(model_path) if model_path else None, conf_threshold=conf_threshold)
         self.use_onnx = use_onnx
@@ -152,6 +155,52 @@ class CPUInspector(VisionInspector):
         self._last_results = defects
         return defects
 
+    def get_model_metadata(self) -> Dict[str, Any]:
+        """
+        Dynamically extracts and returns metadata from the loaded checkpoint.
+        """
+        if not self.is_loaded or not self.model_path:
+            return {
+                "model_name": "Unloaded",
+                "model_version": "None",
+                "model_path": None,
+                "architecture": "YOLOv8n",
+                "num_classes": 0,
+                "classes": [],
+                "supported_domains": ["monochrome_high_contrast"],
+                "device": self.device
+            }
+
+        p = Path(self.model_path)
+        is_multidomain = "pcb_multidomain" in str(p) or "unified" in str(p)
+        model_name = "Unified Multi-Domain YOLOv8n" if is_multidomain else "DeepPCB Baseline YOLOv8n"
+        model_version = f"{'YOLOv8n-pcb-multidomain-v1.0' if is_multidomain else 'YOLOv8n-pcb-smoke-v1.0'} ({p.parent.parent.name}/{p.name})"
+
+        supported_domains = ["monochrome_high_contrast", "color_pcb"] if is_multidomain else ["monochrome_high_contrast"]
+
+        classes = list(CANONICAL_CLASSES.values())
+        if self.yolo_model and hasattr(self.yolo_model, "names") and self.yolo_model.names:
+            classes = list(self.yolo_model.names.values())
+
+        return {
+            "model_name": model_name,
+            "model_version": model_version,
+            "model_path": str(p),
+            "architecture": "YOLOv8n",
+            "num_classes": len(classes),
+            "classes": classes,
+            "supported_domains": supported_domains,
+            "device": self.device
+        }
+
+    def load_checkpoint(self, checkpoint_path: Union[str, Path]) -> bool:
+        """Dynamically switches active checkpoint at runtime."""
+        self.model_path = str(checkpoint_path)
+        self.load_model()
+        return self.is_loaded
+
+
+
     def inspect_with_annotations(
         self,
         image_path: Union[str, Path],
@@ -196,3 +245,49 @@ class CPUInspector(VisionInspector):
         self._last_timing_ms = (t1 - t0) * 1000.0
         self._last_results = defects
         return defects
+
+    def get_model_metadata(self) -> Dict[str, Any]:
+        """
+        Dynamically extracts and returns metadata from the loaded checkpoint.
+        """
+        if not self.is_loaded or not self.model_path:
+            return {
+                "model_name": "Unloaded",
+                "model_version": "None",
+                "model_path": None,
+                "architecture": "YOLOv8n",
+                "num_classes": 0,
+                "classes": [],
+                "supported_domains": ["monochrome_high_contrast"],
+                "device": self.device
+            }
+
+        p = Path(self.model_path)
+        is_multidomain = "pcb_multidomain" in str(p) or "unified" in str(p)
+        model_name = "Unified Multi-Domain YOLOv8n" if is_multidomain else "DeepPCB Baseline YOLOv8n"
+        model_version = f"{'YOLOv8n-pcb-multidomain-v1.0' if is_multidomain else 'YOLOv8n-pcb-smoke-v1.0'} ({p.parent.parent.name}/{p.name})"
+
+        supported_domains = ["monochrome_high_contrast", "color_pcb"] if is_multidomain else ["monochrome_high_contrast"]
+
+        classes = list(CANONICAL_CLASSES.values())
+        if self.yolo_model and hasattr(self.yolo_model, "names") and self.yolo_model.names:
+            classes = list(self.yolo_model.names.values())
+
+        return {
+            "model_name": model_name,
+            "model_version": model_version,
+            "model_path": str(p),
+            "architecture": "YOLOv8n",
+            "num_classes": len(classes),
+            "classes": classes,
+            "supported_domains": supported_domains,
+            "device": self.device
+        }
+
+    def load_checkpoint(self, checkpoint_path: Union[str, Path]) -> bool:
+        """Dynamically switches active checkpoint at runtime."""
+        self.model_path = str(checkpoint_path)
+        self.load_model()
+        return self.is_loaded
+
+

@@ -70,7 +70,8 @@ def test_fallback_clean_board_pass():
     }
     advisory = generate_fallback_advisory(payload)
     assert isinstance(advisory, AdvisoryExplanation)
-    assert "Defect-free" in advisory.what_detected
+    assert "No defects were localized" in advisory.what_detected
+    assert "Defect-free" not in advisory.what_detected
     assert advisory.electrical_confirmation_needed is False
 
 

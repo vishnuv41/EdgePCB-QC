@@ -81,19 +81,19 @@ def generate_fallback_advisory(payload: Dict[str, Any]) -> AdvisoryExplanation:
     if not defects:
         if decision == "PASS":
             return AdvisoryExplanation(
-                what_detected="Defect-free PCB surface; all trace geometries and clearances conform to visual threshold standards.",
-                why_it_matters="Trace continuity, spacing, and pad geometry satisfy the configured quality preset with no visible anomalies.",
-                operator_action="Clear board for downstream assembly. Engineering Guidance: Optical inspection confirms surface visual features; downstream in-circuit testing (ICT) verifies electrical performance.",
+                what_detected="No defects were localized by the current vision model above the configured detection thresholds.",
+                why_it_matters="No visible surface anomalies were localized across inspected regions. Electrical continuity and trace isolation remain unverified by optical inspection alone.",
+                operator_action="Clear board for downstream in-circuit electrical testing (ICT / flying-probe) and assembly verification. Optical inspection evaluates top-level surface topology only.",
                 electrical_confirmation_needed=False,
-                confidence_caveat="Optical inspection confirms surface topology only. Downstream electrical testing is required for functional verification."
+                confidence_caveat="Optical inspection confirms visible surface morphology only; it cannot measure electrical continuity, trace impedance, or subsurface layer integrity. Downstream contact electrical testing is required for functional verification."
             )
         else:
             return AdvisoryExplanation(
-                what_detected="Insufficient optical inspection coverage or imaging uncertainty without localized defect features.",
-                why_it_matters="Incomplete visual inspection coverage means portions of the conductive layers remain unverified.",
-                operator_action="Re-position PCB in fixture, clean optical lens, verify illumination uniformity, and re-trigger visual inspection.",
+                what_detected="Insufficient optical inspection coverage, imaging quality anomaly, or domain shift without localized defect features.",
+                why_it_matters="Incomplete visual inspection coverage or unvalidated imaging domain means portions of the conductive layers remain unverified.",
+                operator_action="Verify board lighting, re-position PCB in fixture, confirm golden reference template alignment, and re-trigger visual inspection. Do not release board without verified inspection coverage.",
                 electrical_confirmation_needed=False,
-                confidence_caveat="Automated optical inspection flags coverage warnings to prevent uninspected boards passing into service."
+                confidence_caveat="Automated optical inspection flags quality and coverage warnings to prevent uninspected boards from passing into service."
             )
 
     # Summarize detected defects

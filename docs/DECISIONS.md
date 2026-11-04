@@ -230,3 +230,47 @@
   8. **Hailo NPU Deployment Preparation:** Verified ONNX numerical parity ($7.40 \times 10^{-4}$ max diff, $8.67 \times 10^{-6}$ MAE). Audited 233-node ONNX graph (100% of operators compatible with Hailo DFC v3.28+). Built 1,024 multi-domain Int8 calibration images (410 DeepPCB, 410 DsPCBSD+, 204 PCB-Defect V2). Updated `docs/HAILO_SETUP.md` with explicit zero performance fabrication statement.
   9. **System Integrity:** Verified entire test suite (**61/61 tests passing 100% in 12.45s**) and validated strict air-gapped zero-network offline execution.
 - **Reasoning:** Delivers complete industrial rigor, zero data leakage, verified domain transfer, and deterministic fail-safe safety.
+
+
+---
+
+### DECISION 024: Audit Correctness, Evidence-Based Advisory Wording, Dynamic Model Metadata, Physical Inspection Coverage, and Elimination of Color False-PASS Vulnerabilities
+- **Date:** 2026-11-04
+- **Context:**
+  1. Inspection record for `PCB-1334` in `database/inspections.db` revealed a false PASS with 0 detections, hardcoded `coverage=0.98`, hardcoded `vision_model_version="YOLO11n-pcb-v1.0"`, and overclaiming advisory text ("Defect-free PCB surface; all trace geometries and clearances conform to visual threshold standards").
+  2. Investigation revealed that `dashboard/app.py` was defaulting to the DeepPCB monochrome smoke baseline checkpoint (`pcb_smoke_experiment/weights/best.pt`), while hardcoding `supported_domains=["monochrome_high_contrast", "color_pcb"]` and `coverage=0.98`.
+  3. The baseline model experiences activation collapse on color PCBs (including `PCB-1334` from PCB-Defect V2 and `S_11833255` from DsPCBSD+), yielding 0 detections. Because the domain was falsely marked as supported, zero detections falsely triggered `RULE_008_ZERO_CRITICAL_DEFECTS_PASS`.
+  4. Visual-only optical inspection cannot verify trace continuity, impedance, or subsurface integrity; claiming trace continuity satisfaction from optical images is an engineering violation.
+- **Decision:**
+  1. **Dynamic Model Attribution & Checkpoint Selection:**
+     - Updated `CPUInspector` in `inspection/cpu_inference.py` to default to `pcb_multidomain_experiment/weights/best.pt` when present, while retaining `pcb_smoke_experiment/weights/best.pt` as baseline.
+     - Added `CPUInspector.get_model_metadata()` and `load_checkpoint()` allowing runtime switching.
+     - Added sidebar checkpoint selector in `dashboard/app.py` allowing operator switching between Unified Multi-Domain (Color + Monochrome) and Baseline DeepPCB (Monochrome High-Contrast Only).
+     - Logged dynamic `model_meta["model_version"]` to database instead of hardcoded strings.
+  2. **Conservative Domain Gate Enforcement:**
+     - Baseline model explicitly declares `supported_domains = ["monochrome_high_contrast"]`.
+     - When a color PCB is inspected under the baseline model, `assess_inspection_image` evaluates `domain_status = "unfamiliar_domain"` -> deterministically routes to `INSPECT` (`RULE_005B_UNFAMILIAR_IMAGE_DOMAIN`). Zero detections on an unfamiliar domain can never pass.
+  3. **Physical Inspection Coverage Calculation (`inspection/coverage.py`):**
+     - Replaced hardcoded `0.98` with `calculate_inspection_coverage()` implementing physical optical field completeness: calculates ratio of unclipped board area to frame bounding box, penalizes edge truncation and specular glare.
+     - For golden reference matching: calculates homography inlier overlap ratio. Enforces that coverage $< 0.90$ routes to `INSPECT` (`RULE_005_INSUFFICIENT_COVERAGE`).
+  4. **Evidence-Based Advisory Terminology:**
+     - Updated `advisory/fallback.py` to eliminate overclaims ("Defect-free", "all trace geometries and clearances conform").
+     - Adopted evidence-based wording: "No defects were localized by the current vision model above the configured detection thresholds", "No visible surface anomalies were localized across inspected regions. Electrical continuity and trace isolation remain unverified by optical inspection alone."
+     - Explicit caveat: "Optical inspection confirms visible surface morphology only; it cannot measure electrical continuity, trace impedance, or subsurface layer integrity. Downstream contact electrical testing is required for functional verification."
+  5. **Electrical Verification Decoupling:**
+     - Visually suspected `open_circuit` and `short_circuit` strictly trigger `requires_electrical_test = True`. Advisory recommendations and stored flags 100% agree.
+     - Visual-only inspections explicitly report electrical status as unverified by optical AOI alone.
+  6. **DsPCBSD+ 9-Class to 6-Class Mapping Audit:**
+     - Audited all 20,276 defect instances across DsPCBSD+ train and val splits.
+     - Retained 14,274 photolithographic etching and trace geometry defects (70.40%): `SH` (915), `SP` (4,584), `SC` (1,593), `OP` (1,770), `MB` (2,529), `HB` (2,883).
+     - Excluded 6,002 superficial particulate/scratch instances (29.60%): `CS` (2,490 conductor scratches), `CFO` (1,832 foreign objects), `BMFO` (1,680 base material debris) with clear physical justification.
+  7. **Investigation of `S_11833255`:**
+     - Evaluated `S_11833255.jpg` (226x226 patch with 7 ground truth spur defects 4-12 px wide).
+     - Confirmed baseline model has 0.0% recall at conf >= 0.25 (false PASS vulnerability).
+     - Unified multi-domain model detected defects at conf 0.10 (TP=2, FP=2) and conf 0.25 (TP=1).
+     - Generated side-by-side comparison figure: `benchmarks/results/s_11833255_investigation.png`.
+  8. **Re-Inspection of PCB-1334 & Regression Testing:**
+     - Re-inspected PCB-1334 under the corrected multi-domain pipeline: detected 3 defects (2 `short_circuit`, 1 `spurious_copper`), triggered `RULE_003_SUSPECTED_CRITICAL_DEFECT` -> `INSPECT`, requiring mandatory electrical testing.
+     - Created `tests/test_audit_correctness_regression.py` covering all 8 specified scenarios.
+     - Verified complete test suite: **69/69 tests passing 100% in 6.91s**.
+- **Reasoning:** Closes the false-PASS vulnerability on color PCBs, guarantees scientific evidence-based advisory language, eliminates hardcoded parameters, and restores complete audit integrity.

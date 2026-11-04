@@ -94,6 +94,25 @@ backend_choice = st.sidebar.selectbox(
     ["CPU / Laptop Pipeline (Active)", "Hailo-8 / 8L NPU (Raspberry Pi AI HAT+)"]
 )
 
+model_checkpoint_choice = st.sidebar.selectbox(
+    "Active Vision Checkpoint",
+    [
+        "Unified Multi-Domain (Color + Monochrome) [Recommended]",
+        "Baseline DeepPCB (Monochrome High-Contrast Only)"
+    ],
+    index=0,
+    help="Unified model trained on DeepPCB, DsPCBSD+, and PCB-Defect V2. Baseline model trained exclusively on DeepPCB scans."
+)
+
+multidomain_path = WORKSPACE_ROOT / "models" / "checkpoints" / "pcb_multidomain_experiment" / "weights" / "best.pt"
+baseline_path = WORKSPACE_ROOT / "models" / "checkpoints" / "pcb_smoke_experiment" / "weights" / "best.pt"
+chosen_path = multidomain_path if "Unified" in model_checkpoint_choice else baseline_path
+
+if str(cpu_inspector.model_path) != str(chosen_path):
+    cpu_inspector.load_checkpoint(chosen_path)
+
+model_meta = cpu_inspector.get_model_metadata()
+
 quality_preset = st.sidebar.selectbox(
     "Quality Standard Preset",
     ["consumer", "industrial", "automotive"],
@@ -113,7 +132,8 @@ st.sidebar.markdown("### System Runtime Status")
 if "Hailo" in backend_choice:
     st.sidebar.error("Hailo NPU: Offline / Pending Pi 5 Hardware")
 else:
-    st.sidebar.success("CPU Backend: Active & Ready (AMD Ryzen 9 8940HX ~28 FPS)")
+    st.sidebar.success(f"CPU Backend: Active & Ready ({model_meta['model_name']})")
+    st.sidebar.caption(f"Checkpoint: `{Path(model_meta['model_path']).name}` | Scope: `{', '.join(model_meta['supported_domains'])}`")
 
 if "ExecuTorch" in advisory_mode_choice and advisory_runner.is_loaded:
     st.sidebar.success(f"Advisory: ExecuTorch Llama 3.2 1B Active ({advisory_runner.pte_path.name})")
@@ -198,20 +218,29 @@ with tab_inspect:
         t_vision_end = time.perf_counter()
         vision_latency = (t_vision_end - t_vision_start) * 1000.0
 
+        # Compute optical inspection coverage (physical calculation)
+        from inspection.coverage import calculate_inspection_coverage
+        coverage_info = calculate_inspection_coverage(
+            img_to_inspect,
+            reference_image=temp_img_to_inspect if mode.startswith("Golden Reference") else None
+        )
+        coverage_val = coverage_info["coverage"]
+
         # Assess Image Quality and Domain Status (Conservative Policy Gates)
         from inspection.quality_assessment import assess_inspection_image
         quality_assessment = assess_inspection_image(
             img_to_inspect,
-            coverage=0.98,
+            coverage=coverage_val,
             min_coverage_required=0.90,
-            supported_domains=["monochrome_high_contrast", "color_pcb"]
+            supported_domains=model_meta["supported_domains"],
+            has_valid_reference=temp_img_to_inspect is not None if mode.startswith("Golden Reference") else True
         )
 
         # Run Deterministic Decision Engine
         payload = {
             "board_id": board_id,
             "defects": defects,
-            "coverage": 0.98,
+            "coverage": coverage_val,
             "quality_assessment": quality_assessment
         }
         decision_record = decision_engine.evaluate(payload, preset=quality_preset)
@@ -242,7 +271,7 @@ with tab_inspect:
                 "advisory_ms": round(advisory_latency, 2),
                 "total_ms": round(total_latency, 2)
             },
-            vision_model_version="YOLO11n-pcb-v1.0"
+            vision_model_version=model_meta["model_version"]
         )
 
         # Display Results
@@ -254,6 +283,8 @@ with tab_inspect:
                 caption=f"Annotated Bounding Boxes ({len(defects)} defect[s] localized)",
                 use_container_width=True
             )
+            st.caption(f"📐 **Optical Coverage:** {coverage_val*100:.1f}% ({coverage_info['description']})")
+            st.caption(f"🔍 **Active Detector:** `{model_meta['model_version']}`")
 
         with col_res_data:
             verdict = decision_record["decision"]
@@ -270,6 +301,8 @@ with tab_inspect:
             if decision_record["requires_electrical_test"]:
                 st.error("⚡ **ELECTRICAL VERIFICATION MANDATORY**: Visually suspected open or short circuit detected. Electrical continuity/isolation test (DMM / Flying-Probe) is required prior to final disposition.")
                 st.caption("⚠️ *Optical defect detection evaluates surface geometry only; electrical integrity must be verified with contact test equipment before final panel sign-off.*")
+            else:
+                st.info("⚡ **ELECTRICAL STATUS: UNVERIFIED BY OPTICAL AOI**: No open or short circuits localized above threshold. Surface visual geometry conforms; downstream in-circuit testing (ICT / flying-probe) is required for functional verification.")
 
             # Quality and Domain Assessment Badges (Conservative Policy)
             q_col1, q_col2, q_col3 = st.columns(3)
