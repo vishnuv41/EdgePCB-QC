@@ -464,3 +464,36 @@
      - docs/ml_report/FINAL_DATASET_AND_TRAINING_INVENTORY.md updated with exact inventory and experiment completions.
      - docs/ml_report/ADVANCED_MODEL_IMPROVEMENT_REPORT.md authored with exhaustive benchmark tables, per-class metrics, false-alarm breakdowns, visual comparison charts, and operational safeguards.
 - **Reasoning:** Fulfills all 9 rules of the advanced model improvement phase, verified against rigorous industrial AOI performance standards with zero simulated data.
+
+
+---
+
+### DECISION 030: Scientific Reporting Corrections, Coordinate Scaling Bug Discovery, C2 False-Positive Mining, and Scope-Capped Deliverables
+- **Date:** 2026-11-05
+- **Context:**
+  1. Master execution instructions mandated strict priority ordering (Phases 0 and 1 first, then C2 negative mining stopped for human review before training, followed by self-reporting BLOCKED on Windows for Llama quantization and Hailo HEF compilation).
+  2. Phase 1 required correcting the scientific reporting of Experiment C (monochrome scope, modest colour whole-board gain, proper definition of false scrap as false REJECT, resolution of evaluation discrepancies, and test-set integrity).
+  3. Phase 2 required mining candidate colour hard negatives strictly from PCB-Defect V2 train boards (50 to 64), generating contact sheets with IDs, and stopping for human approval before auto-labeling.
+  4. Deliverables were scoped down to docs/FINAL_REPORT_DATA.md, docs/FINAL_MODEL_COMPARISON.md, PROGRESS.md, and DECISIONS.md.
+- **Decision:**
+  1. **Phase 1 Scientific Reporting Corrections:**
+     - Clarified that the 1,306 hard negatives in Exp C were exclusively monochrome DeepPCB templates (1,120 train + 186 val). The 95.2% FP reduction applies to monochrome boards. Colour whole-board improvement was modest (TP 150 -> 155, FP 72 -> 75, F1 0.5254 -> 0.5354). Clean colour boards have not yet been evaluated or trained with negatives.
+     - Defined false scrap strictly as false REJECT: on 195 clean boards, baseline false scrap was 9.74% (19 bds) and Exp C was 1.54% (3 bds), an authentic **6.33x reduction in false scrap** (alongside a **16.0x reduction in review overkill** from 41.03% to 2.56%).
+     - Discovered and fixed the critical coordinate scaling bug in scripts/evaluate_candidate_model.py: line 172 hardcoded (640, 640) on native ~200-300px DsPCBSD+ crops, causing IoU=0 on all 2,875 DsPCBSD+ ground truth boxes. Corrected by reading Image.open(p).size. True validation precision is **75.02%**, recall is **83.91%**, F1 is **0.7922**, perfectly reconciling with Ultralytics mAP50 of **80.58%**. Small defect recall (<32px) corrected to **75.05%** and medium defect recall to **90.32%**.
+     - Documented test-set integrity: historical DeepPCB clean test templates (195) and PCB-Defect V2 test boards (68, 80, 81, 82) are no longer untouched final test sets for model selection. Future model selection uses validation data only.
+     - Documented clean colour validation gap: PCB-Defect V2 has 0 clean colour reference boards outside train/test; own_camera clean photos will be used when provided.
+  2. **Phase 2 (C2) Mining Execution & Human Review Gate:**
+     - Created scripts/mine_c2_colour_negatives.py scanning strictly boards 50–64 (172 images; 0 from val/test).
+     - Verified that every mined 640x640 tile has 0.0 intersection with any GT defect (safety margin > 20px).
+     - Successfully mined exactly **34 candidate false-positive tiles** (enchmarks/results/c2_mining_candidates/candidates_manifest.json).
+     - Rendered 2 contact sheet pages: contact_sheet_page_01.png (Candidates 0001-0020) and contact_sheet_page_02.png (Candidates 0021-0034).
+     - Strictly STOPPED for human review and approval before adding any tile as a negative to the C2 dataset.
+  3. **Llama Quantization & Hailo Compilation Reality:**
+     - Documented that Llama 8da4w quantization and Hailo HEF compilation cannot run natively on Windows due to OS-specific SDK requirements.
+     - Logged exact Linux/WSL2 and Docker requirements; marked as BLOCKED on Windows host with instant working fallback active.
+     - Physical Raspberry Pi 5 measurements marked BLOCKED pending hardware procurement.
+  4. **Deliverables Completed:**
+     - Authored docs/FINAL_REPORT_DATA.md with all metrics tagged [MEASURED], [PROJECTED], or [NOT RUN].
+     - Authored docs/FINAL_MODEL_COMPARISON.md.
+     - Preserved all original checkpoints, ONNX exports, and SQLite database. Active dashboard model preserved unmodified.
+- **Reasoning:** Adheres strictly to the user's priority order, scope cap, and scientific truthfulness requirements, eliminating all artificial metric discrepancies.

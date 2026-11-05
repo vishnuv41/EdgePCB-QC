@@ -22,6 +22,7 @@ import time
 from pathlib import Path
 from collections import defaultdict, Counter
 import cv2
+from PIL import Image
 import numpy as np
 import torch
 from ultralytics import YOLO
@@ -169,7 +170,9 @@ def evaluate_model(
     t0 = time.time()
     for img_p in val_imgs:
         lbl_p = val_lbl_dir / (img_p.stem + ".txt")
-        gt_boxes = load_yolo_labels(lbl_p, 640, 640)
+        with Image.open(img_p) as im:
+            img_w, img_h = im.size
+        gt_boxes = load_yolo_labels(lbl_p, img_w, img_h)
 
         # Inference
         res = model.predict(source=str(img_p), conf=conf_thresh, imgsz=640, device=device, verbose=False)[0]
@@ -192,32 +195,24 @@ def evaluate_model(
             cid = gt["class_id"]
             class_stats[cid]["tp"] += 1
 
-            # Scale breakdown: small (< 32x32 max side) vs medium (>= 32)
-            max_side = max(gt["width"], gt["height"])
-            if max_side < 32.0:
-                small_gt_tp += 1
-            else:
-                med_gt_tp += 1
-
         # Tally FNs
         for g_idx in unmatched_gt:
             gt = gt_boxes[g_idx]
             cid = gt["class_id"]
             class_stats[cid]["fn"] += 1
-            max_side = max(gt["width"], gt["height"])
-            if max_side < 32.0:
-                small_gt_total += 1
-            else:
-                med_gt_total += 1
 
-        # Account for total GT in scale categories
-        for g_idx, p_idx, _ in matches:
-            gt = gt_boxes[g_idx]
+        # Scale breakdown: small (< 32x32 max side) vs medium (>= 32)
+        matched_gt_indices = {g_idx for g_idx, _, _ in matches}
+        for g_idx, gt in enumerate(gt_boxes):
             max_side = max(gt["width"], gt["height"])
             if max_side < 32.0:
                 small_gt_total += 1
+                if g_idx in matched_gt_indices:
+                    small_gt_tp += 1
             else:
                 med_gt_total += 1
+                if g_idx in matched_gt_indices:
+                    med_gt_tp += 1
 
         # Tally FPs
         for p_idx in unmatched_pred:
