@@ -1,7 +1,7 @@
 # EdgePCB-QC: Offline Multi-Stage AI Quality-Control Assistant for PCB Manufacturing
 ## Comprehensive Technical Report & Architecture Specification
 **Bharat AI-SoC Challenge 2026–27 | Problem Statement PS5**  
-**Engineering Team:** Autonomous Engineering Agent & Team  
+**Engineering Team:** EdgePCB-QC Development Team  
 **Date:** 2026-11-07  
 **Status:** **VERIFIED, HARDWARE-READY & SCIENTIFICALLY AUDITED**
 

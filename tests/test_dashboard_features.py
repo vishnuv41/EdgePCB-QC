@@ -660,27 +660,27 @@ def test_permanent_side_by_side_layout_structure():
 def test_verified_side_by_side_screenshot_artifacts():
     """Verify that empirical screenshot artifacts for 1920x1080 and 1366x768 exist with valid dimensions."""
     from PIL import Image
-    brain_dir = Path(r"C:\Users\VISHNU\.gemini\antigravity\brain\887ab001-d528-4432-a3ec-e0991f13a2cc")
+    ui_dir = Path(__file__).resolve().parent.parent / "docs" / "ui" / "after"
     
     # 1. 1920x1080 Full HD
-    p_1080 = brain_dir / "side_by_side_1920x1080.png"
-    assert p_1080.exists(), "side_by_side_1920x1080.png must exist"
+    p_1080 = ui_dir / "01_live_camera_1920x1080.png"
+    assert p_1080.exists(), "01_live_camera_1920x1080.png must exist"
     assert p_1080.stat().st_size > 50_000, f"Expected non-trivial image size, got {p_1080.stat().st_size} bytes"
     with Image.open(p_1080) as im:
         assert im.size == (1920, 1080), f"Expected 1920x1080, got {im.size}"
 
     # 2. 1366x768 Laptop
-    p_768 = brain_dir / "side_by_side_1366x768.png"
-    assert p_768.exists(), "side_by_side_1366x768.png must exist"
+    p_768 = ui_dir / "01_live_camera_1366x768.png"
+    assert p_768.exists(), "01_live_camera_1366x768.png must exist"
     assert p_768.stat().st_size > 50_000, f"Expected non-trivial image size, got {p_768.stat().st_size} bytes"
     with Image.open(p_768) as im:
         assert im.size == (1366, 768), f"Expected 1366x768, got {im.size}"
 
-    # 3. Pre-Inspection Upload Preview
-    p_pre = brain_dir / "pre_inspection_preview_1920x1080.png"
-    assert p_pre.exists(), "pre_inspection_preview_1920x1080.png must exist"
-    assert p_pre.stat().st_size > 50_000, f"Expected non-trivial image size, got {p_pre.stat().st_size} bytes"
-    with Image.open(p_pre) as im:
+    # 3. Inspection View 1920x1080
+    p_inspect = ui_dir / "02_inspect_1920x1080.png"
+    assert p_inspect.exists(), "02_inspect_1920x1080.png must exist"
+    assert p_inspect.stat().st_size > 50_000, f"Expected non-trivial image size, got {p_inspect.stat().st_size} bytes"
+    with Image.open(p_inspect) as im:
         assert im.size == (1920, 1080), f"Expected 1920x1080, got {im.size}"
 
 

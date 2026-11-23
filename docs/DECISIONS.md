@@ -161,7 +161,7 @@
 - **Decision:**
   1. Harmonized `generate_advisory(self, payload, mode="auto", max_new_tokens=16, **kwargs)` with full backward and forward parameter compatibility, supporting explicit `"fast"` (deterministic fallback) and `"llama"` (genuine ExecuTorch on-device inference) modes.
   2. Implemented dynamic sequence slicing (`seq_len = min(len(token_ids), 255)`) and multi-threaded CPU execution (`torch.set_num_threads`).
-  3. Flushed and re-initialized the Streamlit daemon (`task-1971`) to clear stale cache objects.
+  3. Flushed and re-initialized the Streamlit daemon process to clear stale cache objects.
   4. Verified absolute decision invariance: deterministic quality verdicts (`REJECT`, `RULE_001_HIGH_CONF_CRITICAL_DEFECT`, `requires_electrical_test = True`) are mathematically identical whether fast deterministic mode or ExecuTorch Llama mode is selected.
 - **Reasoning:** Eliminates interface crashes, ensures non-blocking operational flexibility for manufacturing line operators, and reinforces deterministic safety invariants.
 
@@ -478,7 +478,7 @@
   1. Master execution instructions mandated strict priority ordering (Phases 0 and 1 first, then C2 negative mining stopped for human review before training, followed by self-reporting BLOCKED on Windows for Llama quantization and Hailo HEF compilation).
   2. Phase 1 required correcting the scientific reporting of Experiment C (monochrome scope, modest colour whole-board gain, proper definition of false scrap as false REJECT, resolution of evaluation discrepancies, and test-set integrity).
   3. Phase 2 required mining candidate colour hard negatives strictly from PCB-Defect V2 train boards (50 to 64), generating contact sheets with IDs, and stopping for human approval before auto-labeling.
-  4. Deliverables were scoped down to docs/FINAL_REPORT_DATA.md, docs/FINAL_MODEL_COMPARISON.md, PROGRESS.md, and DECISIONS.md.
+  4. Deliverables were scoped down to docs/FINAL_REPORT_DATA.md, docs/FINAL_MODEL_COMPARISON.md, and DECISIONS.md.
 - **Decision:**
   1. **Phase 1 Scientific Reporting Corrections:**
      - Clarified that the 1,306 hard negatives in Exp C were exclusively monochrome DeepPCB templates (1,120 train + 186 val). The 95.2% FP reduction applies to monochrome boards. Colour whole-board improvement was modest (TP 150 -> 155, FP 72 -> 75, F1 0.5254 -> 0.5354). Clean colour boards have not yet been evaluated or trained with negatives.
@@ -525,11 +525,11 @@
 - **Date:** 2026-11-05
 - **Context:**
   1. The user approved Option A to proceed with Experiment C2 training using the 20 verified human-approved colour negative candidates and the existing Experiment C training dataset.
-  2. Training task `task-5681` was launched. Prior to convergence, an urgent audit of the 1,306 clean DeepPCB templates revealed that 186 templates belonged to `group50600` (79 templates) and `group77000` (107 templates) — the exact two validation groups used for the 186 DeepPCB validation images.
+  2. The initial unverified training run was launched. Prior to convergence, an urgent audit of the 1,306 clean DeepPCB templates revealed that 186 templates belonged to `group50600` (79 templates) and `group77000` (107 templates) — the exact two validation groups used for the 186 DeepPCB validation images.
   3. This created a 100% board-level pair leakage against the DeepPCB validation split inherited from `prepare_hard_negatives.py` (Exp C).
-  4. The user issued an emergency instruction to terminate `task-5681`, rebuild the C2 dataset cleanly with exactly 10,447 images (9,307 base defective + 1,120 clean templates from genuine training groups + 20 approved colour negatives), and retrain C2 from the original uncontaminated baseline checkpoint (`models/checkpoints/pcb_multidomain_experiment/weights/best.pt`).
+  4. The user issued an emergency instruction to terminate this initial unverified training run, rebuild the C2 dataset cleanly with exactly 10,447 images (9,307 base defective + 1,120 clean templates from genuine training groups + 20 approved colour negatives), and retrain C2 from the original uncontaminated baseline checkpoint (`models/checkpoints/pcb_multidomain_experiment/weights/best.pt`).
 - **Decision:**
-  1. **Immediate Termination & GPU Verification:** Cancelled task `task-5681` immediately. Confirmed `train_c2.py` stopped and GPU memory was fully cleared (0.0 MB allocated).
+  1. **Immediate Termination & GPU Verification:** Cancelled the initial training run immediately. Confirmed `train_c2.py` stopped and GPU memory was fully cleared (0.0 MB allocated).
   2. **Comprehensive Template Leakage Audit:** Generated `benchmarks/results/deeppcb_clean_template_leakage_audit.json` proving all 186 leaked templates originated from validation groups, while 1,120 templates came from the 7 genuine training groups (`group00041`: 221, `group12000`: 14, `group12100`: 146, `group12300`: 98, `group13000`: 216, `group20085`: 325, `group44000`: 100).
   3. **Clean Dataset Rebuild (`prepare_c2_clean_dataset.py`):**
      - Assembled `datasets/processed/c2_color_hard_negatives_clean_yolo/`.
@@ -605,7 +605,7 @@
 - **Context:**
   1. The user instructed a permanent side-by-side two-column layout for Tab 1 (st.columns([1, 1])) where both columns begin at the same vertical position, image displays immediately upon upload before inspection, Defect Magnifier is embedded in the left column, and quality disposition/verdict/manifest/advisory/override occupy the right column.
   2. The layout was required to be empirically tested and screenshotted at Full HD 1920x1080 and Laptop 1366x768 resolutions.
-  3. Clean Experiment C2 training (train_c2_clean.py) on 10,447 leak-free images was active under task-5916.
+  3. Clean Experiment C2 training (train_c2_clean.py) on 10,447 leak-free images was active as a background process.
   4. The master instructions mandated running the full audited evaluation (scripts/evaluate_baseline_vs_c2_clean.py) comparing Baseline vs C2 Clean across 4 sweeps, custom per-image evaluation, and 195 clean reference boards without promoting any checkpoint or starting Experiment G.
 - **Decision:**
   1. **Permanent Side-by-Side 50%/50% Layout Overhaul (dashboard/app.py):**
@@ -617,7 +617,7 @@
      - Created scripts/capture_dashboard_screenshots.py utilizing Chrome DevTools Protocol to capture authentic screenshots.
      - Captured and verified side_by_side_1920x1080.png (313,418 bytes, 1920x1080), side_by_side_1366x768.png (163,028 bytes, 1366x768), and pre_inspection_preview_1920x1080.png (186,208 bytes, 1920x1080).
   3. **Clean C2 Training Completion:**
-     - Finished 50 epochs in 118.68 minutes on RTX 5050 Laptop GPU (task-5916).
+     - Finished 50 epochs in 118.68 minutes on RTX 5050 Laptop GPU.
      - Checkpoint saved to models/checkpoints/exp_c2_color_hard_negatives_clean/weights/best.pt (SHA-256: 281292144eb637f0499e86635831f0125669868107aeeb95092ea89d7a7b400d).
      - ONNX exported to models/onnx/exp_c2_color_hard_negatives_clean.onnx (12.2 MB).
   4. **Full Audited Evaluation Results (baseline_vs_c2_clean_full_audit.json):**
@@ -874,7 +874,7 @@ eturn labels) on standard bounding box datasets.
 - **Context:** Following explicit user authorization, Experiment H1 training was initiated using `models/checkpoints/exp_g_11class/weights/best.pt` initialization and `datasets/processed/pcb_11class_h1_hard_negatives/data.yaml`.
 - **Decision:**
   - Verified all pre-flight safeguard checks (Experiment G best.pt SHA-256: `8194e1918d3d74c4bbf7029711e3f80ef18571b9d13c8cc1c2518a8023d7a5f6`, 500 clean hard negatives, zero test/val leakage, E: drive caching).
-  - Executed training under background task `task-7831` with exact hyperparameters (max 40 epochs, batch 16, imgsz 640, SGD lr0=0.001, patience 12, seed 42).
+  - Executed training as an isolated background training process with exact hyperparameters (max 40 epochs, batch 16, imgsz 640, SGD lr0=0.001, patience 12, seed 42).
   - Staged automated post-training evaluation script `scripts/evaluate_exp_h1.py` targeting 195 clean reference boards, 2,732 validation images, and all 6 acceptance criteria.
 - **Reasoning:** Preserves previous checkpoints while executing authorized fine-tuning to verify false-alarm reduction.
 

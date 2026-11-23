@@ -1,9 +1,9 @@
 # EdgePCB-QC — Technical Report Evidence Audit & Scientific Verification
 **Bharat AI-SoC Challenge 2026–27 | Problem Statement PS5**  
-**Lead Author / Auditor:** Lead Systems Engineer & Autonomous Agent  
+**Lead Author / Auditor:** Lead Systems Engineer  
 **Date:** 2026-11-07  
 **Document Classification:** Comprehensive Technical Report Evidence Audit  
-**Audit Target:** 17-Page Technical Report (`pcb.pdf` / `docs/REPORT_DRAFT.md` / `docs/RESEARCH_PAPER_MASTER_SPECIFICATION.md`)
+**Audit Target:** 17-Page Technical Report (`docs/FINAL_REPORT.md` / `docs/RESEARCH_PAPER_MASTER_SPECIFICATION.md`)
 
 ---
 
@@ -79,7 +79,7 @@ Every audited claim is assigned exactly one of the six non-negotiable classifica
 - **Host Workstation:** AMD Ryzen 9 8940HX CPU (16 cores, 32 threads), 32 GB DDR5 RAM, Windows 11.
 - **Zero Fabrication Declaration:** In `benchmarks/results/hailo_preparation_report.json` line 64:
   > *"EdgePCB-QC reports zero fabricated performance. Hailo deployment metrics are documented as PROJECTED until physical Raspberry Pi 5 + AI HAT+ hardware is procured and measured in Phase 2."*
-- **Physical Procurement Status:** Confirmed in `docs/MASTER_PROMPT.md` line 7, `docs/DEMO_PHASE_1_FINAL_REPORT.md` lines 86–89, and `docs/REQUIRED_HARDWARE_AND_FILES.md` lines 12–19: Physical Raspberry Pi 5 8GB, Raspberry Pi AI HAT+, and Camera Module 3 are physically pending procurement.
+- **Physical Procurement Status:** Confirmed in `docs/DEMO_PHASE_1_FINAL_REPORT.md` lines 86–89, and `docs/REQUIRED_HARDWARE_AND_FILES.md` lines 12–19: Physical Raspberry Pi 5 8GB, Raspberry Pi AI HAT+, and Camera Module 3 are physically pending procurement.
 
 ### 3.3 Latency Audit & Classification Breakdown
 
@@ -302,10 +302,10 @@ This matrix classifies every primary claim across the 17-page technical report i
 | **Laptop PyTorch CPU Latency** | Page 16 | 27.21 ms inference (29.07 ms end-to-end) | `benchmarks/results/vision_computational_cost.json` | **`VERIFIED`** | Measured on AMD Ryzen 9 8940HX CPU. |
 | **Laptop ONNX Runtime CPU Latency** | Page 16 | 26.97 ms inference (29.92 ms end-to-end) | `benchmarks/results/vision_computational_cost.json` | **`VERIFIED`** | Measured on AMD Ryzen 9 8940HX CPU. |
 | **Target Hailo-8 Vision Latency** | Page 16 | 5.8 ms / 12.5 ms (~80–170 FPS) | `benchmarks/results/hailo_preparation_report.json` | **`PROJECTED`** | Theoretical calculation; hardware pending procurement. |
-| **Target Pi 5 Golden Compare Latency** | Page 16 | 38.0 ms (ARM NEON) | `docs/REPORT_DRAFT.md` (line 198) | **`PROJECTED`** | Analytical projection for Cortex-A76. |
-| **Target Pi 5 Decision Engine Latency** | Page 16 | 0.12 ms | `docs/REPORT_DRAFT.md` (line 199) | **`PROJECTED`** | Analytical projection for Cortex-A76. |
-| **Target Pi 5 Fallback Advisory Latency**| Page 16 | 0.35 ms | `docs/REPORT_DRAFT.md` (line 200) | **`PROJECTED`** | Analytical projection for Cortex-A76. |
-| **Target Pi 5 / Hailo Llama Throughput** | Page 16 | ~240 ms TTFT, 14 tokens/s (Int4) | `docs/REPORT_DRAFT.md` (line 201) | **`PROJECTED`** | Theoretical projection from Hailo Model Zoo. |
+| **Target Pi 5 Golden Compare Latency** | Page 16 | 38.0 ms (ARM NEON) | `docs/FINAL_REPORT.md` (Table 4) | **`PROJECTED`** | Analytical projection for Cortex-A76. |
+| **Target Pi 5 Decision Engine Latency** | Page 16 | 0.12 ms | `docs/FINAL_REPORT.md` (Table 4) | **`PROJECTED`** | Analytical projection for Cortex-A76. |
+| **Target Pi 5 Fallback Advisory Latency**| Page 16 | 0.35 ms | `docs/FINAL_REPORT.md` (Table 4) | **`PROJECTED`** | Analytical projection for Cortex-A76. |
+| **Target Pi 5 / Hailo Llama Throughput** | Page 16 | ~240 ms TTFT, 14 tokens/s (Int4) | `docs/FINAL_REPORT.md` (Table 4) | **`PROJECTED`** | Theoretical projection from Hailo Model Zoo. |
 | **ExecuTorch Model Artifact Size** | Page 11, 16 | `2,472,432,290 bytes` (2.36 GB) | `E:\EdgePCB-QC_cache\models\llama3_2_1b\llama3_2_1b_fp16.pte` | **`VERIFIED`** | Bitwise file inspection on disk. |
 | **ExecuTorch Model SHA-256 Checksum** | Page 11 | `0d2c47c426380fc5...` | Direct PowerShell `Get-FileHash` | **`VERIFIED`** | SHA-256 confirmed. |
 | **ExecuTorch CPU TTFT** | Page 11, 16 | 20.93s – 47.36s (41–94 tokens) | `benchmarks/results/advisory_latency_matrix.json` | **`VERIFIED`** | Measured on AMD Ryzen 9 8940HX CPU. |
