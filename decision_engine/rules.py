@@ -9,6 +9,13 @@ Outcomes: PASS, INSPECT, REJECT
 from typing import List, Dict, Any, Tuple, Optional
 
 
+SURFACE_ANOMALY_CLASSES = {
+    "conductor_scratch",
+    "conductor_foreign_object",
+    "base_material_foreign_object",
+}
+
+
 class RuleResult:
     def __init__(self, decision: str, rule_id: str, description: str, requires_electrical_test: bool = False):
         self.decision = decision  # PASS | INSPECT | REJECT
@@ -70,7 +77,7 @@ def evaluate_rules(
     # 1. High-confidence critical defect -> REJECT
     high_conf_critical = [d for d in critical_defects if float(d.get("confidence", 0.0)) >= reject_conf]
     if high_conf_critical:
-        classes = {d.get("class") for d in high_conf_critical}
+        classes = {str(d.get("class") or d.get("class_name") or "unknown") for d in high_conf_critical}
         return RuleResult(
             decision="REJECT",
             rule_id="RULE_001_HIGH_CONF_CRITICAL_DEFECT",
@@ -79,18 +86,24 @@ def evaluate_rules(
         )
 
     # 2. Major defects exceeding preset allowance -> REJECT
+    # Surface anomalies (conductor_scratch, conductor_foreign_object, base_material_foreign_object)
+    # route to INSPECT for human solvent wipe/microscopic disposition, never standalone REJECT.
     high_conf_major = [d for d in major_defects if float(d.get("confidence", 0.0)) >= reject_conf]
-    if len(high_conf_major) > max_major:
+    high_conf_structural_major = [
+        d for d in high_conf_major
+        if (d.get("class") or d.get("class_name") or "") not in SURFACE_ANOMALY_CLASSES
+    ]
+    if len(high_conf_structural_major) > max_major:
         return RuleResult(
             decision="REJECT",
             rule_id="RULE_002_EXCESS_MAJOR_DEFECTS",
-            description=f"Rejected: Detected {len(high_conf_major)} high-confidence major defect(s); preset allowance is {max_major}.",
+            description=f"Rejected: Detected {len(high_conf_structural_major)} high-confidence major defect(s); preset allowance is {max_major}.",
             requires_electrical_test=has_electrical_risk
         )
 
     # 3. Medium-confidence critical defects -> INSPECT
     if critical_defects:
-        classes = {d.get("class") for d in critical_defects}
+        classes = {str(d.get("class") or d.get("class_name") or "unknown") for d in critical_defects}
         return RuleResult(
             decision="INSPECT",
             rule_id="RULE_003_SUSPECTED_CRITICAL_DEFECT",
@@ -100,7 +113,7 @@ def evaluate_rules(
 
     # 4. Any major defect within threshold -> INSPECT
     if major_defects:
-        classes = {d.get("class") for d in major_defects}
+        classes = {str(d.get("class") or d.get("class_name") or "unknown") for d in major_defects}
         return RuleResult(
             decision="INSPECT",
             rule_id="RULE_004_MAJOR_DEFECT_FLAGGED",

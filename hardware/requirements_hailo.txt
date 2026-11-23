@@ -1,0 +1,10 @@
+# Hailo Hardware Acceleration Dependencies for Raspberry Pi 5
+# Bharat AI-SoC Challenge 2026-27 | PS5
+# Hardware: Raspberry Pi AI HAT+ (Hailo-8 / Hailo-8L)
+
+# On Raspberry Pi OS (Bookworm), HailoRT is installed via official Debian packages:
+# sudo apt update
+# sudo apt install -y hailo-all python3-hailort dkms
+
+# Python binding wheel (included in hailo-all package on Raspberry Pi OS):
+# /usr/lib/python3/dist-packages/hailo_platform

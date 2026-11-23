@@ -16,3 +16,6 @@ pytest
 pyyaml
 python-dotenv
 psutil
+fastapi
+uvicorn
+python-multipart

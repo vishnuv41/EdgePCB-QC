@@ -23,24 +23,25 @@ from .prompt import format_llama_prompt, format_concise_prompt
 from .fallback import generate_fallback_advisory
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
-LLAMA_MODELS_DIR = WORKSPACE_ROOT / "models" / "llama"
-DEFAULT_TOKENIZER_PATH = LLAMA_MODELS_DIR / "tokenizer.model"
+LLAMA_MODELS_DIR = Path(os.environ.get("EDGEPCB_MODELS_DIR", WORKSPACE_ROOT / "models")) / "llama"
+DEFAULT_TOKENIZER_PATH = Path(os.environ.get("EDGEPCB_TOKENIZER", LLAMA_MODELS_DIR / "tokenizer.model"))
 
 CANDIDATE_PTE_PATHS = [
-    LLAMA_MODELS_DIR / "checkpoints" / "Llama-3.2-1B-Instruct" / "llama3_2_1b_fp16.pte",
-    Path(r"E:\EdgePCB-QC_cache\models\llama3_2_1b\llama3_2_1b_fp16.pte"),
+    Path(os.environ.get("EDGEPCB_LLAMA_PTE", "")) if os.environ.get("EDGEPCB_LLAMA_PTE") else None,
+    LLAMA_MODELS_DIR / "llama3_2_1b_xnnpack_8da4w.pte",
+    WORKSPACE_ROOT / "models" / "llama" / "llama3_2_1b_xnnpack_8da4w.pte",
+    LLAMA_MODELS_DIR / "checkpoints" / "Llama-3.2-1B-Instruct" / "llama3_2_1b_xnnpack_8da4w.pte",
     LLAMA_MODELS_DIR / "llama3_2_1b_fp16.pte",
-    LLAMA_MODELS_DIR / "checkpoints" / "Llama-3.2-1B-Instruct" / "llama3_2_1b.pte",
-    Path(r"E:\EdgePCB-QC_cache\models\llama3_2_1b\llama3_2_1b.pte"),
     LLAMA_MODELS_DIR / "llama3_2_1b.pte"
 ]
+CANDIDATE_PTE_PATHS = [p for p in CANDIDATE_PTE_PATHS if p is not None]
 
 
 def _find_default_pte() -> Path:
     for p in CANDIDATE_PTE_PATHS:
         if p.exists():
             return p
-    return CANDIDATE_PTE_PATHS[0]
+    return CANDIDATE_PTE_PATHS[0] if CANDIDATE_PTE_PATHS else (LLAMA_MODELS_DIR / "llama3_2_1b_xnnpack_8da4w.pte")
 
 
 class ExecuTorchLlamaRunner:
@@ -100,7 +101,7 @@ class ExecuTorchLlamaRunner:
         self,
         payload: Dict[str, Any],
         mode: str = "auto",
-        max_new_tokens: int = 16,
+        max_new_tokens: int = 56,
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -128,6 +129,7 @@ class ExecuTorchLlamaRunner:
             return {
                 "source": "deterministic_fallback",
                 "backend": "deterministic_fallback",
+                "attribution": "Deterministic IPC-A-610 Rule Engine",
                 "model_id": "ipc_expert_rules_engine",
                 "model_version": "None (Deterministic Expert Fallback)",
                 "status": "active",
@@ -135,6 +137,7 @@ class ExecuTorchLlamaRunner:
                 "advisory": advisory_obj.model_dump(),
                 "metrics": {
                     "backend": "deterministic_fallback",
+                    "attribution": "Deterministic IPC-A-610 Rule Engine",
                     "model_id": "ipc_expert_rules_engine",
                     "model_version": "None (Deterministic Expert Fallback)",
                     "status": "active",
@@ -179,8 +182,8 @@ class ExecuTorchLlamaRunner:
             generated_tokens = []
             curr_pos = len(eval_tokens)
             logits = outputs[0]
-            max_gen = max(1, min(max_new_tokens, 64))
-            grace_budget = 8  # Allow up to 8 extra tokens to cleanly close the sentence
+            max_gen = max(1, min(max_new_tokens, 80))
+            grace_budget = 12  # Allow up to 12 extra tokens to cleanly close the sentence
             stop_token_ids = {128001, 128008, 128009}  # <|end_of_text|>, <|eom_id|>, <|eot_id|>
 
             total_token_budget = max_gen + grace_budget
@@ -215,14 +218,25 @@ class ExecuTorchLlamaRunner:
                 .strip()
             )
 
-            # Verify sentence completeness and truncate dangling incomplete fragments
+            import re
+            # Strip trailing incomplete list markers like ": 1.", ": 1", " 1.", or ":"
+            clean_gen_text = re.sub(r'(:?\s*\d+\.?|\s*:)\s*$', '', clean_gen_text).strip()
+
+            # Verify completeness: accept sentences ending in punctuation or clean sentence blocks
             last_punc = max(clean_gen_text.rfind("."), clean_gen_text.rfind("!"), clean_gen_text.rfind("?"))
-            if last_punc != -1 and last_punc >= 15:
+            if last_punc != -1 and last_punc >= 20:
                 complete_gen_text = clean_gen_text[:last_punc + 1].strip()
                 is_complete = True
-            elif len(clean_gen_text) >= 20 and clean_gen_text.endswith((".", "!", "?")):
-                complete_gen_text = clean_gen_text
-                is_complete = True
+            elif len(clean_gen_text) >= 20:
+                lines = [l.strip() for l in clean_gen_text.splitlines() if l.strip()]
+                if lines and len(lines[-1].split()) >= 3:
+                    complete_gen_text = clean_gen_text
+                    if not complete_gen_text.endswith((".", "!", "?")):
+                        complete_gen_text += "."
+                    is_complete = True
+                else:
+                    complete_gen_text = ""
+                    is_complete = False
             else:
                 complete_gen_text = ""
                 is_complete = False
@@ -243,6 +257,7 @@ class ExecuTorchLlamaRunner:
                 return {
                     "source": "executorch_llama_3.2_1b",
                     "backend": "executorch_llama_3.2_1b",
+                    "attribution": "Meta Llama 3.2 1B Instruct (ExecuTorch)",
                     "model_id": "meta-llama/Llama-3.2-1B-Instruct",
                     "model_version": "Llama-3.2-1B-Instruct",
                     "status": "executed",
@@ -250,6 +265,7 @@ class ExecuTorchLlamaRunner:
                     "advisory": advisory_obj.model_dump(),
                     "metrics": {
                         "backend": "executorch_llama_3.2_1b",
+                        "attribution": "Meta Llama 3.2 1B Instruct (ExecuTorch)",
                         "model_id": "meta-llama/Llama-3.2-1B-Instruct",
                         "model_version": "Llama-3.2-1B-Instruct",
                         "status": "executed",
@@ -345,3 +361,36 @@ class ExecuTorchLlamaRunner:
             max_new_tokens=max_new_tokens,
             **kwargs
         )
+
+    def get_status_info(self) -> Dict[str, Any]:
+        """Returns structured diagnostic status of the Llama advisory engine."""
+        pte_exists = self.pte_path.exists() if self.pte_path else False
+        pte_size_mb = round(self.pte_path.stat().st_size / (1024 * 1024), 2) if pte_exists else 0.0
+        tok_exists = self.tokenizer_path.exists() if self.tokenizer_path else False
+
+        pte_name = self.pte_path.name if self.pte_path else "None"
+        if "8da4w" in pte_name.lower():
+            quant_mode = "8da4w (8-bit Dynamic Activation / 4-bit Weight XNNPACK)"
+        elif "fp16" in pte_name.lower():
+            quant_mode = "FP16 (Half Precision Baseline)"
+        else:
+            quant_mode = "Standard PTE (ExecuTorch)"
+
+        return {
+            "model_name": "Meta Llama 3.2 1B Instruct",
+            "model_family": "Llama 3.2",
+            "parameter_count": "1.23 Billion Parameters",
+            "quantization": quant_mode,
+            "runtime": "ExecuTorch (XNNPACK CPU Backend)",
+            "is_loaded": self.is_loaded,
+            "artifact_file": pte_name,
+            "artifact_path": str(self.pte_path) if self.pte_path else "None",
+            "artifact_exists": pte_exists,
+            "artifact_size_mb": pte_size_mb,
+            "tokenizer_file": self.tokenizer_path.name if self.tokenizer_path else "None",
+            "tokenizer_exists": tok_exists,
+            "fallback_engine": "Deterministic IPC-A-610 Expert Rule Engine",
+            "fallback_ready": True,
+            "operational_mode": "Auto (ExecuTorch Neural / Deterministic Rule Fallback)"
+        }
+

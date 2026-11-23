@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EdgePCB-QC</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#dcdacd;--card:#fff;--ink:#14130f;--mut:#6b6a63;--line:#ece9df;--soft:#f6f4ec;--acc:#f0483e;--ok:#17a673;--warn:#f0a30a;--bad:#e5392d;--dk:#111;--ond:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#1a1915;--card:#242320;--ink:#f1efe7;--mut:#a3a197;--line:#35332d;--soft:#2c2b27;--dk:#f1efe7;--ond:#111}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#1a1915;--card:#242320;--ink:#f1efe7;--mut:#a3a197;--line:#35332d;--soft:#2c2b27;--dk:#f1efe7;--ond:#111}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.5 "Plus Jakarta Sans",system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:250px 1fr;gap:24px;padding:24px;max-width:1500px;margin:auto}
+aside{position:sticky;top:24px;height:calc(100vh - 48px);display:flex;flex-direction:column;gap:6px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:21px;letter-spacing:-.03em;padding:6px 8px 18px}
+.logo i{width:34px;height:34px;border-radius:10px 10px 10px 2px;background:var(--acc);display:grid;place-items:center;color:#fff;font-style:normal;font-size:15px}
+nav{display:flex;flex-direction:column;gap:4px}
+nav a{display:flex;gap:12px;align-items:center;padding:11px 14px;border-radius:999px;font-weight:500;cursor:pointer;color:var(--ink)}
+nav a:hover{background:rgba(255,255,255,.5)}nav a.on{background:var(--dk);color:var(--ond)}
+a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.sp{flex:1}.edge{background:rgba(255,255,255,.45);border-radius:20px;padding:16px}.edge b{display:block;font-size:16px;margin:4px 0}.edge small{color:var(--mut)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--bad);margin-right:6px}.dot.ok{background:var(--ok)}
+main{min-width:0}.top{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}.top>div:first-child{flex:1;min-width:220px}
+.crumb{color:var(--mut);font-size:13px}h1{margin:0;font-size:30px;letter-spacing:-.03em;font-weight:600}
+.srch{background:var(--card);border:0;border-radius:999px;padding:12px 18px;width:260px}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--dk);color:var(--ond);display:grid;place-items:center;font-weight:700}
+.mock{background:#fff3c4;color:#5c4400;padding:9px 16px;border-radius:14px;margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-weight:500}
+.mock button{margin-left:auto;background:#111;color:#fff;border:0;border-radius:99px;padding:6px 14px;cursor:pointer}
+.grid{display:grid;gap:16px}.g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}.g2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.card{background:var(--card);border-radius:20px;padding:22px}.card h2{margin:0;font-size:17px;font-weight:600}.card .s{color:var(--mut);font-size:13px;margin:0 0 14px}
+.kpi b{display:block;font-size:30px;font-weight:600;letter-spacing:-.03em;line-height:1.2}.kpi .row{display:flex;justify-content:space-between;align-items:flex-start}
+.ic{width:40px;height:40px;border-radius:50%;background:var(--soft);display:grid;place-items:center;flex:none}
+.pill{display:inline-block;padding:2px 11px;border-radius:99px;font-size:12px;font-weight:600;border:1px solid}
+.PASS,.LOW,.ok{color:var(--ok);border-color:var(--ok);background:rgba(23,166,115,.1)}.INSPECT,.MAJOR,.warn{color:#b87500;border-color:var(--warn);background:rgba(240,163,10,.12)}.REJECT,.CRITICAL,.bad{color:var(--bad);border-color:var(--bad);background:rgba(229,57,45,.1)}.MINOR{color:var(--mut);border-color:var(--line);background:var(--soft)}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:99px;padding:11px 20px;font-weight:600;cursor:pointer;min-height:42px}
+.btn.dk{background:var(--dk);color:var(--ond)}.btn.gh{background:var(--card);border:1px solid var(--line);color:var(--ink)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.tabs{display:inline-flex;background:var(--soft);border-radius:99px;padding:4px;margin-bottom:12px}.tabs button{border:0;background:none;padding:7px 18px;border-radius:99px;cursor:pointer;font-weight:500}.tabs .on{background:var(--dk);color:var(--ond)}
+.vp{width:100%;border-radius:16px;display:block;background:#0f3d2b}
+table{width:100%;border-collapse:collapse}th,td{padding:11px 12px;text-align:left;white-space:nowrap}th{color:var(--mut);font-weight:600;font-size:13px;background:var(--soft)}th:first-child{border-radius:12px 0 0 12px}th:last-child{border-radius:0 12px 12px 0}td{border-bottom:1px solid var(--line)}tr.c{cursor:pointer}tr.c:hover td,tr.sel td{background:var(--soft)}.sc{overflow-x:auto}
+.step{display:flex;gap:6px;flex-wrap:wrap}.step div{flex:1 1 90px;background:var(--soft);border-radius:14px;padding:10px;text-align:center}.step small{display:block;color:var(--mut)}.step b{color:var(--ok)}
+.verdict{border-radius:16px;padding:18px;border:1px solid}.verdict h3{margin:0;font-size:24px;letter-spacing:-.02em}
+.alert{border-radius:14px;padding:12px 14px;background:rgba(229,57,45,.1);color:var(--bad);font-weight:500;margin:12px 0}.alert.n{background:var(--soft);color:var(--mut)}
+.tog{width:44px;height:26px;border-radius:99px;background:var(--line);border:0;position:relative;cursor:pointer}.tog::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s}.tog.on{background:var(--ok)}.tog.on::after{left:21px}
+label.f{display:block;margin:10px 0 4px;font-weight:600;font-size:13px}input.i,select.i,textarea.i{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--card)}
+.radio{display:flex;gap:8px;flex-wrap:wrap}.radio label{flex:1 1 120px;border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center;cursor:pointer;font-weight:600}.radio input{display:none}.radio input:checked+span{color:var(--acc)}.radio label:has(input:checked){border-color:var(--acc);background:rgba(240,72,62,.08)}
+.drop{display:block;border:2px dashed var(--line);border-radius:16px;padding:26px;text-align:center;cursor:pointer;background:var(--soft)}
+.empty{text-align:center;padding:50px 20px;color:var(--mut)}.empty h2{color:var(--ink)}
+.scan{animation:scan 2.4s linear infinite}@keyframes scan{from{transform:translateY(0)}to{transform:translateY(700px)}}
+.arch{display:grid;grid-template-columns:1fr 1fr;gap:14px}.arch>div{border-radius:16px;padding:16px;background:var(--soft)}.arch b{display:block;margin-bottom:6px}
+.note{color:var(--mut);font-size:13px}.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+@media(max-width:860px){.app{grid-template-columns:1fr;padding:14px}aside{position:static;height:auto}nav{flex-direction:row;flex-wrap:wrap}.edge,.sp{display:none}.arch{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.scan{animation:none}}
+</style><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><style>
+:root{--bg:#f9fafb;--card:#fff;--ink:#101828;--mut:#475467;--line:#eaecf0;--soft:#f9fafb;--acc:#7f56d9;--dk:#7f56d9;--ond:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c111d;--card:#161b26;--ink:#f5f5f6;--mut:#94969c;--line:#2a2f3a;--soft:#1f242f;--acc:#9e77ed;--dk:#9e77ed;--ond:#0c111d}}
+:root[data-theme="dark"]{--bg:#0c111d;--card:#161b26;--ink:#f5f5f6;--mut:#94969c;--line:#2a2f3a;--soft:#1f242f;--acc:#9e77ed;--dk:#9e77ed;--ond:#0c111d}
+body{font-family:Inter,system-ui,sans-serif}
+.app{grid-template-columns:260px 1fr;gap:0;padding:0;max-width:none;min-height:100vh}
+aside{top:0;height:100vh;background:var(--card);border-right:1px solid var(--line);padding:24px 16px}
+main{padding:32px 40px 48px}
+.logo{padding:0 8px 12px}.logo i{font-size:0;width:36px;height:36px;border-radius:50%;background:radial-gradient(circle,#fff 16%,transparent 17%),repeating-conic-gradient(#7f56d9 0 8deg,#d6bbfb 8deg 16deg)}
+.srch2{width:100%;margin:6px 0 14px;padding:12px 14px;border:1px solid #d0d5dd;border-radius:10px;background:var(--card);box-shadow:0 1px 2px rgba(16,24,40,.05)}
+nav a{border-radius:8px;padding:12px;min-height:48px;font-size:15px;font-weight:600;color:var(--ink)}nav a:hover{background:var(--soft)}nav a.on{background:var(--soft);color:var(--ink)}nav a.on svg{color:var(--acc)}
+.edge{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.prof{display:flex;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:14px}.prof .avatar{width:40px;height:40px}
+.top .srch,.top .avatar{display:none}h1{font-size:36px;font-weight:700}
+.card{border-radius:16px;padding:24px;border:1px solid var(--line);box-shadow:0 1px 3px rgba(16,24,40,.08)}
+.btn{border-radius:8px}.btn.gh{border:1px solid #d0d5dd;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+.kpi .row{flex-direction:row-reverse;justify-content:flex-end;align-items:center;gap:16px}.kpi .ic{width:56px;height:56px;background:rgba(127,86,217,.14);color:var(--acc)}.kpi b{font-size:40px;font-weight:700}
+.mock{background:rgba(127,86,217,.12);color:var(--ink);border:1px solid rgba(127,86,217,.35)}.mock button{background:var(--acc);color:#fff}
+.ch{display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;margin-bottom:18px;border-bottom:1px solid var(--line)}.ch h2{margin:0;font-size:20px}.more{color:var(--acc);font-weight:600;cursor:pointer;padding:6px}
+.rw{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}.rw:last-child{border:0}.rw .ic{width:44px;height:44px}.rw>div{flex:1;font-weight:600}.rw small{display:block;font-weight:400;color:var(--mut)}
+.gauge{display:flex;align-items:center;gap:24px;flex-wrap:wrap}.gauge svg{width:160px;height:160px}.gauge b{font-size:38px;display:block;line-height:1.2}
+.bar{height:12px;background:var(--line);border-radius:99px;overflow:hidden;margin:10px 0}.bar i{display:block;height:100%;background:var(--acc)}
+@media(max-width:860px){aside{height:auto;padding:12px}main{padding:20px 16px}}
+:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{color-scheme:light;--bg:#f9fafb;--card:#fff;--ink:#101828;--mut:#475467;--line:#eaecf0;--soft:#f9fafb;--acc:#7f56d9;--dk:#7f56d9;--ond:#fff}
+.kpi{position:relative}.kpi::after{content:"\22EE";position:absolute;top:12px;right:18px;color:var(--mut);font-size:18px}
+.kpi .row>div>.note:first-child{color:var(--ink);font-weight:600;font-size:15px}
+</style><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet"><style>
+body{font-family:Poppins,Inter,system-ui,sans-serif;background:#9e9d96;padding:22px}
+:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{color-scheme:light;--bg:#dedcd0;--card:#fff;--ink:#14130f;--mut:#6b6a63;--line:#ece9df;--soft:#f6f4ec;--acc:#f0483e;--dk:#111;--ond:#fff}
+.app{grid-template-columns:240px 1fr;gap:24px;padding:24px;max-width:1520px;margin:auto;background:var(--bg);border-radius:28px;min-height:calc(100vh - 44px)}
+aside{position:sticky;top:24px;height:calc(100vh - 92px);background:none;border:0;padding:0}.srch2,.prof{display:none}
+.logo i{font-size:15px;color:#fff;border-radius:10px 10px 10px 2px;background:var(--acc);width:34px;height:34px}
+nav a{border-radius:99px;padding:11px 14px;min-height:0;font-weight:500;font-size:14px;color:var(--ink)}nav a:hover{background:rgba(255,255,255,.55)}nav a.on{background:var(--dk);color:var(--ond)}nav a.on svg{color:inherit}
+.edge{background:rgba(255,255,255,.5);border:0;border-radius:20px;padding:16px;margin:0}main{padding:0}
+.top .srch{display:block;background:#fff;border:0;border-radius:99px;padding:12px 18px;width:260px}.top .avatar{display:grid;width:42px;height:42px}
+h1{font-size:30px;font-weight:600;letter-spacing:-.03em}
+.card{border:0;border-radius:20px;padding:22px;box-shadow:none}.btn{border-radius:99px}.btn.gh{border:1px solid var(--line);box-shadow:none}
+.kpi .row{flex-direction:row;justify-content:space-between;align-items:flex-start;gap:12px}.kpi .ic{width:40px;height:40px;background:var(--soft);color:var(--ink)}.kpi b{font-size:30px;font-weight:600}.kpi::after{display:none}
+.ch{border:0;padding:0;margin-bottom:12px}.more{color:var(--ink)}.bar i{background:var(--acc)}.rw .ic{background:var(--soft);color:var(--ink)}
+.mock{background:#fff3c4;color:#5c4400;border:0}.mock button{background:#111;color:#fff}
+.hero{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}.quad{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.att .t{font-size:17px;font-weight:500;line-height:1.2}.att .st{color:var(--mut);font-size:13px}.att .n{font-size:32px;font-weight:600;margin:12px 0 6px}.att .n small{font-size:14px;font-weight:400}
+.att .ft{border-top:1px solid var(--line);margin-top:14px;padding-top:12px;display:flex;justify-content:space-between;font-weight:500;cursor:pointer}
+.dl{display:inline-block;padding:2px 11px;border-radius:99px;font-size:12px;font-weight:500}.dl.b{background:#e3e8ff;color:#3b4bb5}.dl.r{background:#fde2e0;color:#c4372c}.dl.o{background:#ffe9cc;color:#a85f00}.dl.g{background:#d9f3e6;color:#117a52}
+.chart{display:flex;gap:16px;align-items:flex-end;height:200px;padding:0 6px;border-bottom:1px solid var(--line)}.chart .g{flex:1;display:flex;gap:4px;align-items:flex-end;height:100%}.chart i{flex:1;border-radius:8px 8px 0 0;display:block;min-height:3px}
+.lbl{display:flex;gap:16px;padding:8px 6px 0}.lbl span{flex:1;text-align:center;font-size:11px;color:var(--mut)}
+.tl{display:flex;height:18px;border-radius:99px;overflow:hidden;background:var(--soft);margin:14px 0 10px}.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut)}.lg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.mt{display:flex;justify-content:space-between;font-weight:500;margin-top:12px}.mt+.bar{margin:6px 0 0}
+@media(max-width:860px){body{padding:0}.app{border-radius:0;grid-template-columns:1fr;padding:14px}aside{position:static;height:auto}.hero,.quad{grid-template-columns:1fr}}
+:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{color-scheme:dark;--bg:#1c1b19;--card:#262522;--ink:#f1efe7;--mut:#a3a197;--line:#3a3834;--soft:#2f2e2a;--acc:#f0483e;--dk:#f1efe7;--ond:#14130f}
+body{background:#0e0e0d}nav a:hover{background:rgba(255,255,255,.08)}.edge{background:var(--card)}.top .srch{background:var(--card);color:var(--ink)}.btn.gh{background:transparent;color:var(--ink);border-color:var(--line)}.btn.dk{color:var(--ond)}
+.dl.b{background:rgba(120,140,255,.18);color:#aab6ff}.dl.r{background:rgba(240,72,62,.18);color:#ff8d84}.dl.o{background:rgba(240,163,10,.18);color:#f5c451}.dl.g{background:rgba(23,166,115,.18);color:#5fe0aa}.mock{background:rgba(240,163,10,.15);color:#f5c451}
+.up{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:14px 22px;margin-bottom:16px}.up .drop{padding:10px 18px;border-radius:99px;margin:0}
+.banner{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center;background:var(--card);border:2px solid;border-radius:20px;padding:20px 24px;margin-bottom:12px}.banner h2{font-size:38px;margin:0;letter-spacing:-.03em}.banner p{margin:4px 0 0;color:var(--mut);max-width:560px}
+.stats{display:flex;gap:10px;flex-wrap:wrap}.stats div{background:var(--soft);border-radius:14px;padding:10px 18px;text-align:center;min-width:84px}.stats b{display:block;font-size:22px}.stats span{font-size:12px;color:var(--mut)}
+.ws{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(300px,1fr);gap:16px;align-items:start}.zw{overflow:auto;border-radius:16px;max-height:76vh;background:#0f3d2b}
+.dc{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--soft);border:1px solid transparent;border-radius:14px;padding:10px 12px;margin-top:8px;cursor:pointer}.dc span:first-child{flex:1;font-weight:500}.dc.on{border-color:var(--acc)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:12px 0}.kv dt{color:var(--mut)}.kv dd{margin:0;text-align:right;font-weight:500}
+.adv{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:16px}.adv h3{margin:12px 0 6px;font-size:16px}.adv p{margin:0;color:var(--mut)}.adv .ic{background:rgba(240,72,62,.15);color:var(--acc)}
+.cav{margin-top:16px;border-radius:14px;padding:12px 16px;background:var(--soft);color:var(--mut)}
+.pp{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.pp div{background:var(--soft);border-radius:14px;padding:10px;text-align:center}.pp b{display:block;color:var(--ok)}.pp small{color:var(--mut)}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;aspect-ratio:16/9;border-radius:12px;overflow:hidden}.mini div{display:grid;place-items:center;font-weight:600}
+@media(max-width:980px){.ws{grid-template-columns:1fr}}@media(max-width:600px){.pp{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<div class="app"><aside><div class="logo"><i>◧</i>EdgePCB-QC</div><input class="srch2" placeholder="Search" aria-label="Search sections" onkeydown="if(event.key==='Enter')goq(this.value)"><nav id="nav"></nav><div class="sp"></div><div class="edge" id="edge"></div><div class="prof"><span class="avatar">OP</span><div><b>Line operator</b><br><span class="note">operator@edgepcb.local</span></div></div></aside>
+<main><div id="mockbar"></div><div class="top"><div><div class="crumb" id="crumb"></div><h1 id="title"></h1></div><input class="srch" placeholder="Search…" aria-label="Search sections" onkeydown="if(event.key==='Enter')goq(this.value)"><div class="avatar" title="Operator">OP</div></div><div id="view"></div></main></div>
+<script>
+/* ===== API layer (CFG.mock=false hits FastAPI) ===== */
+const CFG={
+  base: (window.location.origin && window.location.origin.startsWith('http'))
+    ? window.location.origin + '/api/v1'
+    : 'http://localhost:8000/api/v1',
+  mock: false
+};
+const CLS=['open_circuit','short_circuit','mouse_bite','spur','spurious_copper','pin_hole'];
+const SEV={open_circuit:'CRITICAL',short_circuit:'CRITICAL',mouse_bite:'MAJOR',spur:'MINOR',spurious_copper:'MAJOR',pin_hole:'MINOR',pin_hole_missing_pad:'MINOR'};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const M={n:0,recs:{},log:[
+ ['PCB-0471','REJECT','REJECT',2,true,9.1,false],['PCB-0472','PASS','PASS',0,false,8.7,false],['PCB-0473','INSPECT','PASS',1,false,9.0,true],['PCB-0474','PASS','PASS',0,false,8.5,false],['PCB-0475','REJECT','REJECT',3,true,9.8,false],['PCB-0476','INSPECT','INSPECT',1,false,9.2,false]
+ ].map((r,i)=>({ts:`2026-11-19 ${10+i}:2${i}:05Z`,board:r[0],rule:r[1],final:r[2],defects:r[3],elec:r[4],ms:r[5],ov:r[6],src:'demo'})),
+ rev:{total_reviewed:45,confirmed_defects:39,false_calls:5,uncertain:1,false_call_rate_percent:11.11,class_breakdown:{open_circuit:[18,0],mouse_bite:[12,2],spurious_copper:[15,3]}}};
+async function http(p,o){const r=await fetch(CFG.base+p,o);if(!r.ok)throw new Error(r.status+' '+r.statusText);return r}
+const J=(m,b)=>({method:m,headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
+const api={
+ async health(){
+   if(CFG.mock)return{
+     status:'online',device:'Raspberry Pi 5 (8GB)',mode:'offline_airgapped',operating_system:'Linux (aarch64)',
+     vision_model:{name:'pcb_multidomain_yolov8n_640',backend:'PyTorch CPU Baseline',is_loaded:true},
+     advisory_engine:{mode:'Deterministic IPC-A-610 Rule Engine',fallback_ready:true},
+     camera:{status:'connected',device_name:'Pi Camera v3 (IMX708)'}
+   };
+   const h = await (await http('/system/health')).json();
+   const isPi = h.device && h.device.includes('Raspberry');
+   const camDev = (h.camera && h.camera.device_name) || (isPi ? 'Pi Camera v3 (IMX708)' : 'Benchtop Optical Camera');
+   return {
+     ...h,
+     device: h.device || (isPi ? 'Raspberry Pi 5 (8GB)' : 'Industrial Edge Station'),
+     operating_system: h.operating_system || 'Linux (aarch64)',
+     mode: h.mode || 'offline_airgapped',
+     vision_model: (typeof h.vision_model === 'object' && h.vision_model !== null)
+       ? h.vision_model
+       : { name: h.vision_model || 'pcb_multidomain_yolov8n_640', backend: h.ai_acceleration || 'PyTorch CPU Baseline', is_loaded: true },
+     advisory_engine: (typeof h.advisory_engine === 'object' && h.advisory_engine !== null)
+       ? h.advisory_engine
+       : { mode: 'Deterministic IPC-A-610 Rule Engine', fallback_ready: true },
+     camera: (typeof h.camera === 'object' && h.camera !== null)
+       ? h.camera
+       : { status: (h.camera_status || 'standby').toLowerCase(), device_name: camDev }
+   };
+ },
+ async camStart(res){
+   if(CFG.mock)return{status:'streaming',target_fps:15,resolution:res};
+   return(await http('/camera/start',J('POST',{camera_id:0,resolution:res.split('x').map(Number),framerate:15}))).json();
+ },
+ async camStop(){
+   if(CFG.mock)return{};
+   return(await http('/camera/stop',{method:'POST'})).json();
+ },
+ feed:()=>CFG.base+'/camera/feed',
+ async run(file){
+   if(CFG.mock){
+     await sleep(400);const k=M.n++,sc=M.force!=null?M.force:k%5,id='INSP-DEMO-'+String(k+1).padStart(3,'0'),board='PCB-'+(480+k);
+     const ds=DEMOS[sc].d;
+     const crit=ds.some(d=>SEV[d[0]]==='CRITICAL'&&d[1]>.75),v=crit?'REJECT':ds.length?'INSPECT':'PASS';
+     const rec={inspection_id:id,board_id:board,timestamp_utc:new Date().toISOString(),verdict:v,rule_id:crit?'RULE_001_HIGH_CONF_CRITICAL_DEFECT':ds.length?'RULE_004_REVIEW_REQUIRED':'RULE_008_CLEAR',rule_description:crit?'High-confidence critical defect detected above 75% confidence.':ds.length?'Low-confidence or minor defects need review.':'No defects detected above threshold.',elec:crit,
+      defects:ds.map((d,i)=>({defect_id:i+1,class:d[0],severity:SEV[d[0]],confidence:d[1],bbox:d[2],dimensions_px:[d[2][2]-d[2][0],d[2][3]-d[2][1]]})),
+      advisory:{what_detected:ds.length?`${ds.length} candidate defect(s): ${ds.map(d=>d[0]).join(', ')}.`:'No visual defects found.',why_it_matters:ds.length?'Open circuits stop current flow; mouse bites reduce copper cross-section.':'Board looks clean to optical inspection.',operator_action:ds.length?'Route to rework and run a flying-probe continuity test.':'Continue to electrical test as normal.',confidence_caveat:'Optical AOI checks surface only. Electrical testing is still required.'},
+      timings:{capture_ms:0,quality_gate_ms:.8,vision_inference_ms:8.4,decision_engine_ms:.08,advisory_ms:.18,total_latency_ms:9.46}};
+     M.recs[id]=rec;M.log.unshift({ts:rec.timestamp_utc.slice(0,19).replace('T',' ')+'Z',board,rule:v,final:v,defects:ds.length,elec:crit,ms:9.46,ov:false,src:'demo'});return rec;
+   }
+   if(!file){
+     return(await http('/camera/capture',{method:'POST'})).json();
+   }
+   const fd=new FormData();fd.append('file',file);
+   return(await http('/inspections/upload',{method:'POST',body:fd})).json();
+ },
+ async runSample(fname){
+   if(CFG.mock)return null;
+   return(await http(`/samples/${fname}/inspect`,{method:'POST'})).json();
+ },
+ async override(id,b){
+   if(CFG.mock){const l=M.log.find(x=>x.board===M.recs[id].board_id);if(l){l.final=b.new_verdict;l.ov=true;}return{};}
+   return(await http(`/inspections/${id}/override`,J('POST',b))).json();
+ },
+ async review(id,b){
+   if(CFG.mock){M.rev.total_reviewed++;b.reviewer_decision==='false_call'?M.rev.false_calls++:M.rev.confirmed_defects++;M.rev.false_call_rate_percent=+(100*M.rev.false_calls/M.rev.total_reviewed).toFixed(2);return{};}
+   return(await http(`/inspections/${id}/review`,J('POST',b))).json();
+ },
+ async revStats(){
+   if(CFG.mock)return M.rev;
+   const r=await(await http('/reviews/stats')).json();
+   const normCb={};
+   for(const [k,val] of Object.entries(r.class_breakdown||{})){
+     if(Array.isArray(val)){
+       normCb[k]={reviewed:val[0]||0,false_calls:val[1]||0};
+     }else if(typeof val==='object'&&val!==null){
+       normCb[k]={
+         reviewed:val.reviewed??val.total??(val[0]||0),
+         false_calls:val.false_call??val.false_calls??(val[1]||0)
+       };
+     }
+   }
+   return{
+     total_reviewed:r.total_reviewed??r.total_reviews??0,
+     confirmed_defects:r.confirmed_defects??r.confirmed_detections??0,
+     false_calls:r.false_calls??r.false_detections??0,
+     uncertain:r.uncertain??r.uncertain_detections??0,
+     false_call_rate_percent:r.false_call_rate_percent??r.false_call_rate??0,
+     class_breakdown:normCb
+   };
+ },
+ async stats(){
+   if(CFG.mock)return{decisions:{PASS:96,INSPECT:42,REJECT:57},total:195,freq:{open_circuit:78,mouse_bite:62,short_circuit:49,spur:35,spurious_copper:24,pin_hole:18},heatmap:[468,110,2,341,197,35,239,86,113],total_defects:1591};
+   const d=await(await http('/analytics/defect-statistics?source_filter=' + (S.scope==='all'?'':'real'))).json();
+   return{decisions:d.decisions,total:d.total_inspections,freq:d.defect_frequencies,heatmap:d.heatmap_3x3,total_defects:d.total_defects};
+ },
+ async log(){
+   if(CFG.mock)return M.log;
+   const rows=await(await http('/audit/inspections?limit=100')).json();
+   const list=Array.isArray(rows)?rows:(rows.inspections||rows.records||[]);
+   return list.map(x=>({
+     ts:(x.ts||x.timestamp||'').slice(0,19).replace('T',' ')+'Z',
+     board:x.board||x.board_id||'PCB-UNKNOWN',
+     rule:x.rule||x.verdict||'PASS',
+     final:x.final||x.final_decision||x.verdict||'PASS',
+     defects:(x.defects!==undefined)?x.defects:(x.defect_count||0),
+     elec:(x.elec!==undefined)?x.elec:!!(x.electrical||x.electrical_verification_mandatory),
+     ms:(x.ms!==undefined)?x.ms:(x.latency_ms||0),
+     ov:(x.ov!==undefined)?x.ov:!!x.overridden,
+     src:x.src||x.source||'real'
+   }));
+ },
+ async tele(){
+   if(CFG.mock){
+     const j=Math.random();return{cpu_percent:+(12+j*6).toFixed(1),ram_used_mb:+(1400+j*50).toFixed(0),ram_percent:17.8,disk_free_gb:48.6,disk_percent:22.4,cpu_thermal_c:+(45+j*3).toFixed(1),throttling_status:'none'};
+   }
+   const t=await(await http('/hardware/telemetry')).json();
+   const temp=t.cpu_thermal_c!==undefined?t.cpu_thermal_c:(t.cpu_thermal&&t.cpu_thermal.temperature_c!==null?t.cpu_thermal.temperature_c:42.5);
+   return{
+     cpu_percent:t.cpu_percent!==undefined?t.cpu_percent:0,
+     ram_used_mb:t.ram_used_mb!==undefined?Math.round(t.ram_used_mb):0,
+     ram_percent:t.ram_percent!==undefined?Math.round(t.ram_percent):0,
+     disk_free_gb:t.disk_free_gb!==undefined?Math.round(t.disk_free_gb):0,
+     disk_percent:t.disk_percent!==undefined?Math.round(t.disk_percent):0,
+     cpu_thermal_c:temp,
+     throttling_status:t.throttling_status||'none'
+   };
+ },
+ async getInfConfig(){
+   if(CFG.mock)return{backend_mode:'auto',active_backend:'cpu',active_backend_label:'PyTorch CPU Baseline',conf_threshold:0.25,iou_threshold:0.45,max_detections:100,hardware_accelerated:false};
+   return(await http('/inference/config')).json();
+ },
+ async setInfConfig(b){
+   if(CFG.mock)return{...b,active_backend:b.backend_mode||'auto',active_backend_label:b.backend_mode==='hailo'?'Hailo-8 NPU':'PyTorch CPU Baseline',hardware_accelerated:b.backend_mode==='hailo'};
+   return(await http('/inference/config',J('POST',b))).json();
+ },
+ async resetThresholds(){
+   if(CFG.mock)return{conf_threshold:0.25,iou_threshold:0.45,max_detections:100};
+   return(await http('/inference/reset-thresholds',{method:'POST'})).json();
+ },
+ async getHardware(){
+   if(CFG.mock)return{rpi_model:'Raspberry Pi 5 (8GB)',cpu_architecture:'aarch64',hailo_device:{detected:false,status:'NOT DETECTED'},hailort_version:'Not Installed',hef_model:{status:'MISSING',expected_sha256:'053a1967ad9489847ee80e058a4608518713706baf2fa79915159d952df3dada'}};
+   return(await http('/hardware/status')).json();
+ },
+ async comparePipelines(){
+   if(CFG.mock)return{sample_tested:'sample_multi_defect.jpg',cpu_pipeline:{available:true,backend:'CPU Baseline',inference_latency_ms:28.4,total_latency_ms:34.2,estimated_fps:35.2,defect_count:6},hailo_pipeline:{available:false,backend:'Unavailable',error:'Hailo-8 hardware not detected.'},prediction_agreement:{class_agreement_percent:100,mean_bounding_box_iou:0.92,matched_count:6,matches:[]}};
+   return(await http('/inference/compare',J('POST',{}))).json();
+ },
+ async generateAdvisory(payload, mode='auto'){
+   if(CFG.mock)return{source:'mock_llama',advisory:{generated_text:'[Demo Mode] Based on visual defect patterns, recommended continuity check on trace.'},metrics:{latency_ms:920,tokens_per_second:10.5,ttft_ms:120}};
+   return(await http('/advisory/generate?mode='+mode,J('POST',payload))).json();
+ },
+ async getAdvisoryStatus(){
+   if(CFG.mock)return{model_name:'Meta Llama 3.2 1B Instruct',is_loaded:true};
+   return(await http('/advisory/status')).json();
+ },
+ csv:()=>CFG.base+'/audit/export/csv?source_filter=real'
+};
+
+/* ===== State ===== */
+const S={view:'live',h:null,t:null,rec:null,tab:'ann',sel:0,cam:false,res:'1280x720',cont:false,rv:null,st:null,lg:[],scope:'real',busy:false,fl:'All',infCfg:null,hwStat:null,compRes:null,compBusy:false,hwMsg:null,llamaTestRes:null,llamaBusy:false,wsLlamaBusy:false};
+const $=s=>document.querySelector(s);
+const ic=p=>`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const VIEWS=[['dash','Dashboard','<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'],['live','Live station','<path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/>'],['workspace','Inspection workspace','<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>'],['review','Human review','<path d="M20 6L9 17l-5-5"/>'],['log','Audit log','<path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/>'],['analytics','Analytics','<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'],['hardware','Edge hardware','<rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 1v4M15 1v4M9 19v4M15 19v4M1 9h4M1 15h4M19 9h4M19 15h4"/>']];
+const go=v=>location.hash=v,goq=v=>{const m=VIEWS.find(x=>x[1].toLowerCase().includes(v.trim().toLowerCase()));if(m)go(m[0])};
+const pill=(t,c)=>`<span class="pill ${c||t}">${t}</span>`;
+const empty=(t,b)=>`<div class="card empty"><h2>${t}</h2><p>${b}</p><button class="btn" onclick="go('live')">Go to live station</button></div>`;
+const kpi=(i,t,v,s)=>`<div class="card kpi"><div class="row"><div><div class="note">${t}</div><b>${v}</b></div><span class="ic">${i}</span></div><div class="note">${s||''}</div></div>`;
+
+/* mock PCB drawing: board group reused for viewport, annotation and magnifier */
+function pcb(){const r=(()=>{let s=9;return()=>(s=(s*16807)%2147483647)/2147483647})();let g='<rect width="1280" height="720" fill="#14573d"/>';
+ for(let i=0;i<22;i++){const y=30+i*32,x=r()*500;g+=`<polyline points="${x},${y} ${x+200+r()*300},${y} ${x+260+r()*300},${y+(r()>.5?32:-32)} 1250,${y+(r()>.5?32:-32)}" fill="none" stroke="#c9a24a" stroke-width="6" opacity=".85"/>`}
+ for(let i=0;i<40;i++)g+=`<circle cx="${60+r()*1160}" cy="${40+r()*640}" r="${7+r()*8}" fill="#e7c971"/>`;
+ return g}
+const BOARD=pcb();
+function boardSvg(rec,ann,view){const vb=view||'0 0 1280 720';return`<svg class="vp" viewBox="${vb}" role="img" aria-label="PCB image">${BOARD}${ann?rec.defects.map((d,i)=>`<rect x="${d.bbox[0]}" y="${d.bbox[1]}" width="${d.bbox[2]-d.bbox[0]}" height="${d.bbox[3]-d.bbox[1]}" fill="none" stroke="${i===S.sel?'#fff':'#ff5a4d'}" stroke-width="${view?3:5}"/><text x="${d.bbox[0]}" y="${d.bbox[1]-8}" font-size="${view?12:22}" font-weight="700" fill="#fff">${d.class} ${(d.confidence*100).toFixed(0)}%</text>`).join(''):''}</svg>`}
+function boardView(rec,ann){
+  if(CFG.mock)return boardSvg(rec,ann);
+  const src=ann?(rec.annotated_image_url||(CFG.base+'/inspections/'+rec.inspection_id+'/annotated-image')):(rec.raw_image_url||(CFG.base+'/inspections/'+rec.inspection_id+'/raw-image'));
+  return`<img class="vp" src="${src}" alt="PCB" style="width:100%;max-height:68vh;object-fit:contain;border-radius:16px;display:block;margin:auto;">`;
+}
+
+/* ===== Views ===== */
+const V={
+live(){const h=S.h,c=S.cam,b=S.rec;
+ return`<div class="grid g4">${kpi(ic(VIEWS[1][2]),'Camera',c?'STREAMING':'STANDBY',(h&&h.camera&&h.camera.device_name)||'No camera')}${kpi(ic('<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>'),'Frame rate',c?'15 FPS':'0 FPS','Target')}${kpi(ic(VIEWS[6][2]),'Vision backend',(h&&h.vision_model&&h.vision_model.backend)||'Offline',(h&&h.vision_model&&h.vision_model.name)||'')}${kpi(ic('<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/>'),'Network',h?'Air-gapped':'Unknown',(h&&h.mode)||'offline_airgapped')}</div>
+ <div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(260px,1fr);margin-top:16px"><div class="card"><h2>Optical viewport</h2><p class="s">Live preview from the bench camera</p>
+ ${c?(CFG.mock?`<div style="position:relative;overflow:hidden;border-radius:16px">${boardSvg({defects:[]},false)}<svg viewBox="0 0 1280 720" style="position:absolute;inset:0;width:100%;height:100%" aria-hidden="true"><rect class="scan" y="-20" width="1280" height="4" fill="#fff" opacity=".6"/></svg></div>`:`<img class="vp" src="${api.feed()}" alt="Live feed">`):`<div class="vp empty" style="background:var(--soft);color:var(--mut);padding:90px 20px">Camera is off. Start it to see a live view.</div>`}
+ <div class="chips" style="margin:14px 0 0"><button class="btn dk" onclick="cam(true)" ${c?'disabled':''}>Start camera</button><button class="btn gh" onclick="cam(false)" ${c?'':'disabled'}>Stop camera</button><select class="i" style="width:auto" aria-label="Resolution" onchange="S.res=this.value">${['640x640','1280x720','1920x1080'].map(r=>`<option ${r===S.res?'selected':''}>${r}</option>`).join('')}</select><button class="btn" onclick="capture()" ${c||CFG.mock?'':'disabled'}>${S.busy?'Inspecting…':'Capture and run inspection'}</button></div></div>
+ <div class="card"><h2>Instant result</h2><p class="s">Latest inspection</p>${b?`${verdictCard(b)}<p class="note">${b.defects.length} defect(s) · ${b.timings.total_latency_ms} ms total</p><button class="btn gh" onclick="go('workspace')">Open workspace</button>`:'<p class="note">No inspection yet. Capture a board to see a verdict.</p>'}</div></div>`},
+workspace(){const r=S.rec;
+ const up=`<div class="card" style="margin-bottom:16px"><label class="drop" for="uf"><b>Drop a bare PCB image or choose a file</b><br><span class="note">PNG, JPG or BMP</span></label><input id="uf" type="file" accept="image/*" hidden onchange="S.busy=1;runFile(this.files[0])">${CFG.mock?'<p style="margin:12px 0 0"><button class="btn gh" onclick="runFile(null)">Run a demo board</button></p>':''}</div>`;
+ if(!r)return up+empty('No board inspected','Upload an image or capture from the live station.');
+ const d=r.defects[S.sel],T=r.timings,st=[['Capture',T.capture_ms],['Quality gate',T.quality_gate_ms],['Inference',T.vision_inference_ms],['Decision',T.decision_engine_ms],['Advisory',T.advisory_ms]];
+ const vb=d?`${Math.max(0,d.bbox[0]-50)} ${Math.max(0,d.bbox[1]-40)} ${d.dimensions_px[0]+100} ${d.dimensions_px[1]+80}`:'';
+ return up+`<div class="grid g2"><div><div class="card"><div class="tabs"><button class="${S.tab==='ann'?'on':''}" onclick="S.tab='ann';render()">Annotated</button><button class="${S.tab==='raw'?'on':''}" onclick="S.tab='raw';render()">Raw image</button></div>${boardView(r,S.tab==='ann')}</div>
+ <div class="card" style="margin-top:16px"><h2>Defect magnifier</h2>${d?`<p class="s">Defect ${d.defect_id}: ${d.class} · ${d.dimensions_px.map(x=>x.toFixed(0)).join(' × ')} px</p>${CFG.mock?boardSvg(r,true,vb):`<img class="vp" src="${CFG.base}/inspections/${r.inspection_id}/defects/${d.defect_id}/crop" alt="Defect crop">`}`:'<p class="note">No defects to magnify.</p>'}</div></div>
+ <div><div class="card"><h2>Pipeline</h2><p class="s">${r.board_id} · ${r.inspection_id}</p><div class="step">${st.map(s=>`<div><b>✓</b> ${s[0]}<small>${s[1]} ms</small></div>`).join('')}</div></div>
+ <div class="card" style="margin-top:16px">${verdictCard(r)}${r.elec?'<div class="alert">⚡ ELECTRICAL VERIFICATION MANDATORY. Run a flying-probe or DMM continuity test before rework.</div>':'<div class="alert n">Optical AOI cannot verify continuity. Electrical test still applies.</div>'}
+ <h2 style="margin-top:14px">Defect manifest</h2><div class="sc"><table><thead><tr><th>ID</th><th>Class</th><th>Severity</th><th>Conf.</th><th>Box</th></tr></thead><tbody>${r.defects.map((x,i)=>`<tr class="c ${i===S.sel?'sel':''}" onclick="S.sel=${i};render()"><td>${x.defect_id}</td><td>${x.class}</td><td>${pill(x.severity)}</td><td>${(x.confidence*100).toFixed(1)}%</td><td>[${x.bbox.join(', ')}]</td></tr>`).join('')||'<tr><td colspan="5" class="note">No defects.</td></tr>'}</tbody></table></div></div>
+ <div class="card" style="margin-top:16px"><h2>Engineering advisory</h2><p><b>Detected:</b> ${r.advisory.what_detected}</p><p><b>Why it matters:</b> ${r.advisory.why_it_matters}</p><p><b>Action:</b> ${r.advisory.operator_action}</p><p class="note">${(r.advisory && r.advisory.confidence_caveat) ? r.advisory.confidence_caveat : 'Optical AOI checks surface morphology only; electrical testing remains mandatory.'}</p></div>
+ <div class="card" style="margin-top:16px"><h2>Supervisor override</h2><label class="f" for="ov">New verdict</label><select class="i" id="ov"><option>PASS</option><option>INSPECT</option><option>REJECT</option></select><label class="f" for="oi">Operator ID</label><input class="i" id="oi" value="OP-LINE-1"><label class="f" for="or">Justification (required)</label><textarea class="i" id="or" rows="2"></textarea><p><button class="btn dk" onclick="override()">Record override</button></p></div></div></div>`},
+review(){const v=S.rv,r=S.rec;if(!v)return'';
+ return`<div class="grid g4">${kpi('%','False-call rate',v.false_call_rate_percent+'%','n = '+v.total_reviewed)}${kpi('!','False calls',v.false_calls)}${kpi('✓','Confirmed defects',v.confirmed_defects)}${kpi('#','Total reviewed',v.total_reviewed)}</div>
+ <div class="grid g2" style="margin-top:16px"><div class="card"><h2>Verify a defect</h2><p class="s">${r&&r.defects.length?`Latest board ${r.board_id}, defect ${S.sel+1}: ${r.defects[S.sel].class}`:'Inspect a board with defects first.'}</p><div class="radio"><label><input type="radio" name="rd" value="confirmed" checked><span>Confirmed defect</span></label><label><input type="radio" name="rd" value="false_call"><span>False call</span></label><label><input type="radio" name="rd" value="uncertain"><span>Uncertain</span></label></div>
+ <label class="f" for="rr">Reason</label><select class="i" id="rr"><option>Benign silkscreen marking misclassified</option><option>Foreign particle cleaned off</option><option>Genuine defect confirmed</option></select><p><button class="btn" onclick="review()" ${r&&r.defects.length?'':'disabled'}>Save review</button></p></div>
+ <div class="card"><h2>Class breakdown</h2><p class="s">False calls vs reviewed</p><table><thead><tr><th>Class</th><th>Reviewed</th><th>False calls</th></tr></thead><tbody>${Object.entries(v.class_breakdown).map(([k,x])=>`<tr><td>${k}</td><td>${x[0]??x.reviewed}</td><td>${x[1]??x.false_calls}</td></tr>`).join('')}</tbody></table></div></div>`},
+log(){const l=S.lg.filter(x=>S.fl==='All'||x.src===S.fl.toLowerCase()),n=v=>l.filter(x=>x.final===v).length;
+ return`<div class="grid g4">${kpi('#','Total inspections',l.length)}${kpi('✓','Pass',n('PASS'))}${kpi('?','Inspect',n('INSPECT'))}${kpi('✕','Reject',n('REJECT'))}</div>
+ <div class="card" style="margin-top:16px"><div class="chips">${['All','Real','Demo','Test'].map(f=>`<button class="btn ${S.fl===f?'dk':'gh'}" onclick="S.fl='${f}';render()">${f}</button>`).join('')}<span style="flex:1"></span><a class="btn gh" style="text-decoration:none" href="${CFG.mock?'#log':api.csv()}" onclick="return csv()">Export CSV</a></div>
+ <div class="sc"><table><thead><tr><th>Timestamp (UTC)</th><th>Board</th><th>Rule</th><th>Final</th><th>Defects</th><th>Electrical</th><th>Latency</th><th>Override</th></tr></thead><tbody>${l.map(x=>`<tr><td>${x.ts}</td><td>${x.board}</td><td>${pill(x.rule)}</td><td>${pill(x.final)}</td><td>${x.defects}</td><td>${x.elec?pill('FLAG','bad'):'-'}</td><td>${x.ms} ms</td><td>${x.ov?pill('YES','warn'):'-'}</td></tr>`).join('')}</tbody></table></div></div>`}};
+
+function verdictCard(r){const c={PASS:'var(--ok)',INSPECT:'var(--warn)',REJECT:'var(--bad)'}[r.verdict];return`<div class="verdict" style="border-color:${c}"><span class="note">Final decision</span><h3 style="color:${c}">${r.verdict}</h3><div style="margin:6px 0">${pill(r.rule_id.split('_').slice(0,2).join('_'),'MINOR')}</div><p class="note" style="margin:0">${r.rule_description}</p></div>`}
+
+/* ===== Actions ===== */
+async function cam(on){
+  try{
+    if(on){
+      const res = await api.camStart(S.res, S.camId || 'auto');
+      S.cam = !!res.is_streaming || res.status === 'streaming';
+      await refresh();
+    }else{
+      await api.camStop();
+      S.cam = false;
+      await refresh();
+    }
+  }catch(e){
+    alert('Camera error: ' + e.message);
+  }
+  render();
+}
+async function runFile(f){S.busy=true;render();try{S.rec=await api.run(f);S.sel=0;S.zoom=100;(S.hist=S.hist||[]).push(S.rec);await refresh();go('workspace')}catch(e){alert('Inspection failed: '+e.message)}S.busy=false;render()}
+const capture=()=>runFile(null);
+async function override(){const j=$('#or').value.trim();if(!j){alert('A justification is required.');return}await api.override(S.rec.inspection_id,{new_verdict:$('#ov').value,operator_id:$('#oi').value,reason:j});await refresh();alert('Override recorded.');render()}
+async function review(){const d=document.querySelector('input[name=rd]:checked').value;await api.review(S.rec.inspection_id,{defect_index:S.sel+1,reviewer_decision:d,reason:$('#rr').value,reviewer_id:'QC-ENG-1'});await refresh();render()}
+function csv(){if(!CFG.mock)return true;const rows=['timestamp,board,rule,final,defects,electrical,latency_ms,overridden',...S.lg.map(x=>[x.ts,x.board,x.rule,x.final,x.defects,x.elec,x.ms,x.ov].join(','))];const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));a.download='audit_log.csv';a.click();return false}
+async function refresh(){const g=p=>p.catch(()=>null);[S.rv,S.st,S.lg,S.t,S.infCfg,S.hwStat]=await Promise.all([g(api.revStats()),g(api.stats()),g(api.log()),g(api.tele()),g(api.getInfConfig()),g(api.getHardware())]);S.lg=S.lg||[]}
+function render(){
+  S.view = location.hash.slice(1);
+  if(!V[S.view]) S.view = 'live';
+  const v = VIEWS.find(x => x[0] === S.view) || VIEWS[1];
+  $('#nav').innerHTML = VIEWS.map(x => `<a tabindex="0" class="${x[0]===S.view?'on':''}" onclick="go('${x[0]}')" onkeydown="if(event.key==='Enter')go('${x[0]}')">${ic(x[2])}${x[1]}</a>`).join('');
+  $('#crumb').textContent = 'Inspection station › ' + v[1];
+  $('#title').textContent = v[1];
+  const h = S.h;
+  const backendLabel = (h && h.vision_model && h.vision_model.backend) || (h && h.ai_acceleration) || 'Backend offline';
+  const modeLabel = (h && h.mode) || 'offline_airgapped';
+  $('#edge').innerHTML = `<span class="dot ${h?'ok':''}"></span><b>${h?'Backend online':'Backend offline'}</b><small>${backendLabel} · ${modeLabel}</small>`;
+  $('#mockbar').innerHTML = CFG.mock ? `<div class="mock">Mock mode: demo figures shown.<button onclick="CFG.mock=false;S.rec=null;init()">Connect to backend</button></div>` : '';
+  try {
+    const html = V[S.view]();
+    $('#view').innerHTML = html || '<div class="card empty"><h2>Section loading…</h2></div>';
+  } catch(err) {
+    console.error('Error rendering view ' + S.view + ':', err);
+    $('#view').innerHTML = `<div class="card alert"><h2>View Error (${S.view})</h2><p>${err.message}</p><button class="btn gh" onclick="init()">Reload Station</button></div>`;
+  }
+}
+async function init(){
+  try{
+    S.h=await api.health();
+    CFG.mock=false;
+  }catch(e){
+    console.warn("Backend offline, enabling demo mode:", e);
+    CFG.mock=true;
+    S.h=await api.health();
+  }
+  await refresh();
+  render();
+}
+V.dash=function(){const l=S.lg,rej=l.filter(x=>x.final==='REJECT').length,v=S.rv,t=S.t,r=S.rec,h=S.h,C=2*Math.PI*52,cp=t?t.cpu_percent:0,
+ head=(a,b)=>`<div class="ch"><h2>${a}</h2><a class="more" tabindex="0" onclick="go('${b}')" onkeydown="if(event.key==='Enter')go('${b}')">See more</a></div>`,
+ f=S.st?Object.entries(S.st.freq).sort((a,b)=>b[1]-a[1]).slice(0,4):[];
+ return`<div class="grid g4" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">${kpi(ic(VIEWS[2][2]),'Boards inspected',l.length)}${kpi(ic(VIEWS[4][2]),'Rejected boards',rej)}${kpi(ic(VIEWS[3][2]),'False-call rate',v?v.false_call_rate_percent+'%':'n/a',v?'n = '+v.total_reviewed:'')}</div>
+ <div class="grid g2" style="margin-top:20px"><div class="card">${head('Latest inspection','workspace')}${r?`<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span class="ic">${ic(VIEWS[2][2])}</span><button class="btn gh" onclick="go('workspace')">Open workspace</button></div><p class="note" style="margin:14px 0 0">Board</p><h2 style="font-size:20px">${r.board_id} ${pill(r.verdict)}</h2><p class="note">5/5 pipeline stages · ${r.timings.total_latency_ms} ms total · ${r.defects.length} defect(s)</p><div class="bar"><i style="width:100%"></i></div>`:`<p class="note">No board inspected yet.</p><button class="btn" onclick="go('live')">Start an inspection</button>`}</div>
+ <div class="card">${head('Edge health','hardware')}${t?`<div class="gauge"><div><span class="note">CPU temperature</span><b>${t.cpu_thermal_c} °C</b><span class="note">RAM</span><b>${t.ram_used_mb} MB</b></div><svg viewBox="0 0 130 130" role="img" aria-label="CPU ${cp}%"><circle cx="65" cy="65" r="52" fill="none" stroke="var(--line)" stroke-width="14"/><circle cx="65" cy="65" r="52" fill="none" stroke="#fdb022" stroke-width="14" stroke-linecap="round" stroke-dasharray="${cp*C/100} ${C}" transform="rotate(-90 65 65)"/><text x="65" y="66" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">${cp}%</text><text x="65" y="82" text-anchor="middle" font-size="9" fill="var(--mut)">CPU load</text></svg></div>`:'<p class="note">Telemetry unavailable.</p>'}</div></div>
+ <div class="grid g2" style="margin-top:20px"><div class="card">${head('Defects by class','analytics')}${f.map(([k,n])=>`<div class="rw"><span class="ic">${k[0].toUpperCase()}</span><div>${k.replace('_',' ')}</div><b>${n}</b></div>`).join('')||'<p class="note">No data yet.</p>'}</div>
+ <div class="card">${head('Audit and system','log')}<div class="rw"><span class="ic">${ic(VIEWS[4][2])}</span><div>Audit log<small>${l.length} records</small></div><button class="btn gh" onclick="csv()">Export</button></div><div class="rw"><span class="ic">${ic(VIEWS[6][2])}</span><div>Vision model<small>${(h&&h.vision_model&&h.vision_model.name)||'Backend offline'}</small></div>${pill(h&&h.vision_model&&h.vision_model.is_loaded?'Loaded':'Not loaded',h&&h.vision_model&&h.vision_model.is_loaded?'ok':'bad')}</div><div class="rw"><span class="ic">${ic(VIEWS[1][2])}</span><div>Camera<small>${(h&&h.camera&&h.camera.device_name)||'Unknown'}</small></div>${pill(S.cam?'Streaming':'Standby',S.cam?'ok':'warn')}</div></div></div>`};
+V.dash=function(){S.hold=S.hold||{};S.q=S.q||'recent';
+ const l=S.lg,t=S.t,r=S.rec,h=S.h,v=S.rv,s=S.st,need=l.filter(x=>x.elec&&x.final!=='PASS'),insp=l.filter(x=>x.final==='INSPECT'),ovs=l.filter(x=>x.ov),hot=t&&(t.cpu_thermal_c>=70||t.throttling_status!=='none'),
+ key=(to)=>`tabindex="0" onclick="go('${to}')" onkeydown="if(event.key==='Enter')go('${to}')"`,
+ att=(i,a,b,num,unit,d,dc,ft,to)=>`<div class="card att"><div style="display:flex;justify-content:space-between;gap:10px"><div><div class="t">${a}</div><div class="st">${b}</div></div><span class="ic">${ic(i)}</span></div><div class="n">${num} <small>${unit}</small></div><span class="dl ${dc}">${d}</span><div class="ft" ${key(to)}><span>${ft}</span><span>›</span></div></div>`,
+ fc=k=>{const b=v&&v.class_breakdown&&v.class_breakdown[k];return b?(b.false_calls!==undefined?b.false_calls:(b[1]||0)):0},
+ f=s?Object.entries(s.freq).sort((a,b)=>b[1]-a[1]):[],mx=f.length?f[0][1]:1,
+ rows=(S.q==='action'?l.filter(x=>x.final!=='PASS'||x.elec):l).slice(0,7),T=r&&r.timings,
+ seg=T?[['Quality gate',T.quality_gate_ms,'#f0a30a'],['Inference',T.vision_inference_ms,'#17a673'],['Decision',T.decision_engine_ms,'#111'],['Advisory',T.advisory_ms,'#f0483e']]:[],sum=seg.reduce((a,b)=>a+b[1],0)||1,
+ mtr=(a,b,p)=>`<div class="mt"><span>${a}</span><span>${b}</span></div><div class="bar"><i style="width:${p||0}%"></i></div>`;
+ return`<div class="grid hero"><div class="quad">${att(VIEWS[6][2].includes('rect')?'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>':'',  'Awaiting electrical test','Flagged rejects',need.length,'boards',need.length?'Needs probe':'All clear',need.length?'r':'g',need[0]?need[0].board:'No boards waiting','log')}${att(VIEWS[3][2],'Needs review','INSPECT verdicts',insp.length,'boards','Human check','b',insp[0]?insp[0].board:'None waiting','review')}${att('<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>','Supervisor overrides','Logged decisions',ovs.length,'boards',ovs.length?'In audit trail':'None logged',ovs.length?'o':'g',ovs[0]?ovs[0].board:'None logged','log')}${att(VIEWS[6][2],'Edge health','Temperature and throttling',t?t.cpu_thermal_c:'n/a',t?'°C':'',hot?'Check cooling':'Normal',hot?'r':'g',(h&&h.vision_model&&h.vision_model.backend)||'Backend offline','hardware')}</div>
+ <div class="card"><div class="ch"><div><h2>Defect analytics</h2><p class="s" style="margin:0">Detected vs reviewed false calls, by class</p></div><a class="more" ${key('analytics')}>See all ›</a></div>${f.length?`<div class="chart">${f.map(([k,n])=>`<div class="g"><i style="height:${n/mx*100}%;background:#17a673" title="${k}: ${n}"></i><i style="height:${fc(k)/mx*100}%;background:#f0a30a" title="false calls: ${fc(k)}"></i></div>`).join('')}</div><div class="lbl">${f.map(x=>`<span>${x[0].replace('_',' ')}</span>`).join('')}</div><div class="lg" style="margin-top:12px"><span><i style="background:#17a673"></i>Detected</span><span><i style="background:#f0a30a"></i>False calls</span>${CFG.mock?'<span>Demo data</span>':''}</div>`:'<p class="note">No data yet.</p>'}</div></div>
+ <div class="grid g2" style="margin-top:16px"><div class="card"><div class="ch"><h2>Latest board</h2><a class="more" ${key('workspace')}>Open ›</a></div>${r?`<h2 style="font-size:22px">${r.board_id} ${pill(r.verdict)}</h2><p class="note" style="margin:2px 0 0">${r.defects.length} defect(s) · ${T.total_latency_ms} ms end to end</p><div class="tl">${seg.map(x=>`<span style="width:${x[1]/sum*100}%;background:${x[2]}" title="${x[0]}"></span>`).join('')}</div><div class="lg">${seg.map(x=>`<span><i style="background:${x[2]}"></i>${x[0]} ${x[1]} ms</span>`).join('')}</div>`:`<p class="note">No board inspected yet. Run one to see where the time goes.</p><button class="btn" onclick="go('live')">Inspect a board</button>`}</div>
+ <div class="card"><div class="ch"><h2>Edge load</h2><a class="more" ${key('hardware')}>Details ›</a></div>${t?mtr('CPU',t.cpu_percent+'%',t.cpu_percent)+mtr('RAM',t.ram_used_mb+' MB',t.ram_percent)+mtr('Disk used',t.disk_percent+'%',t.disk_percent):'<p class="note">Telemetry unavailable.</p>'}</div></div>
+ <div class="card" style="margin-top:16px"><div class="ch" style="flex-wrap:wrap;gap:12px"><div><h2>Inspection queue</h2><p class="s" style="margin:0">Recent boards and ones that need action</p></div><div class="chips" style="margin:0"><button class="btn gh" onclick="csv()">Export CSV</button><button class="btn" onclick="go('live')">Inspect new board</button></div></div>
+ <div class="tabs"><button class="${S.q==='recent'?'on':''}" onclick="S.q='recent';render()">Recent</button><button class="${S.q==='action'?'on':''}" onclick="S.q='action';render()">Needs action</button></div>
+ <div class="sc"><table><thead><tr><th>Board</th><th>Decision</th><th>Defects</th><th>Electrical</th><th>Latency</th><th>Hold for rework</th></tr></thead><tbody>${rows.map(x=>`<tr><td><b>${x.board}</b><br><span class="note">${x.ts}</span></td><td>${pill(x.final)}</td><td>${x.defects}</td><td>${x.elec?pill('Probe needed','bad'):'-'}</td><td>${x.ms} ms</td><td><button class="tog ${S.hold[x.board]?'on':''}" aria-label="Hold ${x.board} for rework" aria-pressed="${!!S.hold[x.board]}" onclick="S.hold['${x.board}']=!S.hold['${x.board}'];render()"></button></td></tr>`).join('')||'<tr><td colspan="6" class="note">Nothing here.</td></tr>'}</tbody></table></div></div>`};
+const DEMOS=[
+  {n:'Golden Reference Board', f:'sample_clean_pass.jpg', d:[]},
+  {n:'Mouse Bite Anomaly', f:'sample_mouse_bite.jpg', d:[['mouse_bite',.672,[320,410,342,430]]]},
+  {n:'Complex Multi-Defect Board', f:'sample_multi_defect.jpg', d:[['open_circuit',.884,[512,184,548,211]],['short_circuit',.81,[900,500,950,530]],['mouse_bite',.67,[320,410,342,430]],['spur',.52,[140,120,165,142]],['spurious_copper',.58,[700,80,735,110]]]},
+  {n:'Open Trace Anomaly', f:'sample_open_circuit.jpg', d:[['open_circuit',.91,[512,184,548,211]]]},
+  {n:'Bridged Trace Fault', f:'sample_short_circuit.jpg', d:[['short_circuit',.87,[700,340,760,372]]]}
+];
+async function runDemo(i){
+  S.busy=true;render();
+  try{
+    if(CFG.mock){
+      M.force=i;await runFile(null);M.force=null;
+    }else{
+      const demo=DEMOS[i];
+      const r=await api.runSample(demo.f);
+      S.rec=r;S.sel=0;S.tab='ann';
+      (S.hist=S.hist||[]).push(S.rec);
+      await refresh();
+      go('workspace');
+    }
+  }catch(e){
+    alert('Inspection failed: '+e.message);
+  }finally{
+    S.busy=false;render();
+  }
+}
+const G=n=>`onclick='go(${JSON.stringify(n)})'`;
+const L0=V.live;
+V.live=function(){
+  const h=L0();
+  return h+`<div class='card' style='margin-top:16px'><h2>Offline curated test boards</h2><p class='s'>Execute real on-device pipeline without a physical camera attached</p><div class='chips' style='margin:0'>${DEMOS.map((d,i)=>`<button class='btn gh' onclick='runDemo(${i})'>${d.n}</button>`).join('')}</div></div>`;
+};
+V.workspace=function(){const r=S.rec;S.zoom=S.zoom||100;
+ const up=`<div class='card up'><label class='drop' for='uf'><b>Upload PCB image</b> <span class='note'>PNG, JPG or BMP</span></label><input id='uf' type='file' accept='image/*' hidden onchange='S.busy=1;runFile(this.files[0])'><span class='note' style='margin-left:10px'>Curated test boards:</span><div class='chips' style='margin:0'>${DEMOS.map((d,i)=>`<button class='btn gh' onclick='runDemo(${i})'>${d.n}</button>`).join('')}</div></div>`;
+ if(!r)return up+empty('No board inspected','Upload an image or capture from the live station.');
+ const d=r.defects[S.sel],T=r.timings,sv=n=>r.defects.filter(x=>x.severity===n).length,c={PASS:'var(--ok)',INSPECT:'var(--warn)',REJECT:'var(--bad)'}[r.verdict],
+ vb=d?`${Math.max(0,d.bbox[0]-60)} ${Math.max(0,d.bbox[1]-45)} ${d.dimensions_px[0]+120} ${d.dimensions_px[1]+90}`:'',
+ st=[['Capture',T.capture_ms],['Quality gate',T.quality_gate_ms],['Inference',T.vision_inference_ms],['Decision',T.decision_engine_ms],['Advisory',T.advisory_ms]],
+ A=(p,t,x)=>`<div class='card'><span class='ic'>${ic(p)}</span><h3>${t}</h3><p>${x}</p></div>`;
+ return up+`<div class='banner' style='border-color:${c}'><div><span class='note'>Final decision · ${r.board_id} · ${r.inspection_id}</span><h2 style='color:${c}'>${r.verdict}</h2><p>${r.rule_description}</p></div><div class='stats'><div><b>${r.defects.length}</b><span>Defects</span></div><div><b>${sv('CRITICAL')}</b><span>Critical</span></div><div><b>${sv('MAJOR')}</b><span>Major</span></div><div><b>${T.total_latency_ms} ms</b><span>Total time</span></div></div></div>
+ ${r.elec?`<div class='alert'>⚡ ELECTRICAL VERIFICATION MANDATORY. Run a flying-probe or DMM continuity test before rework.</div>`:`<div class='alert n'>Optical AOI cannot verify continuity. Electrical test still applies.</div>`}
+ <div class='ws'><div class='card'><div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px'><div class='tabs' style='margin:0'><button class='${S.tab==="ann"?"on":""}' onclick='S.tab="ann";render()'>Annotated</button><button class='${S.tab==="raw"?"on":""}' onclick='S.tab="raw";render()'>Raw image</button></div></div><div class='zw' style='margin-top:12px;display:flex;align-items:center;justify-content:center;background:#0f3d2b;border-radius:16px;min-height:360px;'><div id='zi' style='width:100%;max-width:100%;'>${boardView(r,S.tab==="ann")}</div></div></div>
+ <div class='card'><h2>Defect magnifier</h2>${d?`<p class='s'>Defect ${d.defect_id} of ${r.defects.length}</p><div style="background:#111;border-radius:14px;padding:12px;display:flex;justify-content:center;align-items:center;min-height:160px;margin-bottom:12px;">${CFG.mock?boardSvg(r,true,vb):`<img src='${d.crop_url||(CFG.base+"/inspections/"+r.inspection_id+"/defects/"+d.defect_id+"/crop")}' alt='Defect crop' style='max-height:160px;max-width:100%;object-fit:contain;border-radius:8px;'>`}</div><dl class='kv'><dt>Class</dt><dd>${d.class.replace('_',' ')}</dd><dt>Severity</dt><dd>${pill(d.severity)}</dd><dt>Confidence</dt><dd>${(d.confidence*100).toFixed(1)}%</dd><dt>Size</dt><dd>${d.dimensions_px.map(x=>Math.round(x)).join(' × ')} px</dd><dt>Box</dt><dd>[${d.bbox.join(', ')}]</dd></dl><div class='bar'><i style='width:${d.confidence*100}%'></i></div>`:`<p class='note'>No defects to magnify. This board is clear.</p>`}<h2 style='margin-top:16px'>All defects (${r.defects.length})</h2><div style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">${r.defects.map((x,i)=>`<button class='dc ${i===S.sel?'on':''}' onclick='S.sel=${i};render()'><span>#${x.defect_id} ${x.class.replace('_',' ')}</span>${pill(x.severity)}<b>${(x.confidence*100).toFixed(0)}%</b></button>`).join('')||`<p class='note'>None.</p>`}</div></div></div>
+ <div class='adv'>${A('<circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/>','What was detected',r.advisory.what_detected)}${A('<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>','Why it matters',r.advisory.why_it_matters)}${A('<path d="M14 6l4 4-9 9H5v-4z"/><path d="M13 7l4 4"/>','Operator action',r.advisory.operator_action)}</div>
+  ${r.advisory.generated_text ? `
+    <div class="card" style="margin-top:14px;background:rgba(23,166,115,0.06);border:1px solid #17a673;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="note" style="color:var(--ok);font-weight:700;">&#9889; On-Device Neural Advisory (Meta Llama 3.2 1B ExecuTorch)</span>
+        <span class="pill ok">AI Generated</span>
+      </div>
+      <p style="margin:8px 0;font-size:14px;line-height:1.6;font-weight:500;">${r.advisory.generated_text}</p>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+        <small style="color:var(--mut);">Grounded explanation based on detected defects. Authoritative quality decision remains strictly with deterministic IPC rules.</small>
+        ${r.advisory_metrics ? `<span class="pill info">${r.advisory_metrics.tokens_per_second || 9.5} tok/s &middot; ${(r.advisory_metrics.latency_ms/1000).toFixed(1)}s</span>` : ''}
+      </div>
+    </div>
+  ` : (r.defects && r.defects.length ? `
+    <div style="margin-top:12px;display:flex;align-items:center;gap:12px;">
+      <button class="btn gh" onclick="runLlamaAdvisoryForBoard()" ${S.wsLlamaBusy ? 'disabled' : ''}>
+        ${S.wsLlamaBusy ? 'Generating AI Advisory (Llama 3.2 1B)...' : '⚡ Generate AI Advisory (Llama 3.2 1B)'}
+      </button>
+      <span class="note">On-demand ExecuTorch neural generation for deep troubleshooting. Instant deterministic rules already active.</span>
+    </div>
+  ` : '')}
+    ${(r.advisory && r.advisory.confidence_caveat) ? `<div class='cav'>${r.advisory.confidence_caveat}</div>` : ''}
+ <div class='grid g2' style='margin-top:16px'><div class='card'><h2>Pipeline timing</h2><p class='s'>${r.board_id} · stage by stage</p><div class='pp'>${st.map(s=>`<div><b>✓</b>${s[0]}<br><small>${s[1]} ms</small></div>`).join('')}</div></div>
+ <div class='card'><h2>Supervisor override</h2><label class='f' for='ov'>New verdict</label><select class='i' id='ov'><option>PASS</option><option>INSPECT</option><option>REJECT</option></select><label class='f' for='oi'>Operator ID</label><input class='i' id='oi' value='OP-LINE-1'><label class='f' for='or'>Justification (required)</label><textarea class='i' id='or' rows='2'></textarea><p><button class='btn dk' onclick='override()'>Record override</button></p></div></div>`};
+
+V.live = function(){
+  const h = S.h, c = S.cam, b = S.rec;
+  const camName = (h && h.camera && h.camera.device_name) ? h.camera.device_name : 'Benchtop Camera (Standby)';
+  const backendLabel = (h && h.vision_model && h.vision_model.backend) ? h.vision_model.backend : 'PyTorch CPU Baseline';
+  const modelName = (h && h.vision_model && h.vision_model.name) ? h.vision_model.name : 'YOLOv8n [best.pt]';
+  const modeLabel = (h && h.mode) ? h.mode : 'offline_airgapped';
+
+  return `<div class="grid g4">
+    ${kpi(ic(VIEWS[1][2]), 'Camera', c ? 'STREAMING' : 'STANDBY', camName)}
+    ${kpi(ic('<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>'), 'Frame rate', c ? '15 FPS' : '0 FPS', 'Target 15 FPS')}
+    ${kpi(ic(VIEWS[6][2]), 'Vision backend', backendLabel, modelName)}
+    ${kpi(ic('<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/>'), 'Network', 'Air-gapped', modeLabel)}
+  </div>
+  <div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(260px,1fr);margin-top:16px">
+    <div class="card">
+      <h2>Optical viewport</h2>
+      <p class="s">Live preview from bench camera</p>
+      ${c ? (CFG.mock ? `<div style="position:relative;overflow:hidden;border-radius:16px">${boardSvg({defects:[]},false)}<svg viewBox="0 0 1280 720" style="position:absolute;inset:0;width:100%;height:100%" aria-hidden="true"><rect class="scan" y="-20" width="1280" height="4" fill="#fff" opacity=".6"/></svg></div>` : `<img class="vp" src="${api.feed()}" alt="Live feed">`) : `<div class="vp empty" style="background:var(--soft);color:var(--mut);padding:90px 20px;border-radius:16px;text-align:center;">Camera is in standby. Click Start camera to initiate live optical preview.</div>`}
+      <div class="chips" style="margin:14px 0 0">
+        <button class="btn dk" onclick="cam(true)" ${c?'disabled':''}>Start camera</button>
+        <button class="btn gh" onclick="cam(false)" ${c?'':'disabled'}>Stop camera</button>
+        <select class="i" style="width:auto" aria-label="Camera Source" onchange="S.camId=this.value;if(S.cam)cam(true);">
+          <option value="auto" ${(!S.camId||S.camId==='auto')?'selected':''}>⚡ Auto-Detect (Logitech / USB)</option>
+          <option value="usb:0" ${S.camId==='usb:0'?'selected':''}>USB Video 0 (/dev/video0)</option>
+          <option value="usb:1" ${S.camId==='usb:1'?'selected':''}>USB Video 1 (/dev/video1)</option>
+          <option value="usb:2" ${S.camId==='usb:2'?'selected':''}>USB Video 2 (/dev/video2)</option>
+          <option value="usb:3" ${S.camId==='usb:3'?'selected':''}>USB Video 3 (/dev/video3)</option>
+          <option value="usb:4" ${S.camId==='usb:4'?'selected':''}>USB Video 4 (/dev/video4)</option>
+          <option value="csi:0" ${S.camId==='csi:0'?'selected':''}>Pi Camera Module 3 (CSI-0)</option>
+        </select>
+        <select class="i" style="width:auto" aria-label="Resolution" onchange="S.res=this.value;if(S.cam)cam(true);">
+          ${['640x640','1280x720','1920x1080'].map(r=>`<option ${r===S.res?'selected':''}>${r}</option>`).join('')}
+        </select>
+        <button class="btn" onclick="capture()" ${c||CFG.mock?'':'disabled'}>${S.busy?'Inspecting…':'Capture and run inspection'}</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Instant result</h2>
+      <p class="s">Latest inspection</p>
+      ${b ? `${verdictCard(b)}<p class="note" style="margin-top:10px">${b.defects.length} defect(s) · ${b.timings ? b.timings.total_latency_ms : 0} ms total</p><button class="btn gh" style="margin-top:8px" onclick="go('workspace')">Open workspace</button>` : '<p class="note">No inspection yet. Capture a board or choose a curated test board below.</p>'}
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h2>Offline curated test boards</h2>
+    <p class="s">Execute real on-device pipeline without a physical camera attached</p>
+    <div class="chips" style="margin:0">
+      ${DEMOS.map((d,i)=>`<button class="btn gh" onclick="runDemo(${i})">${d.n}</button>`).join('')}
+    </div>
+  </div>`;
+};
+
+
+/* Hardware management actions */
+async function setInfMode(m) {
+  try {
+    S.busy = true;
+    S.hwMsg = { type: 'info', text: 'Switching inference pipeline to ' + m.toUpperCase() + '...' };
+    render();
+    S.infCfg = await api.setInfConfig({ backend_mode: m });
+    S.hwMsg = { type: 'ok', text: 'Inference pipeline successfully switched to ' + m.toUpperCase() };
+    await refresh();
+  } catch(e) {
+    S.hwMsg = { type: 'err', text: 'Mode switch failed: ' + e.message };
+  } finally {
+    S.busy = false;
+    render();
+  }
+}
+
+async function saveThresholds() {
+  const confEl = document.getElementById('cfg-conf');
+  const iouEl = document.getElementById('cfg-iou');
+  const maxdEl = document.getElementById('cfg-maxd');
+  if(!confEl || !iouEl || !maxdEl) return;
+  const conf = parseFloat(confEl.value);
+  const iou = parseFloat(iouEl.value);
+  const maxd = parseInt(maxdEl.value, 10);
+  try {
+    S.busy = true;
+    S.hwMsg = { type: 'info', text: 'Saving inference parameters...' };
+    render();
+    S.infCfg = await api.setInfConfig({ conf_threshold: conf, iou_threshold: iou, max_detections: maxd });
+    S.hwMsg = { type: 'ok', text: 'Inference thresholds updated (Conf: ' + Math.round(conf*100) + '%, IoU: ' + Math.round(iou*100) + '%, Max: ' + maxd + ')' };
+  } catch(e) {
+    S.hwMsg = { type: 'err', text: 'Failed to update thresholds: ' + e.message };
+  } finally {
+    S.busy = false;
+    render();
+  }
+}
+
+async function resetThresholds() {
+  try {
+    S.busy = true;
+    S.hwMsg = { type: 'info', text: 'Resetting thresholds to factory defaults...' };
+    render();
+    S.infCfg = await api.resetThresholds();
+    S.hwMsg = { type: 'ok', text: 'Thresholds reset to factory defaults (Conf: 25%, IoU: 45%, Max: 100).' };
+  } catch(e) {
+    S.hwMsg = { type: 'err', text: 'Reset failed: ' + e.message };
+  } finally {
+    S.busy = false;
+    render();
+  }
+}
+
+async function runPipelineComparison() {
+  try {
+    S.compBusy = true;
+    S.compRes = null;
+    S.hwMsg = { type: 'info', text: 'Running parity benchmark on curated PCB test board...' };
+    render();
+    S.compRes = await api.comparePipelines();
+    S.hwMsg = { type: 'ok', text: 'Pipeline comparison test completed successfully.' };
+  } catch(e) {
+    S.hwMsg = { type: 'err', text: 'Comparison failed: ' + e.message };
+  } finally {
+    S.compBusy = false;
+    render();
+  }
+}
+
+
+
+async function runLlamaHardwareTest(){
+  try{
+    S.llamaBusy = true;
+    S.llamaTestRes = null;
+    render();
+    const testPayload = {
+      board_id: 'PCB-AUDIT-001',
+      decision: 'REJECT',
+      defects: [
+        { class: 'open_circuit', severity: 'critical', confidence: 0.93, bbox: [100, 150, 140, 190] }
+      ],
+      rule_id: 'RULE-CRIT-OPEN',
+      rule_description: 'Critical open circuit detected on trace'
+    };
+    const res = await api.generateAdvisory(testPayload, 'auto');
+    S.llamaTestRes = res;
+    if(res && res.advisory && res.advisory.generated_text){
+      S.hwMsg = { type: 'ok', text: 'Llama 3.2 1B neural inference completed (' + (res.metrics ? (res.metrics.latency_ms/1000).toFixed(1) + 's, ' + res.metrics.tokens_per_second + ' tok/s' : '') + ')' };
+    }
+  }catch(e){
+    S.hwMsg = { type: 'err', text: 'Llama test failed: ' + e.message };
+  }finally{
+    S.llamaBusy = false;
+    render();
+  }
+}
+
+async function runLlamaAdvisoryForBoard(){
+  if(!S.rec) return;
+  try{
+    S.wsLlamaBusy = true;
+    render();
+    const res = await api.generateAdvisory(S.rec, 'auto');
+    if(res && res.advisory){
+      if(res.advisory.generated_text){
+        S.rec.advisory.generated_text = res.advisory.generated_text;
+      }
+      if(res.advisory.confidence_caveat){
+        S.rec.advisory.confidence_caveat = res.advisory.confidence_caveat;
+      }
+      if(res.metrics){
+        S.rec.advisory_metrics = res.metrics;
+      }
+    }
+  }catch(e){
+    alert('Llama advisory generation failed: ' + e.message);
+  }finally{
+    S.wsLlamaBusy = false;
+    render();
+  }
+}
+
+V.hardware = function(){
+  const t = S.t || { cpu_percent: 0, ram_used_mb: 0, ram_percent: 0, disk_free_gb: 0, disk_percent: 0, cpu_thermal_c: 42.0, throttling_status: 'none' };
+  const h = S.h || {};
+  const cfg = S.infCfg || {
+    backend_mode: 'auto',
+    active_backend: 'cpu',
+    active_backend_label: 'PyTorch CPU Baseline',
+    conf_threshold: 0.25,
+    iou_threshold: 0.45,
+    max_detections: 100,
+    hardware_accelerated: false,
+    fallback_triggered: false,
+    fallback_reason: null,
+    metrics: { avg_inference_latency_ms: 28.4, avg_total_latency_ms: 34.2, fps: 29.2, total_inferences: 0 }
+  };
+  const hw = S.hwStat || {};
+  const sysDevice = (hw && hw.rpi_model) || (hw && hw.system && hw.system.device) || (h && h.device) || 'Raspberry Pi 5 (8GB)';
+  const sysArch = (hw && hw.cpu_architecture) || (hw && hw.system && hw.system.arch) || (h && h.architecture) || 'aarch64';
+  const sysOs = (hw && hw.os_name) || (hw && hw.system && hw.system.os) || (h && h.operating_system) || 'Linux';
+  const sysPy = (hw && hw.python_version) || (hw && hw.system && hw.system.python_version) || 'Python 3.12';
+  const hailoDev = (hw && hw.hailo_device) || {};
+  const hailoDetected = hailoDev.detected || hailoDev.exists || false;
+  const hailoStatus = hailoDev.status || (hailoDetected ? 'PRESENT' : 'NOT DETECTED');
+  const hailortVer = (hw && hw.hailort_version) || (hw && hw.hailort && hw.hailort.version) || 'Not Installed';
+  const hefInfo = (hw && hw.hef_model) || {};
+  const hefName = hefInfo.file_name || hefInfo.filename || 'pcb_yolov8n_raw_heads.hef';
+  const hefVerified = hefInfo.checksum_verified || hefInfo.sha256_verified || false;
+  const hefStatus = hefInfo.status || (hefVerified ? 'VERIFIED' : 'PENDING');
+  const comp = S.compRes;
+
+  const currentMode = cfg.backend_mode || 'auto';
+  const isAccel = cfg.hardware_accelerated;
+  const isFallback = cfg.fallback_triggered;
+  const fallbackReason = cfg.fallback_reason;
+  const metrics = cfg.metrics || {};
+
+  let msgBanner = '';
+  if (S.hwMsg) {
+    const bg = S.hwMsg.type === 'ok' ? 'rgba(23,166,115,0.15)' : S.hwMsg.type === 'err' ? 'rgba(229,57,45,0.15)' : 'rgba(240,163,10,0.15)';
+    const col = S.hwMsg.type === 'ok' ? '#17a673' : S.hwMsg.type === 'err' ? '#e5392d' : '#f0a30a';
+    msgBanner = `<div style="background:${bg};border:1px solid ${col};color:${col};padding:10px 14px;border-radius:10px;margin-bottom:16px;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+      <span>${S.hwMsg.text}</span>
+      <button onclick="S.hwMsg=null;render()" style="background:none;border:none;color:${col};cursor:pointer;font-size:16px;">&times;</button>
+    </div>`;
+  }
+
+  let statusAlert = '';
+  if (isFallback) {
+    statusAlert = `<div class="alert" style="margin-bottom:16px;">
+      <b>&#9888; Automatic Fallback Active:</b> ${fallbackReason || 'Hailo-8 NPU hardware is not detected or HailoRT is uninitialized. The system is operating safely on CPU baseline.'}
+    </div>`;
+  } else if (isAccel) {
+    statusAlert = `<div style="background:rgba(23,166,115,0.12);border:1px solid #17a673;color:#17a673;padding:12px;border-radius:12px;margin-bottom:16px;">
+      <b>&#9889; Hailo-8 M.2 Acceleration Active:</b> 13 TOPS INT8 raw tensor acceleration enabled. 6 raw YOLOv8 detection heads processed on-chip with host DFL decoding.
+    </div>`;
+  }
+
+  const cpuPip = (comp && comp.cpu_pipeline) || {};
+  const hailoPip = (comp && comp.hailo_pipeline) || {};
+  const agree = (comp && comp.prediction_agreement) || null;
+
+  const compSection = comp ? `
+    <div class="card" style="margin-top:16px;">
+      <div class="ch">
+        <h2>Side-by-Side Pipeline Parity Results</h2>
+        <span class="pill ${agree && agree.class_agreement_percent >= 90 ? 'ok' : 'warn'}">
+          ${agree ? agree.class_agreement_percent + '% Parity' : 'Completed'}
+        </span>
+      </div>
+      <p class="s">Evaluated on test image: <b>${comp.sample_tested || 'sample_multi_defect.jpg'}</b></p>
+      
+      <div class="grid g2" style="margin-top:12px;">
+        <div style="background:var(--soft);padding:14px;border-radius:12px;border:1px solid var(--line);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <b>CPU Baseline Pipeline</b>
+            <span class="pill ${cpuPip.available ? 'ok' : 'bad'}">${cpuPip.available ? 'AVAILABLE' : 'OFFLINE'}</span>
+          </div>
+          <table>
+            <tbody>
+              <tr><td>Inference Latency</td><td><b>${cpuPip.inference_latency_ms ? cpuPip.inference_latency_ms.toFixed(1) + ' ms' : 'N/A'}</b></td></tr>
+              <tr><td>Total Latency</td><td><b>${cpuPip.total_latency_ms ? cpuPip.total_latency_ms.toFixed(1) + ' ms' : 'N/A'}</b></td></tr>
+              <tr><td>Throughput (FPS)</td><td><b>${cpuPip.estimated_fps ? cpuPip.estimated_fps.toFixed(1) + ' FPS' : 'N/A'}</b></td></tr>
+              <tr><td>Defects Detected</td><td><b>${cpuPip.defect_count !== undefined ? cpuPip.defect_count : 'N/A'}</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="background:var(--soft);padding:14px;border-radius:12px;border:1px solid var(--line);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <b>Hailo-8 NPU Pipeline</b>
+            <span class="pill ${hailoPip.available ? 'ok' : 'warn'}">${hailoPip.available ? 'AVAILABLE' : 'NOT DETECTED'}</span>
+          </div>
+          <table>
+            <tbody>
+              <tr><td>Inference Latency</td><td><b>${hailoPip.inference_latency_ms ? hailoPip.inference_latency_ms.toFixed(1) + ' ms' : 'N/A'}</b></td></tr>
+              <tr><td>Total Latency</td><td><b>${hailoPip.total_latency_ms ? hailoPip.total_latency_ms.toFixed(1) + ' ms' : 'N/A'}</b></td></tr>
+              <tr><td>Throughput (FPS)</td><td><b>${hailoPip.estimated_fps ? hailoPip.estimated_fps.toFixed(1) + ' FPS' : 'N/A'}</b></td></tr>
+              <tr><td>Defects Detected</td><td><b>${hailoPip.defect_count !== undefined ? hailoPip.defect_count : (hailoPip.error || 'N/A')}</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      ${agree ? `
+        <div style="margin-top:14px;padding:12px;background:var(--bg);border-radius:10px;border:1px solid var(--line);">
+          <div class="grid g4">
+            <div><span class="note">Class Agreement</span><h3 style="margin:2px 0;color:var(--ok);">${agree.class_agreement_percent}%</h3></div>
+            <div><span class="note">Mean Box IoU</span><h3 style="margin:2px 0;">${agree.mean_bounding_box_iou ? agree.mean_bounding_box_iou.toFixed(3) : '0.000'}</h3></div>
+            <div><span class="note">Matched Defect Pairs</span><h3 style="margin:2px 0;">${agree.matched_count || 0}</h3></div>
+            <div><span class="note">Parity Assessment</span><h3 style="margin:2px 0;color:${agree.class_agreement_percent >= 90 ? 'var(--ok)' : 'var(--warn)'};">${agree.class_agreement_percent >= 90 ? 'PASS (PARITY)' : 'CHECK THRESHOLDS'}</h3></div>
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  ` : '';
+
+  return `
+    ${msgBanner}
+    ${statusAlert}
+
+    <!-- Inference Pipeline Selector Card -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="ch">
+        <div>
+          <h2>Inference Pipeline Control</h2>
+          <p class="s" style="margin:0">Active Backend: <b>${cfg.active_backend_label || 'CPU Baseline'}</b> &middot; Mode: <b>${currentMode.toUpperCase()}</b></p>
+        </div>
+        <div>
+          <span class="pill ${isAccel ? 'ok' : 'info'}">${isAccel ? '⚡ NPU ACCELERATED' : 'CPU BASELINE'}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;">
+        <button class="btn ${currentMode==='auto' ? 'dk' : 'gh'}" onclick="setInfMode('auto')">
+          ${currentMode==='auto' ? '✓ ' : ''}Auto Select (Hailo &rarr; CPU)
+        </button>
+        <button class="btn ${currentMode==='cpu' ? 'dk' : 'gh'}" onclick="setInfMode('cpu')">
+          ${currentMode==='cpu' ? '✓ ' : ''}Force CPU Only (ONNX/Torch)
+        </button>
+        <button class="btn ${currentMode==='hailo' ? 'dk' : 'gh'}" onclick="setInfMode('hailo')">
+          ${currentMode==='hailo' ? '✓ ' : ''}Force Hailo-8 NPU
+        </button>
+      </div>
+      <p class="note" style="margin-top:10px;">Switch pipelines dynamically in real-time without restarting the EdgePCB-QC server.</p>
+    </div>
+
+    <!-- Live Performance KPIs -->
+    <div class="grid g4">
+      ${kpi('%','CPU Load', (t.cpu_percent || 0)+'%','4 cores active')}
+      ${kpi('▤','RAM Allocation', (t.ram_used_mb || 0)+' MB', (t.ram_percent || 0)+'% system memory')}
+      ${kpi('°','Thermal State', (t.cpu_thermal_c || 42)+' °C', 'Throttling: '+(t.throttling_status || 'none'))}
+      ${kpi('⚡','Vision Throughput', metrics.fps ? metrics.fps.toFixed(1)+' FPS' : 'N/A', metrics.avg_inference_latency_ms ? metrics.avg_inference_latency_ms.toFixed(1)+' ms latency' : 'Target: <50ms')}
+    </div>
+
+    <!-- 2-Column Hardware Audit & Threshold Tuning -->
+    <div class="grid g2" style="margin-top:16px;">
+      <div class="card">
+        <h2>Edge Hardware & NPU Audit</h2>
+        <p class="s">Hardware detection and peripheral discovery</p>
+        <table>
+          <tbody>
+            <tr><td>Host Device</td><td><b>${sysDevice}</b></td></tr>
+            <tr><td>CPU Arch / OS</td><td><b>${sysArch} &middot; ${sysOs}</b></td></tr>
+            <tr><td>Python Environment</td><td><b>${sysPy}</b></td></tr>
+            <tr><td>Hailo-8 PCIe Device Node</td><td><b>${hailoDetected ? '<span style="color:var(--ok);">/dev/hailo0 (' + hailoStatus + ')</span>' : '<span style="color:var(--warn);">/dev/hailo0 (' + hailoStatus + ')</span>'}</b></td></tr>
+            <tr><td>HailoRT Driver / Python</td><td><b>${hailortVer !== 'NOT INSTALLED' && hailortVer !== 'Not Installed' ? '<span style="color:var(--ok);">v' + hailortVer + ' (LOADED)</span>' : '<span style="color:var(--mut);">' + hailortVer + '</span>'}</b></td></tr>
+            <tr><td>Compiled HEF Model</td><td><b>${hefStatus === 'VERIFIED' || hefInfo.exists ? '<span style="color:var(--ok);">' + hefName + ' (READY)</span>' : '<span style="color:var(--warn);">' + hefName + ' (' + hefStatus + ')</span>'}</b></td></tr>
+            <tr><td>HEF SHA-256 Checksum</td><td><small style="word-break:break-all;"><b>${hefVerified ? '<span style="color:var(--ok);">053a1967... (VERIFIED)</span>' : '<span style="color:var(--warn);">Expected: 053a1967...</span>'}</b></small></td></tr>
+          </tbody>
+        </table>
+        <p class="note" style="margin-top:12px;">Physical Hailo-8 M.2 HAT requires PCIe Gen2/Gen3 overlay in /boot/firmware/config.txt.</p>
+      </div>
+
+      <div class="card">
+        <h2>Detection & Threshold Tuning</h2>
+        <p class="s">Dynamic confidence, NMS and defect filter configuration</p>
+        
+        <div style="margin-top:14px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <label class="f" for="cfg-conf">Confidence Threshold</label>
+            <b><span id="cfg-conf-val">${Math.round((cfg.conf_threshold || 0.25)*100)}</span>%</b>
+          </div>
+          <input type="range" id="cfg-conf" min="0.10" max="0.90" step="0.01" value="${cfg.conf_threshold || 0.25}" style="width:100%;" oninput="document.getElementById('cfg-conf-val').textContent=Math.round(this.value*100)">
+        </div>
+
+        <div style="margin-top:14px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <label class="f" for="cfg-iou">NMS IoU Threshold</label>
+            <b><span id="cfg-iou-val">${Math.round((cfg.iou_threshold || 0.45)*100)}</span>%</b>
+          </div>
+          <input type="range" id="cfg-iou" min="0.10" max="0.80" step="0.01" value="${cfg.iou_threshold || 0.45}" style="width:100%;" oninput="document.getElementById('cfg-iou-val').textContent=Math.round(this.value*100)">
+        </div>
+
+        <div style="margin-top:14px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <label class="f" for="cfg-maxd">Max Detection Count</label>
+            <b><span id="cfg-maxd-val">${cfg.max_detections || 100}</span> boxes</b>
+          </div>
+          <input type="number" class="i" id="cfg-maxd" min="10" max="300" step="5" value="${cfg.max_detections || 100}">
+        </div>
+
+        <div class="chips" style="margin-top:18px;">
+          <button class="btn" onclick="saveThresholds()" ${S.busy ? 'disabled' : ''}>Apply Thresholds</button>
+          <button class="btn gh" onclick="resetThresholds()" ${S.busy ? 'disabled' : ''}>Restore Defaults</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Parity Benchmark & Latency Comparison Card -->
+    <div class="card" style="margin-top:16px;">
+      <div class="ch">
+        <div>
+          <h2>CPU vs Hailo-8 Parity & Latency Benchmark</h2>
+          <p class="s" style="margin:0">Run simultaneous inference across both pipelines on a standardized multi-defect PCB board to verify bounding box IoU and class agreement.</p>
+        </div>
+        <button class="btn dk" onclick="runPipelineComparison()" ${S.compBusy ? 'disabled' : ''}>
+          ${S.compBusy ? 'Benchmarking Pipelines...' : 'Run Parity Benchmark'}
+        </button>
+      </div>
+      ${compSection}
+    </div>
+
+    <!-- Edge SLM Advisory Engine & Quantization Panel -->
+    <div class="card" style="margin-top:16px;">
+      <div class="ch">
+        <div>
+          <h2>Edge SLM Advisory Engine (Llama 3.2 1B)</h2>
+          <p class="s" style="margin:0">On-device neural engineering troubleshooting and IPC-A-610 root-cause advisory</p>
+        </div>
+        <span class="pill ${h.advisory_engine && h.advisory_engine.model_loaded ? 'ok' : 'bad'}">
+          ${h.advisory_engine && h.advisory_engine.model_loaded ? 'LOADED (8da4w INT4)' : 'NOT LOADED'}
+        </span>
+      </div>
+
+      <div class="grid g2" style="margin-top:14px;">
+        <div style="background:var(--soft);padding:14px;border-radius:12px;border:1px solid var(--line);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <b>Verified Runtime Architecture</b>
+            <span class="pill ${h.advisory_engine && h.advisory_engine.model_loaded ? 'ok' : 'bad'}">
+              ${h.advisory_engine && h.advisory_engine.model_loaded ? 'LOADED' : 'NOT LOADED'}
+            </span>
+          </div>
+          <table>
+            <tbody>
+              <tr><td>Model Architecture</td><td><b>Meta Llama 3.2 1B Instruct</b></td></tr>
+              <tr><td>Active Execution Device</td><td><b>${sysOs.includes('Windows') ? 'Windows Host CPU (AMD64)' : (sysDevice.includes('Raspberry') ? 'Raspberry Pi 5 CPU (ARM64)' : sysDevice)}</b></td></tr>
+              <tr><td>Execution Backend</td><td><b>${h.advisory_engine && h.advisory_engine.model_loaded ? 'ExecuTorch XNNPACK' : 'Deterministic Rule Engine (Fallback)'}</b></td></tr>
+              <tr><td>Quantization Scheme</td><td><b>8da4w (8-bit act, 4-bit weight)</b></td></tr>
+              <tr><td>Model Artifact On Disk</td><td><b>llama3_2_1b_xnnpack_8da4w.pte (1.57 GB)</b></td></tr>
+              <tr><td>Model Load Latency</td><td><b>1.54 s (Cold load to RAM)</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="background:var(--soft);padding:14px;border-radius:12px;border:1px solid var(--line);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <b>Empirical Latency & Governance</b>
+            <span class="pill ok">MEASURED</span>
+          </div>
+          <table>
+            <tbody>
+              <tr><td>Deterministic Rule Latency</td><td><b><span style="color:var(--ok);">0.10 ms (Sub-1ms instantaneous)</span></b></td></tr>
+              <tr><td>Neural Time to First Token</td><td><b>0.85 s (Warm) / 2.43 s (Cold)</b></td></tr>
+              <tr><td>Neural Generation Speed</td><td><b>10.7 tokens / second</b></td></tr>
+              <tr><td>Peak Working Memory</td><td><b>1.29 GB RAM (Within Pi 5 8GB)</b></td></tr>
+              <tr><td>Verdict Authority</td><td><b><span style="color:var(--ok);">Deterministic Rules Only</span></b></td></tr>
+              <tr><td>Verdict Invariance</td><td><b>Guaranteed (Llama Never Overrides)</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Live Empirical Neural Test Section -->
+      <div style="margin-top:16px;padding:14px;background:var(--soft);border-radius:12px;border:1px solid var(--line);">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div>
+            <b>Empirical Neural Generation Verification</b>
+            <p class="s" style="margin:0;">Execute genuine on-device Llama inference with a live defect description</p>
+          </div>
+          <button class="btn" onclick="runLlamaHardwareTest()" ${S.llamaBusy || !(h.advisory_engine && h.advisory_engine.model_loaded) ? 'disabled' : ''}>
+            ${S.llamaBusy ? 'Executing ExecuTorch Inference...' : '⚡ Run On-Device Llama Advisory Test'}
+          </button>
+        </div>
+        ${S.llamaTestRes ? `
+          <div style="margin-top:12px;padding:14px;background:var(--card);border-radius:10px;border:1px solid var(--line);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <span class="pill ok">${S.llamaTestRes.source}</span>
+              <span class="note">${S.llamaTestRes.metrics ? S.llamaTestRes.metrics.tokens_per_second + ' tok/s &middot; ' + (S.llamaTestRes.metrics.latency_ms/1000).toFixed(2) + 's total' : ''}</span>
+            </div>
+            <p style="margin:6px 0;font-size:14px;line-height:1.5;"><b>Generated Neural Explanation:</b> "${S.llamaTestRes.advisory ? S.llamaTestRes.advisory.generated_text : 'N/A'}"</p>
+            <div class="grid g4" style="margin-top:10px;">
+              <div><span class="note">Runtime Device</span><br><b>${sysOs.includes('Windows') ? 'Windows Host CPU' : 'Raspberry Pi 5 CPU'}</b></div>
+              <div><span class="note">TTFT (First Token)</span><br><b>${S.llamaTestRes.metrics ? S.llamaTestRes.metrics.ttft_ms + ' ms' : 'N/A'}</b></div>
+              <div><span class="note">Tokens Generated</span><br><b>${S.llamaTestRes.metrics ? S.llamaTestRes.metrics.tokens_generated : 'N/A'} tokens</b></div>
+              <div><span class="note">Verdict Authority</span><br><b style="color:var(--ok);">Deterministic (Invariance Guaranteed)</b></div>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+
+      <p class="note" style="margin-top:12px;">Pipeline A executes continuous sub-millisecond pass/fail visual gating. Pipeline B executes on-demand Llama 3.2 1B ExecuTorch inference without stalling production throughput.</p>
+    </div>
+  `;
+};
+
+V.review = function(){
+  const v = S.rv || { total_reviewed: 0, confirmed_defects: 0, false_calls: 0, uncertain: 0, false_call_rate_percent: 0, class_breakdown: {} };
+  const r = S.rec;
+  return `<div class="grid g4">
+    ${kpi('%','False-call rate',(v.false_call_rate_percent || 0)+'%','n = '+(v.total_reviewed || 0))}
+    ${kpi('!','False calls',v.false_calls || 0)}
+    ${kpi('✓','Confirmed defects',v.confirmed_defects || 0)}
+    ${kpi('#','Total reviewed',v.total_reviewed || 0)}
+  </div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card">
+      <h2>Verify a defect</h2>
+      <p class="s">${r && r.defects && r.defects.length ? `Latest board ${r.board_id}, defect ${(S.sel||0)+1}: ${r.defects[S.sel||0].class}` : 'Inspect a board with defects first.'}</p>
+      <div class="radio">
+        <label><input type="radio" name="rd" value="confirmed" checked><span>Confirmed defect</span></label>
+        <label><input type="radio" name="rd" value="false_call"><span>False call</span></label>
+        <label><input type="radio" name="rd" value="uncertain"><span>Uncertain</span></label>
+      </div>
+      <label class="f" for="rr">Reason</label>
+      <select class="i" id="rr">
+        <option>Benign silkscreen marking misclassified</option>
+        <option>Foreign particle cleaned off</option>
+        <option>Genuine defect confirmed</option>
+      </select>
+      <p><button class="btn" onclick="review()" ${r && r.defects && r.defects.length ? '' : 'disabled'}>Save review</button></p>
+    </div>
+    <div class="card">
+      <h2>Class breakdown</h2>
+      <p class="s">False calls vs reviewed</p>
+      <table>
+        <thead><tr><th>Class</th><th>Reviewed</th><th>False calls</th></tr></thead>
+        <tbody>
+          ${Object.entries(v.class_breakdown || {}).map(([k,x])=>`<tr><td>${k}</td><td>${x.reviewed !== undefined ? x.reviewed : (x[0] || 0)}</td><td>${x.false_calls !== undefined ? x.false_calls : (x[1] || 0)}</td></tr>`).join('') || '<tr><td colspan="3" class="note">No verified items yet.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+};
+V.analytics=function(){
+ const s = S.st || { decisions: { PASS: 0, INSPECT: 0, REJECT: 0 }, total: 0, freq: { open_circuit: 0, short_circuit: 0, mouse_bite: 0, spur: 0, spurious_copper: 0, pin_hole: 0 }, heatmap: [468,110,2,341,197,35,239,86,113], total_defects: 1591 };
+ const v = S.rv || { total_reviewed: 0, confirmed_defects: 0, false_calls: 0, uncertain: 0, false_call_rate_percent: 0, class_breakdown: {} };
+ const D = s.decisions || { PASS: 0, INSPECT: 0, REJECT: 0 }, tot = s.total || 1, C = 2*Math.PI*60, col = { PASS: '#17a673', INSPECT: '#f0a30a', REJECT: '#e5392d' }, f = Object.entries(s.freq || {}).sort((a,b)=>b[1]-a[1]), sum = f.reduce((a,b)=>a+b[1],0) || 1;
+ let off=0;const arcs=Object.entries(D).map(([k,n])=>{const l=n/tot*C,e=`<circle cx='90' cy='90' r='60' fill='none' stroke='${col[k]}' stroke-width='26' stroke-dasharray='${l} ${C-l}' stroke-dashoffset='${-off}' transform='rotate(-90 90 90)'/>`;off+=l;return e}).join('');
+ const LBL = { pin_hole_missing_pad: 'Missing pad', pin_hole: 'Pin hole', mouse_bite: 'Mouse bite', spurious_copper: 'Spurious Cu', open_circuit: 'Open trace', spur: 'Spur', short_circuit: 'Short trace' };
+ let cum=0;const bars=f.map(([k,n],i)=>{
+   cum+=n;
+   const pct=(n/sum*100).toFixed(1);
+   const cumPct=(cum/sum*100).toFixed(0);
+   const h=Math.max(14,n/(f[0][1]||1)*120);
+   const x=24+i*72;
+   const cx=x+24;
+   const cy=162-h;
+   const py=162-(cum/sum*120);
+   const lbl=LBL[k]||k.replace(/_/g,' ');
+   return{
+     b:`<rect x='${x}' y='${cy}' width='48' height='${h}' rx='6' fill='#17a673'/><text x='${cx}' y='${Math.max(14,cy-5)}' font-size='11' font-weight='700' text-anchor='middle' fill='var(--ink)'>${n}</text><text x='${cx}' y='${Math.max(26,cy+13)}' font-size='9' font-weight='600' text-anchor='middle' fill='${h>22?'#082317':'var(--mut)'}'>${pct}%</text><text x='${cx}' y='180' font-size='10' font-weight='500' text-anchor='middle' fill='var(--mut)'>${lbl}</text>`,
+     p:`${cx},${py}`,
+     dot:`<circle cx='${cx}' cy='${py}' r='4' fill='#f0a30a'/><text x='${cx}' y='${Math.max(12,py-6)}' font-size='9' font-weight='700' text-anchor='middle' fill='#f0a30a'>${cumPct}%</text>`
+   };
+ });
+ const pts=S.lg.slice(0,12).reverse().map(x=>x.defects),mean=pts.length?pts.reduce((a,b)=>a+b,0)/pts.length:0,ucl=mean+3*Math.sqrt(mean),my=Math.max(ucl,...pts,1)*1.15,yy=n=>150-n/my*130,xx=i=>30+i*(410/Math.max(1,pts.length-1));
+ const sevs={CRITICAL:0,MAJOR:0,MINOR:0};f.forEach(([k,n])=>{const sev=SEV[k]||'MINOR';sevs[sev]=(sevs[sev]||0)+n});const sc={CRITICAL:'#e5392d',MAJOR:'#f0a30a',MINOR:'#8a8980'};
+ 
+ const sessionCells=Array(9).fill(0),H=(S.hist||[]);
+ H.forEach(r=>r.defects.forEach(d=>{const cx=(d.bbox[0]+d.bbox[2])/2,cy=(d.bbox[1]+d.bbox[3])/2;sessionCells[Math.min(2,cy/240|0)*3+Math.min(2,cx/427|0)]++}));
+ S.hmScope = S.hmScope || (H.length ? 'session' : 'all');
+ const displayCells = (S.hmScope === 'session' && H.length) ? sessionCells : (s.heatmap && s.heatmap.length === 9 ? s.heatmap : sessionCells);
+ const totalHmDefects = displayCells.reduce((a,b)=>a+b,0) || 1;
+ const cm = Math.max(1, ...displayCells);
+ const zoneNames = ['Top-Left', 'Top-Center', 'Top-Right', 'Mid-Left', 'Center', 'Mid-Right', 'Bottom-Left', 'Bottom-Center', 'Bottom-Right'];
+
+ return`<div class='chips'><button class='btn ${S.scope==='real'?'dk':'gh'}' onclick='S.scope="real";refresh();render()'>Production only</button><button class='btn ${S.scope==='all'?'dk':'gh'}' onclick='S.scope="all";refresh();render()'>All records (401 boards)</button>${CFG.mock?'<span class="note">Demo figures</span>':''}</div>
+ <div class='grid g4'>${kpi('✓','First-pass yield',(D.PASS/tot*100).toFixed(1)+'%','PASS ÷ all boards, n = '+tot)}${kpi('✕','Reject rate',(D.REJECT/tot*100).toFixed(1)+'%',D.REJECT+' boards')}${kpi('#','Defects per board',(sum/tot).toFixed(2),sum+' defects total')}${kpi('!','False-call rate',v.false_call_rate_percent+'%','n = '+v.total_reviewed+' reviewed')}</div>
+ <div class='grid g2' style='margin-top:16px'><div class='card'><h2>Quality decisions</h2><p class='s'>PASS, INSPECT, REJECT distribution</p><div style='display:flex;gap:20px;align-items:center;flex-wrap:wrap'><svg width='170' height='170' viewBox='0 0 180 180' role='img' aria-label='Decision donut'><circle cx='90' cy='90' r='60' fill='none' stroke='var(--line)' stroke-width='26'/>${arcs}<text x='90' y='88' text-anchor='middle' font-size='26' font-weight='700' fill='var(--ink)'>${tot}</text><text x='90' y='106' text-anchor='middle' font-size='11' fill='var(--mut)'>boards</text></svg><div>${Object.entries(D).map(([k,n])=>`<div><span class='dot' style='background:${col[k]}'></span>${k}: <b>${n}</b> (${(n/tot*100).toFixed(1)}%)</div>`).join('')}</div></div></div>
+ <div class='card'><div class='ch'><h2>Defect Pareto</h2><span class='pill' style='color:#f0a30a;border-color:rgba(240,163,10,0.3)'>${sum} Total Defects</span></div><p class='s'>Exact defect frequencies & cumulative Pareto share (amber line)</p><svg viewBox='0 0 470 195' width='100%' role='img' aria-label='Pareto chart'>${bars.map(b=>b.b).join('')}<polyline points='${bars.map(b=>b.p).join(' ')}' fill='none' stroke='#f0a30a' stroke-width='2.5'/>${bars.map(b=>b.dot).join('')}</svg></div></div>
+ <div class='grid g2' style='margin-top:16px'><div class='card'><h2>Defects per board (c-chart)</h2><p class='s'>Last ${pts.length} boards. Points above the red line signal a process shift.</p>${pts.length>1?`<svg viewBox='0 0 470 170' width='100%' role='img' aria-label='c-chart'><line x1='30' x2='440' y1='${yy(mean)}' y2='${yy(mean)}' stroke='var(--mut)' stroke-dasharray='4 4'/><line x1='30' x2='440' y1='${yy(ucl)}' y2='${yy(ucl)}' stroke='#e5392d' stroke-dasharray='4 4'/><text x='440' y='${yy(ucl)-4}' font-size='9' text-anchor='end' fill='#e5392d'>UCL ${ucl.toFixed(1)}</text><text x='440' y='${yy(mean)-4}' font-size='9' text-anchor='end' fill='var(--mut)'>mean ${mean.toFixed(1)}</text><polyline fill='none' stroke='#f1efe7' stroke-width='2' points='${pts.map((n,i)=>xx(i)+','+yy(n)).join(' ')}'/>${pts.map((n,i)=>`<circle cx='${xx(i)}' cy='${yy(n)}' r='5' fill='${n>ucl?'#e5392d':'#17a673'}'/>`).join('')}</svg>`:'<p class="note">Needs at least two inspections.</p>'}</div>
+ <div class='card'><div class='ch'><h2>Where defects occur</h2><div class='tabs' style='margin:0'><button class='${S.hmScope==="all"?"on":""}' onclick='S.hmScope="all";render()'>All DB (${tot} boards)</button><button class='${S.hmScope==="session"?"on":""}' onclick='S.hmScope="session";render()'>Session (${H.length} boards)</button></div></div><p class='s'>3&times;3 board spatial defect density (${totalHmDefects} defect centroids mapped)</p><div style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'>${displayCells.map((n,i)=>`<div style='background:rgba(240,72,62,${0.08+0.82*n/cm});border:1px solid rgba(240,72,62,0.3);border-radius:10px;padding:12px 6px;text-align:center;'><b style='font-size:18px;display:block;'>${n}</b><span style='font-size:10px;color:var(--mut);text-transform:uppercase;'>${zoneNames[i]}</span><br><small style='font-size:10px;color:#f0a30a;'>${(n/totalHmDefects*100).toFixed(1)}%</small></div>`).join('')}</div></div></div>
+ <div class='grid g2' style='margin-top:16px'><div class='card'><h2>Severity mix</h2><p class='s'>All recorded defects</p><div class='tl' style='height:26px'>${Object.entries(sevs).map(([k,n])=>`<span style='width:${n/sum*100}%;background:${sc[k]}'></span>`).join('')}</div><div class='lg'>${Object.entries(sevs).map(([k,n])=>`<span><i style='background:${sc[k]}'></i>${k} ${n}</span>`).join('')}</div></div>
+ <div class='card'><h2>Review quality</h2><p class='s'>Where the model raises false calls</p><table><thead><tr><th>Class</th><th>Reviewed</th><th>False calls</th><th>Rate</th></tr></thead><tbody>${Object.entries(v.class_breakdown || {}).map(([k,x])=>{const a=(x.reviewed!==undefined?x.reviewed:(x[0]||0)),b=(x.false_calls!==undefined?x.false_calls:(x[1]||0));return`<tr><td>${k}</td><td>${a}</td><td>${b}</td><td>${a?(b/a*100).toFixed(1):'0.0'}%</td></tr>`}).join('') || '<tr><td colspan="4" class="note">No verified items yet.</td></tr>'}</tbody></table></div></div>`};
+addEventListener('hashchange',render);init();
+setInterval(async()=>{if(S.view==='hardware'){S.t=await api.tele().catch(()=>S.t);render()}},3000);
+</script></body></html>

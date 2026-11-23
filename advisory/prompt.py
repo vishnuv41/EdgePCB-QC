@@ -70,14 +70,14 @@ def format_compact_prompt(payload: Dict[str, Any]) -> str:
     board_id = payload.get("board_id", "PCB")
     decision = payload.get("decision", "INSPECT")
     defects = payload.get("defects", [])
-    classes = [d.get("class", "defect") for d in defects] or ["none"]
+    classes = [d.get("class", "defect").replace("_", " ") for d in defects] or ["none"]
     def_str = ", ".join(classes[:2])
 
     prompt = (
         f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n"
-        f"EdgePCB-QC: {decision}. Complete sentence only.<|eot_id|>"
+        f"You are EdgePCB-QC Assistant, an edge AI quality inspector. Provide concise technical guidance in 2 complete sentences. Do NOT use numbered lists or bullet points. Decision: {decision}.<|eot_id|>"
         f"<|start_header_id|>user<|end_header_id|>\n"
-        f"{board_id} {def_str}. Advisory?<|eot_id|>"
+        f"Board {board_id} shows {def_str}. State functional risk and operator action.<|eot_id|>"
         f"<|start_header_id|>assistant<|end_header_id|>\n"
     )
     return prompt
@@ -86,19 +86,19 @@ def format_compact_prompt(payload: Dict[str, Any]) -> str:
 def format_standard_prompt(payload: Dict[str, Any]) -> str:
     """
     Constructs a balanced standard prompt (~60-66 tokens)
-    directing Llama to explain impact, action, and electrical testing in complete sentences.
+    directing Llama to explain functional risk and operator action in 2-3 complete sentences.
     """
     board_id = payload.get("board_id", "PCB")
     decision = payload.get("decision", "INSPECT")
     defects = payload.get("defects", [])
-    classes = [d.get("class", "defect") for d in defects] or ["none"]
+    classes = [d.get("class", "defect").replace("_", " ") for d in defects] or ["none"]
     def_str = ", ".join(classes[:3])
 
     prompt = (
         f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n"
-        f"You are EdgePCB-QC Assistant, an edge AI quality inspector. Advise in complete sentences without headers. Decision: {decision}.<|eot_id|>"
+        f"You are EdgePCB-QC Assistant, an industrial PCB quality engineer. Provide concise technical guidance in 2-3 complete sentences. Do NOT use numbered lists or bullet points. Authoritative decision: {decision}.<|eot_id|>"
         f"<|start_header_id|>user<|end_header_id|>\n"
-        f"Board {board_id} shows visually suspected {def_str}. State failure risk, electrical test requirements, and operator action.<|eot_id|>"
+        f"Board {board_id} has detected defects: {def_str}. Explain the functional risk and state the operator action.<|eot_id|>"
         f"<|start_header_id|>assistant<|end_header_id|>\n"
     )
     return prompt
@@ -112,7 +112,7 @@ def format_comprehensive_prompt(payload: Dict[str, Any]) -> str:
     board_id = payload.get("board_id", "PCB")
     decision = payload.get("decision", "INSPECT")
     defects = payload.get("defects", [])
-    classes = [d.get("class", "defect") for d in defects] or ["none"]
+    classes = [d.get("class", "defect").replace("_", " ") for d in defects] or ["none"]
     def_str = ", ".join(classes[:3])
 
     conf_vals = [f"{d.get('confidence', 0.0)*100:.1f}%" for d in defects if 'confidence' in d]
@@ -120,11 +120,9 @@ def format_comprehensive_prompt(payload: Dict[str, Any]) -> str:
 
     prompt = (
         f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n"
-        f"You are EdgePCB-QC Assistant, an edge industrial quality-control reasoning agent for printed circuit board manufacturing. "
-        f"Explain visual inspection findings concisely in complete sentences. The deterministic decision is {decision}.<|eot_id|>"
+        f"You are EdgePCB-QC Assistant, an industrial PCB quality engineer. Provide concise technical guidance in 2-3 complete sentences. Do NOT use numbered lists or bullet points. Authoritative decision: {decision}.<|eot_id|>"
         f"<|start_header_id|>user<|end_header_id|>\n"
-        f"Inspection of {board_id} detected visually suspected {def_str} ({conf_str}). "
-        f"Explain defect failure risks, why electrical testing is required, and recommend operator handling.<|eot_id|>"
+        f"Board {board_id} has detected defects: {def_str} ({conf_str}). Explain the functional risk and recommend operator handling.<|eot_id|>"
         f"<|start_header_id|>assistant<|end_header_id|>\n"
     )
     return prompt

@@ -26,6 +26,23 @@ CANONICAL_CLASSES = {
 }
 
 
+
+def letterbox_image(img: np.ndarray, new_shape=(640, 640), color=(114, 114, 114)):
+    """Resizes image with aspect ratio preservation and padding."""
+    shape = img.shape[:2]
+    r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
+    new_unpad = int(round(shape[1] * r)), int(round(shape[0] * r))
+    dw, dh = new_shape[1] - new_unpad[0], new_shape[0] - new_unpad[1]
+    dw /= 2
+    dh /= 2
+
+    if shape[::-1] != new_unpad:
+        img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
+    top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
+    left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
+    img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)
+    return img, r, dw, dh
+
 def determine_quadrant(bbox: List[float], img_w: int, img_h: int) -> str:
     """Determines the coarse physical location of a defect for operator guidance."""
     x1, y1, x2, y2 = bbox
@@ -63,12 +80,17 @@ class CPUInspector(VisionInspector):
         device: str = "cpu"
     ):
         if model_path is None:
-            multidomain_pt = Path(__file__).resolve().parent.parent / "models" / "checkpoints" / "pcb_multidomain_experiment" / "weights" / "best.pt"
-            smoke_pt = Path(__file__).resolve().parent.parent / "models" / "checkpoints" / "pcb_smoke_experiment" / "weights" / "best.pt"
-            if multidomain_pt.exists():
-                model_path = multidomain_pt
-            elif smoke_pt.exists():
-                model_path = smoke_pt
+            root = Path(__file__).resolve().parent.parent
+            candidates = [
+                root / "models" / "onnx" / "pcb_multidomain_yolov8n_640.onnx",
+                root / "models" / "pcb" / "pcb_multidomain_yolov8n_640.onnx",
+                root / "models" / "checkpoints" / "pcb_multidomain_experiment" / "weights" / "best.pt",
+                root / "models" / "checkpoints" / "pcb_smoke_experiment" / "weights" / "best.pt"
+            ]
+            for c in candidates:
+                if c.exists():
+                    model_path = c
+                    break
 
         super().__init__(model_path=str(model_path) if model_path else None, conf_threshold=conf_threshold)
         self.use_onnx = use_onnx
@@ -171,8 +193,65 @@ class CPUInspector(VisionInspector):
 
         # 2. ONNX Inference
         elif self.onnx_session is not None:
-            # ONNXRuntime inference
-            pass
+            # ONNXRuntime CPU inference with letterboxing and NMS
+            letterboxed, ratio, pad_w, pad_h = letterbox_image(img, (640, 640))
+            img_rgb = cv2.cvtColor(letterboxed, cv2.COLOR_BGR2RGB)
+            blob = img_rgb.astype(np.float32) / 255.0
+            blob = np.transpose(blob, (2, 0, 1))
+            blob = np.expand_dims(blob, axis=0)
+
+            inp_name = self.onnx_session.get_inputs()[0].name
+            out = self.onnx_session.run(None, {inp_name: blob})[0]  # [1, 10, 8400]
+            out = out[0].T  # [8400, 10]
+
+            boxes = out[:, :4]  # cx, cy, w, h
+            scores = out[:, 4:]  # 6 classes
+            class_ids = np.argmax(scores, axis=1)
+            confidences = np.max(scores, axis=1)
+
+            conf_thresh = float(self.conf_threshold)
+            mask = confidences >= conf_thresh
+            filtered_boxes = boxes[mask]
+            filtered_conf = confidences[mask]
+            filtered_classes = class_ids[mask]
+
+            if len(filtered_boxes) > 0:
+                nms_boxes = []
+                for b in filtered_boxes:
+                    cx, cy, bw, bh = b
+                    x1 = cx - bw / 2
+                    y1 = cy - bh / 2
+                    nms_boxes.append([int(x1), int(y1), int(bw), int(bh)])
+
+                iou_thresh = 0.45
+                indices = cv2.dnn.NMSBoxes(nms_boxes, filtered_conf.tolist(), conf_thresh, iou_thresh)
+                if len(indices) > 0:
+                    for idx in np.array(indices).flatten():
+                        cx, cy, bw, bh = filtered_boxes[idx]
+                        x1 = (cx - bw / 2 - pad_w) / ratio
+                        y1 = (cy - bh / 2 - pad_h) / ratio
+                        x2 = (cx + bw / 2 - pad_w) / ratio
+                        y2 = (cy + bh / 2 - pad_h) / ratio
+
+                        x1 = max(0.0, min(float(w), float(x1)))
+                        y1 = max(0.0, min(float(h), float(y1)))
+                        x2 = max(0.0, min(float(w), float(x2)))
+                        y2 = max(0.0, min(float(h), float(y2)))
+
+                        xyxy = [x1, y1, x2, y2]
+                        cls_id = int(filtered_classes[idx])
+                        cls_name = CANONICAL_CLASSES.get(cls_id, f"class_{cls_id}")
+                        bw_orig = x2 - x1
+                        bh_orig = y2 - y1
+                        area_frac = (bw_orig * bh_orig) / total_board_area if total_board_area > 0 else 0.0
+
+                        defects.append({
+                            "class": cls_name,
+                            "confidence": round(float(filtered_conf[idx]), 4),
+                            "bbox": [round(float(v), 2) for v in xyxy],
+                            "area_fraction": round(area_frac, 5),
+                            "location": determine_quadrant(xyxy, w, h)
+                        })
 
         t1 = time.perf_counter()
         self._last_timing_ms = (t1 - t0) * 1000.0

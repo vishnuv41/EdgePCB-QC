@@ -1,34 +1,128 @@
-.venv/
+# ==============================================================================
+# EdgePCB-QC — Production .gitignore
+# Bharat AI-SoC Challenge 2026–27 | Problem Statement 5
+# ==============================================================================
+
+# Python & Environment
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.venv*/
+*venv*/
+edgepcb_gpu_venv/
+
+# Secrets, Credentials & Local Config
 .env
-datasets/raw/*
-datasets/processed/*
-datasets/inspected_captures/*
-datasets/calibration_images/*
-datasets/unseen_evaluation/images/*
-datasets/unseen_evaluation/results/*
-*.tmp
-!datasets/raw/.gitkeep
-!datasets/processed/.gitkeep
-!datasets/unseen_evaluation/images/.gitkeep
-!datasets/unseen_evaluation/results/.gitkeep
-models/checkpoints/*
-models/onnx/*
-models/hailo/*
-models/llama/*
-!models/*/.gitkeep
-*.pt
-*.onnx
-*.hef
-*.pte
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+
+# Databases & Runtime State (Keep schema in models.py, exclude populated databases)
 *.db
+*.sqlite
 *.sqlite3
-runs/
+database/*.db
+backend/data/*.db
+.edgepcb.pid
+*.pid
+edgepcb_server.log
+hailort*.log
+*.log
+
+# Generated captures & inspection crops
+backend/static/captures/
+backend/static/crops/
+backend/uploads/
+uploads/
+
+# Caches & IDEs
+.pytest_cache/
+.coverage
+htmlcov/
+.hypothesis/
 .vscode/
+.idea/
+.streamlit/
+*.swp
+*.swo
+
+# Node & Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Large Datasets & Archives
+datasets/raw/
+datasets/processed/
+datasets/calibration_images/
+datasets/inspected_captures/
+datasets/unseen_evaluation/images/
+datasets/unseen_evaluation/results/
+calib_set_*.npy
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+*.sha256
+dist_colab/
+scratch/
+runs/
+
+# Redundant unpacks & deployment staging bundles
+EdgePCB-QC_RPI5_HAILO_FINAL/
+EdgePCB-QC_RaspberryPi_Deployment/
+edgepcb_rpi5_deployment/
+EdgePCB-QC_RaspberryPi5_Complete_Deployment*/
+EdgePCB-QC_RPI5_HAILO8_FINAL_DEPLOYMENT*/
+
+# Intermediate experiment crops, tiles & visual audits
 benchmarks/*.jpg
 benchmarks/*.png
-benchmarks/**/*.jpg
-benchmarks/**/*.png
 benchmarks/results/*.png
-benchmarks/results/pcb_5655_investigation/*.jpg
+benchmarks/results/**/*.png
+benchmarks/results/**/*.jpg
+benchmarks/results/c2_*/
+benchmarks/results/exp_h_hard_negative_candidates/
+benchmarks/results/generalization_audit/
+benchmarks/results/multidataset_60_board/
+benchmarks/results/provisional_candidates_review/
+benchmarks/results/pcb_5655_investigation/
+
+# Model Checkpoints & Large Binaries
+*.pt
+*.pth
+*.ckpt
+models/checkpoints/
+models/checkpoints/**/*
+models/llama/checkpoints/
+models/onnx/exp_*.onnx
+models/onnx/pcb_smoke_experiment.onnx
+models/onnx/pcb_multidomain_experiment.onnx
+
+# ExecuTorch Large Model Binary (> 100 MB GitHub limit)
+*.pte
+llama3_2_1b_*.pte
+models/llama/*.pte
+
+# Allow Essential Production Model Artifacts (< 20 MB each)
+!models/hailo/pcb_yolov8n_raw_heads.hef
+!models/onnx/pcb_multidomain_yolov8n_640.onnx
+!models/llama/tokenizer.model
+
+# Allow Gitkeep for directory structure
+!.gitkeep
+!models/*/.gitkeep
+!datasets/*/.gitkeep

@@ -75,6 +75,31 @@ class InspectionRecord(Base):
     advisory_latency_ms = Column(Float, default=0.0)
     total_latency_ms = Column(Float, default=0.0)
 
+    # Provenance and Auditability Snapshot (Sections 6 & 8)
+    inspection_source = Column(String(32), default="unknown", nullable=False)  # 'real', 'demo', 'test', 'unknown'
+    config_snapshot_json = Column(Text, nullable=True)
+    image_sha256 = Column(String(64), nullable=True)
+    model_sha256 = Column(String(64), nullable=True)
+
+
+class HumanReviewRecord(Base):
+    __tablename__ = "human_reviews"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    review_id = Column(String(64), unique=True, index=True, nullable=False)
+    inspection_id = Column(String(64), index=True, nullable=False)
+    board_id = Column(String(64), index=True, nullable=False)
+    defect_index = Column(Integer, nullable=False)
+    ai_class = Column(String(64), nullable=False)
+    ai_confidence = Column(Float, nullable=False)
+    ai_severity = Column(String(32), nullable=False)
+    rule_id = Column(String(64), nullable=False)
+    reviewer_decision = Column(String(32), nullable=False)  # 'confirmed_defect', 'false_call', 'uncertain'
+    reason = Column(String(256), nullable=False)
+    comment = Column(Text, nullable=True)
+    reviewer_id = Column(String(64), default="OPERATOR-1", nullable=False)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+
 
 class DatabaseManager:
     def __init__(self, db_path: Optional[Path] = None):
@@ -106,7 +131,11 @@ class DatabaseManager:
                     ("clipping_warnings", "INTEGER DEFAULT 0"),
                     ("requires_electrical_test_for_suspected_defect", "BOOLEAN DEFAULT 0"),
                     ("electrical_functionality_verified", "BOOLEAN DEFAULT 0"),
-                    ("electrical_test_required_for_final_signoff", "BOOLEAN DEFAULT 1")
+                    ("electrical_test_required_for_final_signoff", "BOOLEAN DEFAULT 1"),
+                    ("inspection_source", "VARCHAR(32) DEFAULT 'unknown'"),
+                    ("config_snapshot_json", "TEXT DEFAULT NULL"),
+                    ("image_sha256", "VARCHAR(64) DEFAULT NULL"),
+                    ("model_sha256", "VARCHAR(64) DEFAULT NULL")
                 ]
                 for col_name, col_type in columns_to_add:
                     if col_name not in existing_cols:
@@ -139,12 +168,17 @@ class DatabaseManager:
         advisory_record: Optional[Dict[str, Any]] = None,
         advisory_metrics: Optional[Dict[str, Any]] = None,
         timings: Optional[Dict[str, float]] = None,
-        vision_model_version: str = "YOLO11n-pcb-v1.0",
+        vision_model_version: str = "YOLOv8n-pcb-v1.0",
         advisory_backend: Optional[str] = None,
         advisory_model_id: Optional[str] = None,
         advisory_status: Optional[str] = None,
         advisory_fallback_reason: Optional[str] = None,
-        llm_version: Optional[str] = None
+        llm_version: Optional[str] = None,
+        inspection_source: str = "real",
+        config_snapshot: Optional[Dict[str, Any]] = None,
+        image_sha256: Optional[str] = None,
+        model_sha256: Optional[str] = None,
+        **kwargs
     ) -> str:
         """
         Persists a complete end-to-end inspection record to SQLite with truthful attribution.
@@ -153,6 +187,12 @@ class DatabaseManager:
         inspection_id = str(uuid.uuid4())
         timings = timings or {}
         advisory_metrics = advisory_metrics or {}
+        
+        # Safely reconcile any kwargs passed dynamically or by older wrappers
+        inspection_source = kwargs.get("inspection_source", inspection_source)
+        config_snapshot = kwargs.get("config_snapshot", config_snapshot)
+        image_sha256 = kwargs.get("image_sha256", image_sha256)
+        model_sha256 = kwargs.get("model_sha256", model_sha256)
         
         defects = decision_record.get("defects", [])
         decision = decision_record.get("decision", "INSPECT")
@@ -219,7 +259,11 @@ class DatabaseManager:
             config_version=decision_record.get("config_version", "1.0-deterministic"),
             vision_latency_ms=timings.get("vision_ms", 0.0),
             advisory_latency_ms=timings.get("advisory_ms", 0.0),
-            total_latency_ms=timings.get("total_ms", 0.0)
+            total_latency_ms=timings.get("total_ms", 0.0),
+            inspection_source=inspection_source,
+            config_snapshot_json=json.dumps(config_snapshot) if config_snapshot else None,
+            image_sha256=image_sha256,
+            model_sha256=model_sha256
         )
 
         with self.Session() as session:
@@ -235,10 +279,13 @@ class DatabaseManager:
                 return None
             return self._record_to_dict(record)
 
-    def list_inspections(self, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+    def list_inspections(self, limit: int = 50, offset: int = 0, source_filter: Optional[str] = None) -> List[Dict[str, Any]]:
         with self.Session() as session:
+            query = session.query(InspectionRecord)
+            if source_filter:
+                query = query.filter(InspectionRecord.inspection_source == source_filter)
             records = (
-                session.query(InspectionRecord)
+                query
                 .order_by(desc(InspectionRecord.timestamp))
                 .offset(offset)
                 .limit(limit)
@@ -270,28 +317,153 @@ class DatabaseManager:
             session.commit()
             return True
 
-    def get_defect_statistics(self) -> Dict[str, Any]:
-        """Calculates Pareto distribution and counts across inspection history."""
+    def record_human_review(
+        self,
+        inspection_id: str,
+        board_id: str,
+        defect_index: int,
+        ai_class: str,
+        ai_confidence: float,
+        ai_severity: str,
+        rule_id: str,
+        reviewer_decision: str,
+        reason: str,
+        comment: Optional[str] = None,
+        reviewer_id: str = "OPERATOR-1"
+    ) -> str:
+        """
+        Records human verification of an individual defect detection.
+        reviewer_decision: 'confirmed_defect', 'false_call', or 'uncertain'
+        """
+        review_id = str(uuid.uuid4())
+        rev = HumanReviewRecord(
+            review_id=review_id,
+            inspection_id=inspection_id,
+            board_id=board_id,
+            defect_index=defect_index,
+            ai_class=ai_class,
+            ai_confidence=float(ai_confidence),
+            ai_severity=ai_severity,
+            rule_id=rule_id,
+            reviewer_decision=reviewer_decision,
+            reason=reason,
+            comment=comment,
+            reviewer_id=reviewer_id,
+            timestamp=datetime.now(timezone.utc)
+        )
         with self.Session() as session:
-            records = session.query(InspectionRecord).all()
+            session.add(rev)
+            session.commit()
+        return review_id
+
+    def list_human_reviews(self, inspection_id: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+        with self.Session() as session:
+            query = session.query(HumanReviewRecord)
+            if inspection_id:
+                query = query.filter_by(inspection_id=inspection_id)
+            records = query.order_by(desc(HumanReviewRecord.timestamp)).limit(limit).all()
+            return [
+                {
+                    "review_id": r.review_id,
+                    "inspection_id": r.inspection_id,
+                    "board_id": r.board_id,
+                    "defect_index": r.defect_index,
+                    "ai_class": r.ai_class,
+                    "ai_confidence": r.ai_confidence,
+                    "ai_severity": r.ai_severity,
+                    "rule_id": r.rule_id,
+                    "reviewer_decision": r.reviewer_decision,
+                    "reason": r.reason,
+                    "comment": r.comment,
+                    "reviewer_id": r.reviewer_id,
+                    "timestamp": r.timestamp.isoformat()
+                }
+                for r in records
+            ]
+
+    def get_false_call_metrics(self) -> Dict[str, Any]:
+        """
+        Calculates:
+        False-call rate = Human-confirmed false detections / Reviewed detections * 100
+        Excludes 'uncertain' and unreviewed detections from the denominator.
+        """
+        with self.Session() as session:
+            reviews = session.query(HumanReviewRecord).all()
+            false_calls = [r for r in reviews if r.reviewer_decision == "false_call"]
+            confirmed_defects = [r for r in reviews if r.reviewer_decision == "confirmed_defect"]
+            uncertain = [r for r in reviews if r.reviewer_decision == "uncertain"]
+
+            reviewed_count = len(false_calls) + len(confirmed_defects)
+            false_call_rate = (len(false_calls) / reviewed_count * 100.0) if reviewed_count > 0 else None
+
+            class_breakdown = {}
+            for r in reviews:
+                c = r.ai_class
+                if c not in class_breakdown:
+                    class_breakdown[c] = {"false_call": 0, "confirmed_defect": 0, "uncertain": 0, "reviewed": 0, "false_call_rate": None}
+                if r.reviewer_decision == "false_call":
+                    class_breakdown[c]["false_call"] += 1
+                    class_breakdown[c]["reviewed"] += 1
+                elif r.reviewer_decision == "confirmed_defect":
+                    class_breakdown[c]["confirmed_defect"] += 1
+                    class_breakdown[c]["reviewed"] += 1
+                elif r.reviewer_decision == "uncertain":
+                    class_breakdown[c]["uncertain"] += 1
+
+            for c, stats in class_breakdown.items():
+                if stats["reviewed"] > 0:
+                    stats["false_call_rate"] = round(stats["false_call"] / stats["reviewed"] * 100.0, 2)
+
+            return {
+                "total_reviews": len(reviews),
+                "reviewed_detections": reviewed_count,
+                "false_detections": len(false_calls),
+                "confirmed_detections": len(confirmed_defects),
+                "uncertain_detections": len(uncertain),
+                "false_call_rate": round(false_call_rate, 2) if false_call_rate is not None else None,
+                "class_breakdown": class_breakdown
+            }
+
+    def get_defect_statistics(self, source_filter: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Calculates Pareto distribution and counts across inspection history.
+        source_filter: if 'real', filters strictly operational inspections, excluding test/demo/unknown.
+        """
+        with self.Session() as session:
+            query = session.query(InspectionRecord)
+            if source_filter:
+                query = query.filter(InspectionRecord.inspection_source == source_filter)
+            records = query.all()
             total_inspections = len(records)
             decision_counts = {"PASS": 0, "INSPECT": 0, "REJECT": 0}
             class_counts = {}
+            heatmap_cells = [0] * 9
+            total_defects_count = 0
 
             for r in records:
                 decision_counts[r.final_decision] = decision_counts.get(r.final_decision, 0) + 1
                 try:
                     defects = json.loads(r.defects_json)
                     for d in defects:
-                        cls_name = d.get("class", "unknown")
+                        cls_name = d.get("class") or d.get("defect_class") or "unknown"
                         class_counts[cls_name] = class_counts.get(cls_name, 0) + 1
+                        total_defects_count += 1
+                        bbox = d.get("bbox")
+                        if bbox and len(bbox) == 4:
+                            cx = (bbox[0] + bbox[2]) / 2.0
+                            cy = (bbox[1] + bbox[3]) / 2.0
+                            col = min(2, max(0, int(cx / 427.0)))
+                            row = min(2, max(0, int(cy / 240.0)))
+                            heatmap_cells[row * 3 + col] += 1
                 except Exception:
                     pass
 
             return {
                 "total_inspections": total_inspections,
+                "total_defects": total_defects_count,
                 "decisions": decision_counts,
-                "defect_frequencies": class_counts
+                "defect_frequencies": class_counts,
+                "heatmap_3x3": heatmap_cells
             }
 
     @staticmethod
@@ -330,5 +502,9 @@ class DatabaseManager:
             "config_version": record.config_version,
             "vision_latency_ms": record.vision_latency_ms,
             "advisory_latency_ms": record.advisory_latency_ms,
-            "total_latency_ms": record.total_latency_ms
+            "total_latency_ms": record.total_latency_ms,
+            "inspection_source": getattr(record, "inspection_source", "unknown"),
+            "config_snapshot": json.loads(record.config_snapshot_json) if getattr(record, "config_snapshot_json", None) else None,
+            "image_sha256": getattr(record, "image_sha256", None),
+            "model_sha256": getattr(record, "model_sha256", None)
         }

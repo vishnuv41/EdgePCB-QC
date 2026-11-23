@@ -1,0 +1,31 @@
+# EdgePCB-QC Raspberry Pi 5 Python Dependencies
+# Bharat AI-SoC Challenge 2026-27 | PS5
+# Target OS: Raspberry Pi OS (64-bit Bookworm, Debian 12, Python 3.11)
+
+# Core scientific & computer vision
+numpy>=1.24.0,<2.0.0
+opencv-python-headless>=4.8.0
+pillow>=10.0.0
+
+# Fast API Industrial Workstation Server
+fastapi>=0.109.0
+uvicorn>=0.27.0
+python-multipart>=0.0.9
+
+# Streamlit operator dashboard (Alternative UI)
+streamlit>=1.35.0
+plotly>=5.18.0
+
+# Database & schema validation
+sqlalchemy>=2.0.0
+pydantic>=2.5.0
+
+# System monitoring
+psutil>=5.9.0
+
+# Ultralytics & PyTorch (CPU fallback engine)
+ultralytics>=8.1.0
+torch>=2.1.0 --index-url https://download.pytorch.org/whl/cpu
+
+# ExecuTorch dependencies (CPU Llama advisory)
+executorch>=0.4.0

@@ -1,0 +1,15 @@
+[Unit]
+Description=EdgePCB-QC Industrial AOI Workstation Server
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/EdgePCB-QC
+ExecStart=/home/pi/EdgePCB-QC/.venv/bin/python3 /home/pi/EdgePCB-QC/run_server.py
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

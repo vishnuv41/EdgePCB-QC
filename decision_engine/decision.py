@@ -29,7 +29,7 @@ class DecisionEngine:
         Evaluates an inspection payload and returns a deterministic quality verdict.
         """
         board_id = payload.get("board_id", "UNKNOWN-BOARD")
-        defects = payload.get("defects", [])
+        defects = payload.get("defects") or payload.get("detections") or []
         coverage = float(payload.get("coverage", 1.0))
 
         if preset is None:

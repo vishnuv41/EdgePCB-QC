@@ -1,0 +1,28 @@
+{
+  "station_id": "STATION-RPI5-AOI",
+  "station_label": "EdgePCB-QC Industrial Inspection",
+  "host": "0.0.0.0",
+  "port": 8000,
+  "mode": "offline_airgapped",
+  "backend_mode": "auto",
+  "inference": {
+    "confidence_threshold": 0.25,
+    "iou_threshold": 0.45,
+    "max_detections": 100,
+    "hailo_hef_path": "models/pcb/pcb_yolov8n_raw_heads.hef",
+    "onnx_model_path": "models/pcb/pcb_multidomain_yolov8n_640.onnx"
+  },
+  "advisory": {
+    "pte_path": "models/llama/llama3_2_1b_xnnpack_8da4w.pte",
+    "tokenizer_path": "models/llama/tokenizer.model",
+    "max_new_tokens": 56
+  },
+  "camera": {
+    "device_index": 0,
+    "resolution": [
+      1280,
+      720
+    ],
+    "framerate": 15
+  }
+}

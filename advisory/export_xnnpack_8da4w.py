@@ -12,10 +12,29 @@ import time
 from pathlib import Path
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
-LLAMA_DIR = WORKSPACE_ROOT / "models" / "llama" / "checkpoints" / "Llama-3.2-1B-Instruct"
-CHECKPOINT_PATH = LLAMA_DIR / "original" / "consolidated.00.pth"
-PARAMS_PATH = LLAMA_DIR / "original" / "params.json"
+OUTPUT_DIR = WORKSPACE_ROOT / "models" / "llama"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_NAME = "llama3_2_1b_xnnpack_8da4w.pte"
+
+CANDIDATE_CHECKPOINTS = [
+    OUTPUT_DIR / "checkpoints" / "Llama-3.2-1B-Instruct" / "original" / "consolidated.00.pth",
+    Path(r"E:\EdgePCB-QC_cache\models\llama3_2_1b\original\consolidated.00.pth"),
+    OUTPUT_DIR / "original" / "consolidated.00.pth",
+]
+
+CANDIDATE_PARAMS = [
+    OUTPUT_DIR / "checkpoints" / "Llama-3.2-1B-Instruct" / "original" / "params.json",
+    Path(r"E:\EdgePCB-QC_cache\models\llama3_2_1b\original\params.json"),
+    OUTPUT_DIR / "original" / "params.json",
+]
+
+
+def find_file(candidates, label):
+    for c in candidates:
+        if c.exists():
+            print(f"[+] Found {label}: {c} ({c.stat().st_size / (1024*1024):.1f} MB)")
+            return c
+    raise FileNotFoundError(f"Could not locate {label} in candidate paths: {candidates}")
 
 
 def export_xnnpack_8da4w():
@@ -23,38 +42,58 @@ def export_xnnpack_8da4w():
     print("EXECUTORCH LLAMA 3.2 1B XNNPACK 8DA4W EXPORT PIPELINE")
     print("=" * 70)
 
-    if not CHECKPOINT_PATH.exists():
-        raise FileNotFoundError(f"Checkpoint not found: {CHECKPOINT_PATH}")
-    if not PARAMS_PATH.exists():
-        raise FileNotFoundError(f"Params not found: {PARAMS_PATH}")
+    checkpoint_path = find_file(CANDIDATE_CHECKPOINTS, "PyTorch checkpoint")
+    params_path = find_file(CANDIDATE_PARAMS, "params.json")
+
+    # Set FLATC_EXECUTABLE so flatbuffer compilation succeeds on Windows
+    scripts_flatc = Path(sys.prefix) / "Scripts" / "flatc.exe"
+    bin_flatc = Path(sys.prefix) / "Lib" / "site-packages" / "executorch" / "data" / "bin" / "flatc.exe"
+    if "FLATC_EXECUTABLE" not in os.environ:
+        if scripts_flatc.exists():
+            os.environ["FLATC_EXECUTABLE"] = str(scripts_flatc)
+        elif bin_flatc.exists():
+            os.environ["FLATC_EXECUTABLE"] = str(bin_flatc)
+    os.environ["PATH"] = str(Path(sys.prefix) / "Scripts") + os.pathsep + os.environ.get("PATH", "")
+    print(f"[*] FLATC_EXECUTABLE: {os.environ.get('FLATC_EXECUTABLE')}")
 
     import torch
     import executorch
     from executorch.examples.models.llama import export_llama_lib
 
-    print(f"[*] Checkpoint:   {CHECKPOINT_PATH}")
-    print(f"[*] Params:       {PARAMS_PATH}")
+    print(f"[*] Checkpoint:   {checkpoint_path}")
+    print(f"[*] Params:       {params_path}")
+    print(f"[*] Output Dir:   {OUTPUT_DIR}")
+    print(f"[*] Output File:  {OUTPUT_NAME}")
     print(f"[*] Backend:      XNNPACK (-X)")
-    print(f"[*] Quantization: 8da4w (-qmode 8da4w)")
+    print(f"[*] Quantization: 8da4w (-qmode 8da4w: 8-bit act, 4-bit weight)")
 
+    # extra_opts string passed to argument parser
     extra_opts = f"-kv --max_seq_length 256 --max_context_length 512 -X -qmode 8da4w -n {OUTPUT_NAME}"
+    print(f"[*] Extra options: {extra_opts}")
     t0 = time.perf_counter()
 
-    export_llama_lib.build_model(
+    out_path = export_llama_lib.build_model(
         model="llama3_2",
-        checkpoint=CHECKPOINT_PATH.resolve().as_posix(),
-        params=PARAMS_PATH.resolve().as_posix(),
-        output_dir=LLAMA_DIR.resolve().as_posix(),
+        checkpoint=checkpoint_path.resolve().as_posix(),
+        params=params_path.resolve().as_posix(),
+        output_dir=OUTPUT_DIR.resolve().as_posix(),
         extra_opts=extra_opts
     )
 
     t_export = time.perf_counter() - t0
-    out_file = LLAMA_DIR / OUTPUT_NAME
-    if out_file.exists():
-        size_mb = out_file.stat().st_size / (1024 * 1024)
-        print(f"[+] Successfully compiled {OUTPUT_NAME} in {t_export:.2f}s ({size_mb:.1f} MB)!")
+    final_pte = OUTPUT_DIR / OUTPUT_NAME
+    if final_pte.exists():
+        size_mb = final_pte.stat().st_size / (1024 * 1024)
+        print("\n" + "=" * 70)
+        print(f"[✓] EXPORT SUCCESSFUL: {final_pte.name}")
+        print(f"    Path:    {final_pte}")
+        print(f"    Size:    {size_mb:.2f} MB ({final_pte.stat().st_size:,} bytes)")
+        print(f"    Elapsed: {t_export:.2f} s")
+        print("=" * 70)
+        return final_pte
     else:
-        print(f"[+] Compilation completed in {t_export:.2f}s.")
+        print(f"[!] Compilation finished in {t_export:.2f}s, returned: {out_path}")
+        return Path(out_path) if out_path else None
 
 
 if __name__ == "__main__":
